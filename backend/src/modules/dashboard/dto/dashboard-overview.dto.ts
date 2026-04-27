@@ -14,6 +14,7 @@ export enum PeriodEnum {
     SEVEN_DAYS = '7d',
     THIRTY_DAYS = '30d',
     NINETY_DAYS = '90d',
+    ONE_YEAR = '365d',
     THIS_MONTH = 'this_month',
     LAST_MONTH = 'last_month',
 }
@@ -29,7 +30,7 @@ export class GetDashboardOverviewDto {
     })
     @IsOptional()
     @IsEnum(PeriodEnum, {
-        message: 'period must be one of: 1d, 7d, 30d, 90d, this_month, last_month',
+        message: 'period must be one of: 1d, 7d, 30d, 90d, 365d, this_month, last_month',
     })
     period?: PeriodEnum = PeriodEnum.SEVEN_DAYS;
 

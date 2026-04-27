@@ -76,7 +76,7 @@ const STATUS_OPTIONS = [
 const PLATFORM_OPTIONS = [
     { value: 'ALL', label: 'All Platforms' },
     { value: 'FACEBOOK', label: 'Facebook' },
-    { value: 'GOOGLE', label: 'Google Ads' },
+    { value: 'GOOGLE_ADS', label: 'Google Ads' },
     { value: 'TIKTOK', label: 'TikTok' },
     { value: 'LINE_ADS', label: 'Line Ads' },
 ] as const;
@@ -129,6 +129,14 @@ export function CampaignToolbar({
         } else {
             onChange(next);
         }
+    };
+
+    const handleSingleSelectPlatform = (value: string) => {
+        if (value === 'ALL') {
+            onPlatformChange(new Set(['ALL']));
+            return;
+        }
+        onPlatformChange(new Set([value]));
     };
 
     const [query, setQuery] = useState(search);
@@ -244,7 +252,7 @@ export function CampaignToolbar({
                             <DropdownMenuSeparator className="-mx-2 mb-1" />
                             <DropdownMenuCheckboxItem
                                 checked={platform.has('ALL')}
-                                onCheckedChange={() => onPlatformChange(new Set(['ALL']))}
+                                onCheckedChange={() => handleSingleSelectPlatform('ALL')}
                                 className="rounded-lg cursor-pointer"
                             >
                                 All Platforms
@@ -253,7 +261,7 @@ export function CampaignToolbar({
                                 <DropdownMenuCheckboxItem
                                     key={option.value}
                                     checked={platform.has(option.value)}
-                                    onCheckedChange={() => handleToggle(platform, onPlatformChange, option.value)}
+                                    onCheckedChange={() => handleSingleSelectPlatform(option.value)}
                                     className="rounded-lg cursor-pointer"
                                 >
                                     {option.label}

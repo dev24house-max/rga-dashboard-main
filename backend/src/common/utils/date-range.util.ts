@@ -16,6 +16,8 @@ export class DateRangeUtil {
                 return this.getDateRange(30);
             case PeriodEnum.NINETY_DAYS:
                 return this.getDateRange(90);
+            case PeriodEnum.ONE_YEAR:
+                return this.getDateRange(365);
             case PeriodEnum.THIS_MONTH: {
                 // First day of current month to today
                 const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));

@@ -12,7 +12,7 @@
  */
 
 // ✅ Single source of truth for date range options
-export const DATE_RANGE_OPTIONS = ['1d', '7d', '30d', '90d'] as const;
+export const DATE_RANGE_OPTIONS = ['1d', '7d', '30d', '90d', '365d'] as const;
 
 // ✅ Type derived from the constant (DRY principle)
 export type DateRangeOption = typeof DATE_RANGE_OPTIONS[number];
@@ -23,6 +23,7 @@ export const DATE_RANGE_LABELS: Record<DateRangeOption, string> = {
     '7d': 'Last 7 day',
     '30d': 'last month',
     '90d': '3 month',
+    '365d': '1 year',
 };
 
 // ✅ For API calls that need GA4 start date values

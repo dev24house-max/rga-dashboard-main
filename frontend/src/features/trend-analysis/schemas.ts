@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
 export const PeriodEnumSchema = z.enum([
+    '1d',
     '7d',
     '30d',
     'this_month',
     'last_month',
+    '90d',
+    '365d',
     'custom',
 ]);
 export type PeriodEnum = z.infer<typeof PeriodEnumSchema>;

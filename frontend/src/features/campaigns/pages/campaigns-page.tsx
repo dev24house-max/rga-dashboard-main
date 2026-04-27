@@ -64,6 +64,11 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
             start.setDate(start.getDate() - 89);
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
+        case '365d': {
+            const start = new Date(today);
+            start.setDate(start.getDate() - 364);
+            return { startDate: start.toISOString().split('T')[0], endDate };
+        }
         case 'this_month': {
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
             return { startDate: start.toISOString().split('T')[0], endDate };
@@ -133,7 +138,7 @@ export function CampaignsPage() {
     const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null);
 
     // Period filter state for time-window metrics
-    const [period, setPeriod] = useState<PeriodEnum>('7d');
+    const [period, setPeriod] = useState<PeriodEnum>('1d');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
 
     // Search and filter state

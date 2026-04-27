@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
-import { Prisma } from '@prisma/client';
+import { AdPlatform, Prisma } from '@prisma/client';
 
 // ============================================================
 // Helper: Safe Decimal to Number conversion
@@ -32,6 +32,7 @@ export class MetricsService {
         tenantId: string,
         period: string,
         compareWith?: 'previous_period',
+        platform?: AdPlatform,
     ) {
         const days = DateRangeUtil.parsePeriodDays(period);
         const { startDate, endDate } = DateRangeUtil.getDateRange(days);
@@ -41,6 +42,7 @@ export class MetricsService {
             tenantId,
             startDate,
             endDate,
+            platform,
         );
 
         // Previous period metrics (if comparison requested)
@@ -52,6 +54,7 @@ export class MetricsService {
                 tenantId,
                 prevStartDate,
                 prevEndDate,
+                platform,
             );
         }
 
@@ -76,6 +79,7 @@ export class MetricsService {
         tenantId: string,
         startDate: Date,
         endDate: Date,
+        platform?: AdPlatform,
     ) {
         const hideMockData = process.env.HIDE_MOCK_DATA === 'true';
 
@@ -86,6 +90,7 @@ export class MetricsService {
                     gte: startDate,
                     lte: endDate,
                 },
+                ...(platform ? { platform } : {}),
                 ...(hideMockData ? { isMockData: false } : {}),
             },
             _sum: {
@@ -168,7 +173,7 @@ export class MetricsService {
      * @param tenantId - Tenant ID
      * @param period - Time period ('7d', '30d')
      */
-    async getDailyMetrics(tenantId: string, period: string) {
+    async getDailyMetrics(tenantId: string, period: string, platform?: AdPlatform) {
         const days = DateRangeUtil.parsePeriodDays(period);
         const { startDate, endDate } = DateRangeUtil.getDateRange(days);
 
@@ -182,6 +187,7 @@ export class MetricsService {
                     gte: startDate,
                     lte: endDate,
                 },
+                ...(platform ? { platform } : {}),
                 ...(hideMockData ? { isMockData: false } : {}),
             },
             _sum: {

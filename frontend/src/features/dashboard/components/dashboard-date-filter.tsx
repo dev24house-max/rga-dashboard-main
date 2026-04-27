@@ -46,8 +46,9 @@ export interface DashboardDateFilterProps {
 const PERIOD_OPTIONS: { value: PeriodEnum; label: string }[] = [
     { value: '1d', label: 'Today' },
     { value: '7d', label: 'Last 7 day' },
-    { value: '30d', label: 'last month' },
+    { value: 'last_month', label: 'Last month' },
     { value: '90d', label: '3 month' },
+    { value: '365d', label: '1 year' },
 ];
 
 function startOfDay(date: Date) {
@@ -76,8 +77,6 @@ function getPeriodFromPickedDate(pickedDate: Date, currentPeriod: PeriodEnum): P
         picked.getMonth() === firstDayOfPrevMonth.getMonth();
 
     if (isPrevMonth) return 'last_month';
-
-    return currentPeriod;
 
     return currentPeriod;
 }
