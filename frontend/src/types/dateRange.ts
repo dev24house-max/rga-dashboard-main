@@ -8,18 +8,11 @@
  * // Adding a new option in the future:
  * // 1. Add to DATE_RANGE_OPTIONS
  * // 2. Add label to DATE_RANGE_LABELS
- * // 3. Add date calculation to getDateRangeStrings
+ * // 3. Done! All components will automatically support it.
  */
 
-export const DATE_RANGE_OPTIONS = [
-    '1d',
-    'yesterday',
-    '7d',
-    '14d',
-    'this_month',
-    'last_month',
-    'last_3_months',
-] as const;
+// ✅ Single source of truth for date range options
+export const DATE_RANGE_OPTIONS = ['1d', '7d', '30d', '90d', '365d'] as const;
 
 // ✅ Type derived from the constant
 export type DateRangeOption = typeof DATE_RANGE_OPTIONS[number];
@@ -27,12 +20,10 @@ export type DateRangeOption = typeof DATE_RANGE_OPTIONS[number];
 // ✅ Human-readable labels for UI
 export const DATE_RANGE_LABELS: Record<DateRangeOption, string> = {
     '1d': 'Today',
-    'yesterday': 'Yesterday',
-    '7d': 'Last 7 days',
-    '14d': 'Last 14 days',
-    'this_month': 'This month',
-    'last_month': 'Last month',
-    'last_3_months': 'Last 3 months',
+    '7d': 'Last 7 day',
+    '30d': 'last month',
+    '90d': '3 month',
+    '365d': '1 year',
 };
 
 const formatDate = (date: Date): string => {

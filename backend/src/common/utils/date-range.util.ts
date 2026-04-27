@@ -31,8 +31,9 @@ export class DateRangeUtil {
                 return this.getLastFullMonthsRange(1);
 
             case PeriodEnum.NINETY_DAYS:
-                return this.getLastFullMonthsRange(3);
-
+                return this.getDateRange(90);
+            case PeriodEnum.ONE_YEAR:
+                return this.getDateRange(365);
             case PeriodEnum.THIS_MONTH: {
                 const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
                 const endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999));

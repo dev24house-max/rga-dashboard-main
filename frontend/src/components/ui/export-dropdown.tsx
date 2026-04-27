@@ -7,7 +7,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { exportToImage, exportToPdf } from '@/lib/export-utils';
+import { exportToImage, exportToPdfWithSummary } from '@/lib/export-utils';
 
 interface ExportDropdownProps {
     /** The element to capture for Image/PDF. Pass a ref.current */
@@ -39,7 +39,7 @@ export function ExportDropdown({
             if (type === 'image') {
                 await exportToImage(targetElement, filename);
             } else if (type === 'pdf') {
-                await exportToPdf(targetElement, filename);
+                await exportToPdfWithSummary(targetElement, filename);
             }
         } catch (err) {
             console.error('Export failed', err);

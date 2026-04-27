@@ -47,13 +47,24 @@ export const dashboardService = {
         apiClient.get<any>('/dashboard/summary-by-platform', { params: { days, platform } }),
 
     // Exports
-    exportCampaignsCSV: (platform?: string, status?: string) =>
-        apiClient.get('/dashboard/export/campaigns/csv', {
-            params: { platform, status },
+    exportCampaignsCSV: (startDate: string, endDate: string, platform?: string, status?: string) =>
+        apiClient.get('/export/campaigns', {
+            params: {
+                startDate,
+                endDate,
+                ...(platform ? { platform } : {}),
+                ...(status ? { status } : {}),
+            },
             responseType: 'blob'
         }),
-    exportMetricsPDF: (period: string) =>
-        apiClient.get(`/dashboard/export/metrics/pdf?period=${period}`, { responseType: 'blob' }),
+    exportMetricsPDF: (period: string, platform?: string) =>
+        apiClient.get('/dashboard/export/metrics/pdf', {
+            params: {
+                period,
+                ...(platform ? { platform } : {}),
+            },
+            responseType: 'blob',
+        }),
 
     // Onboarding
     getOnboardingStatus: () => apiClient.get<{ googleAds: boolean; googleAnalytics: boolean; kpiTargets: boolean; teamMembers: boolean }>('/dashboard/onboarding-status'),

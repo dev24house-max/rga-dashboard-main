@@ -183,7 +183,7 @@ function buildPlatformFunnelStages(platformDataArray: any[] | undefined) {
 
 export function DashboardPage() {
     // Period state for date filtering
-    const [period, setPeriod] = useState<PeriodEnum>('this_month');
+    const [period, setPeriod] = useState<PeriodEnum>('1d');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
 
     // Fetch dashboard data with selected period or custom range

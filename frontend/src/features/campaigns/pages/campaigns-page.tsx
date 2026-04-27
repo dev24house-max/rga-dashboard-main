@@ -111,18 +111,14 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
         }
         case '14d': {
             const start = new Date(today);
-            start.setDate(start.getDate() - 13);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
+            start.setDate(start.getDate() - 89);
+            return { startDate: start.toISOString().split('T')[0], endDate };
         }
-        // case '90d': {
-        //     const start = new Date(today);
-        //     start.setDate(start.getDate() - 89);
-        //     return { startDate: formatLocalDate(start), endDate };
-        // }
+        case '365d': {
+            const start = new Date(today);
+            start.setDate(start.getDate() - 364);
+            return { startDate: start.toISOString().split('T')[0], endDate };
+        }
         case 'this_month': {
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -209,7 +205,7 @@ export function CampaignsPage() {
     const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null);
 
     // Period filter state for time-window metrics
-    const [period, setPeriod] = useState<PeriodEnum>('this_month');
+    const [period, setPeriod] = useState<PeriodEnum>('1d');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
 
     // Search and filter state

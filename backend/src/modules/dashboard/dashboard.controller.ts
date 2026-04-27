@@ -1,4 +1,4 @@
-﻿import { Controller, Get, Post, Delete, Query, UseGuards, Request, Res, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, UseGuards, Request, Res, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -216,10 +216,11 @@ export class DashboardController {
   @Get('export/metrics/pdf')
   async exportMetricsPDF(
     @CurrentUser() user: any,
-    @Query('period') period: '7d' | '30d' = '7d',
+    @Query('period') period: string = '7d',
+    @Query('platform') platform?: string,
     @Res() res?: Response,
   ) {
-    const pdf = await this.exportService.exportMetricsToPDF(user.tenantId, period);
+    const pdf = await this.exportService.exportMetricsToPDF(user.tenantId, period, platform as any);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
