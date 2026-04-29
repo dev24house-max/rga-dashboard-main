@@ -21,7 +21,38 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { useState } from 'react';
+
+// =============================================================================
+// Info Tooltip Component
+// =============================================================================
+
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
 
 // Platforms to display (in order)
 const DISPLAY_PLATFORMS: PlatformId[] = ['google', 'google-analytics', 'facebook', 'tiktok'];
@@ -75,7 +106,12 @@ export default function DataSourcesPage() {
                 </div>
 
                 {/* Platform Cards Grid */}
-                <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold sm:text-lg">Connected Platforms</h3>
+                        <InfoTooltip content="Connect ad platforms to automatically import your campaigns, spending data, and performance metrics. You can manage and disconnect platforms anytime." />
+                    </div>
+                    <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {DISPLAY_PLATFORMS.map((platform) => (
                         <DataSourceCard
                             key={platform}
@@ -88,15 +124,6 @@ export default function DataSourcesPage() {
                         />
                     ))}
                 </div>
-
-                {/* Info Section */}
-                <div className="rounded-lg border bg-muted/50 p-4">
-                    <h3 className="font-medium mb-2">Need Help?</h3>
-                    <p className="text-sm text-muted-foreground">
-                        When you connect a platform, you'll be redirected to authorize access.
-                        After authorization, you may need to select which ad account to use.
-                        Your data will be synced automatically once connected.
-                    </p>
                 </div>
             </div>
 
