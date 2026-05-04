@@ -6,10 +6,16 @@
 
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { IntegrationChecklist } from '@/components/IntegrationChecklist';
 import { DashboardMetrics } from '../components/dashboard-metrics';
@@ -21,6 +27,30 @@ import { ConversionFunnel } from '../components/widgets/conversion-funnel';
 import { FinancialOverview } from '../components/widgets/financial-overview';
 import { useDashboardOverview } from '../hooks/use-dashboard';
 import type { AdPlatform, PeriodEnum, RecentCampaign } from '../schemas';
+
+// =============================================================================
+// Info Tooltip Components
+// =============================================================================
+
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
 
 // =============================================================================
 // Error State Component
@@ -232,7 +262,10 @@ export function DashboardPage() {
 
                 {/* Metrics Grid */}
                 <section className="w-full">
-                    <h3 className="sr-only">Key Performance Metrics</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-base font-semibold sm:text-lg">Key Performance Metrics</h3>
+                        <InfoTooltip content="Track your essential advertising metrics including total cost, clicks, impressions, conversions, and ROAS across all platforms within the selected period." />
+                    </div>
                     <DashboardMetrics
                         summary={data?.summary}
                         growth={data?.growth}
@@ -242,7 +275,10 @@ export function DashboardPage() {
 
                 {/* AI Summaries */}
                 <section className="w-full">
-                    <h3 className="sr-only">AI Summaries</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-base font-semibold sm:text-lg">AI Summaries</h3>
+                        <InfoTooltip content="AI-generated insights and analysis of your advertising performance, providing actionable recommendations to optimize your campaigns." />
+                    </div>
                     {isLoading ? (
                         <Skeleton className="h-[180px] w-full rounded-3xl sm:h-[220px]" />
                     ) : (
@@ -252,7 +288,10 @@ export function DashboardPage() {
 
                 {/* Charts & Campaigns Grid - Responsive Layout */}
                 <section id="performance-trends" className="w-full">
-                    <h3 className="sr-only">Performance Trends & Recent Campaigns</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-base font-semibold sm:text-lg">Performance Trends & Recent Campaigns</h3>
+                        <InfoTooltip content="View your advertising performance trends over time with detailed charts, and see your most recent campaigns with their status, platform, and spending information." />
+                    </div>
                     <div className="grid gap-4 grid-cols-1 lg:grid-cols-7 xl:gap-6 items-stretch">
                         {/* Trend Chart - 4/7 on desktop */}
                         <div className="col-span-1 lg:col-span-4 xl:col-span-4 flex h-full flex-col">
@@ -283,7 +322,10 @@ export function DashboardPage() {
 
                 {/* Financial Overview & Conversion Funnel */}
                 <section id="conversion-funnel" className="w-full">
-                    <h3 className="sr-only">Financial Overview & Conversion Funnel</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-base font-semibold sm:text-lg">Financial Overview & Conversion Funnel</h3>
+                        <InfoTooltip content="Analyze your advertising spend by platform, view financial metrics including revenue and profit estimations based on ROAS, and track the conversion funnel from impressions through to conversions." />
+                    </div>
                     <div className="grid gap-4 grid-cols-1 xl:grid-cols-2 xl:gap-6">
                         {isLoading ? (
                             <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />

@@ -1,6 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UnifiedSyncService } from '../../sync/unified-sync.service';
+import { AdPlatform } from '@prisma/client';
 import axios from 'axios';
 import { EncryptionService } from '../../../common/services/encryption.service';
 
@@ -16,6 +18,7 @@ export class LineAdsOAuthService {
         private readonly configService: ConfigService,
         private readonly prisma: PrismaService,
         private readonly encryptionService: EncryptionService,
+        private readonly unifiedSyncService: UnifiedSyncService,
     ) {
         this.channelId = this.configService.get('LINE_CHANNEL_ID');
         this.channelSecret = this.configService.get('LINE_CHANNEL_SECRET');
@@ -77,8 +80,10 @@ export class LineAdsOAuthService {
                 },
             });
 
+            let accountId: string;
+
             if (existing) {
-                await this.prisma.lineAdsAccount.update({
+                const updated = await this.prisma.lineAdsAccount.update({
                     where: { id: existing.id },
                     data: {
                         accessToken: this.encryptionService.encrypt(access_token),
@@ -87,8 +92,9 @@ export class LineAdsOAuthService {
                         updatedAt: new Date(),
                     },
                 });
+                accountId = updated.id;
             } else {
-                await this.prisma.lineAdsAccount.create({
+                const created = await this.prisma.lineAdsAccount.create({
                     data: {
                         tenantId,
                         channelId: lineUserId,
@@ -97,7 +103,11 @@ export class LineAdsOAuthService {
                         status: 'ACTIVE',
                     },
                 });
+                accountId = created.id;
             }
+
+            // Trigger an initial sync for the connected LINE Ads account.
+            await this.unifiedSyncService.syncAccount(AdPlatform.LINE_ADS, accountId, tenantId);
 
             return { success: true };
 
