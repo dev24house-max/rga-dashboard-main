@@ -107,8 +107,8 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar className="border-r border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-lg shadow-slate-200/20 w-[260px] z-50">
-            <div className="flex flex-col h-full w-full">
+        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 w-[260px] z-50">
+            <div className="flex flex-col h-full w-full text-slate-900 dark:text-slate-100">
 
                 {/* Header / Logo */}
                 <div className="px-6 py-6 pb-2">
@@ -134,9 +134,9 @@ export function AppSidebar() {
                             key={group.title}
                             className="space-y-2"
                         >
-                            <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 select-none flex items-center gap-2">
+                            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 select-none flex items-center gap-2">
                                 {group.title}
-                                <div className="h-px flex-1 bg-slate-100/50" />
+                                <div className="h-px flex-1 bg-slate-100/50 dark:bg-slate-800/50" />
                             </h3>
 
                             <div className="space-y-1">
@@ -153,7 +153,7 @@ export function AppSidebar() {
                                                 "w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
                                                 active
                                                     ? "text-white shadow-md shadow-orange-500/20"
-                                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                                                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100",
                                                 item.comingSoon && "opacity-50 cursor-not-allowed"
                                             )}
                                         >
@@ -170,20 +170,20 @@ export function AppSidebar() {
                                             {/* Icon */}
                                             <Icon className={cn(
                                                 "w-[18px] h-[18px] relative z-10 transition-transform duration-300 group-hover:scale-110",
-                                                active ? "text-white" : "text-orange-500"
+                                                active ? "text-white" : "text-orange-500 dark:text-orange-400"
                                             )} />
 
                                             {/* Label */}
                                             <span className={cn(
                                                 "text-[13px] font-medium relative z-10 tracking-wide",
-                                                active ? "text-white" : "text-slate-900"
+                                                active ? "text-white" : "text-slate-900 dark:text-slate-100"
                                             )}>
                                                 {item.label}
                                             </span>
 
                                             {/* Coming Soon Badge */}
                                             {item.comingSoon && (
-                                                <span className="ml-auto text-[10px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded border border-slate-200">
+                                                <span className="ml-auto text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                                                     Soon
                                                 </span>
                                             )}
@@ -207,7 +207,7 @@ export function AppSidebar() {
                 </div>
 
                 {/* Footer / User Profile */}
-                <div className="p-4 border-t border-slate-100/60 bg-slate-50/50 backdrop-blur-sm">
+                <div className="p-4 border-t border-slate-100/60 bg-slate-50/50 dark:bg-slate-950/50 dark:border-slate-800/60 backdrop-blur-sm">
                     <div className="flex items-center gap-3 px-2">
                         {/* Avatar */}
                         <div className="relative">
@@ -219,10 +219,10 @@ export function AppSidebar() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                                 {user?.name || 'User'}
                             </p>
-                            <p className="text-xs text-slate-500 truncate font-medium">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
                                 {user?.role || 'Viewer'}
                             </p>
                         </div>

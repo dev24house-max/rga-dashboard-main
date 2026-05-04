@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IntegrationFactory } from '../integrations/common/integration.factory';
-import { AdPlatform, Prisma } from '@prisma/client';
+import { AdPlatform, Prisma, SyncStatus } from '@prisma/client';
 import { MarketingPlatformAdapter } from '../integrations/common/marketing-platform.adapter';
 import { EncryptionService } from '../../common/services/encryption.service';
 
@@ -346,6 +346,7 @@ export class UnifiedSyncService {
             startDate: data.startDate,
             endDate: data.endDate,
             [fkField]: accountId,
+            syncStatus: SyncStatus.IN_PROGRESS,
         };
 
         if (existing) {
@@ -474,6 +475,14 @@ export class UnifiedSyncService {
                 },
             });
         }
+
+        await this.prisma.campaign.update({
+            where: { id: campaignId },
+            data: {
+                syncStatus: SyncStatus.SUCCESS,
+                lastSyncedAt: new Date(),
+            },
+        });
     }
 
     /**

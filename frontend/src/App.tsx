@@ -119,7 +119,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient} key={tenantKey}>
       <ErrorBoundary>
-        <ThemeProvider defaultTheme="light">
+        <ThemeProvider defaultTheme="light" switchable>
           {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
           <TooltipProvider>
             <Toaster />

@@ -18,6 +18,13 @@ import { prismaConfig } from '../src/modules/prisma/prisma.config';
 
 const prisma = new PrismaClient(prismaConfig);
 
+// Safety guard: prevent accidental seeding in production environments.
+// To allow seeding explicitly, set ALLOW_PRISMA_SEED=true in the environment.
+const allowPrismaSeed = process.env.ALLOW_PRISMA_SEED === 'true';
+if (!allowPrismaSeed) {
+  console.log('SEED PROTECTED: Set ALLOW_PRISMA_SEED=true to run prisma seed. Exiting.');
+  process.exit(0);
+}
 // ==========================================
 // 1. Embedded Mock Data & Generators
 // ==========================================
@@ -692,7 +699,7 @@ async function main() {
   const seoTopKeywordsData = topKeywords.map((kw, index) => {
     const keywordDate = new Date(premiumStartDate);
     keywordDate.setDate(premiumStartDate.getDate() + index);
-    
+
     return {
       tenantId: tenant.id,
       date: keywordDate,
@@ -716,7 +723,7 @@ async function main() {
   const seoTrafficByLocationData = locations.map((location, index) => {
     const locationDate = new Date(premiumStartDate);
     locationDate.setDate(premiumStartDate.getDate() + index);
-    
+
     return {
       tenantId: tenant.id,
       date: locationDate,
@@ -742,7 +749,7 @@ async function main() {
   const seoAnchorTextData = anchorTexts.map((anchor, index) => {
     const anchorDate = new Date(premiumStartDate);
     anchorDate.setDate(premiumStartDate.getDate() + index);
-    
+
     return {
       tenantId: tenant.id,
       date: anchorDate,
@@ -770,7 +777,7 @@ async function main() {
   const seoOffpageData = offpageMetrics.map((metric, index) => {
     const metricDate = new Date(premiumStartDate);
     metricDate.setDate(premiumStartDate.getDate() + index);
-    
+
     return {
       tenantId: tenant.id,
       date: metricDate,

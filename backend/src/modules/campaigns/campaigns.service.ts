@@ -61,12 +61,13 @@ export class CampaignsService {
 
     if (isDbSort) {
       // Parallel Execution: Fetch data and summary concurrently
+      const usePeriodMetrics = !!(query.startDate || query.endDate);
       const [[items, total], summaryRaw] = await Promise.all([
         this.repository.findAll(tenantId, query),
         this.repository.getSummary(tenantId, query),
       ]);
 
-      const normalized = items.map((c) => this.normalizeCampaign(c));
+      const normalized = items.map((c) => this.normalizeCampaign(c, usePeriodMetrics));
       const s = summaryRaw._sum;
 
       const summary = {
@@ -107,6 +108,7 @@ export class CampaignsService {
       };
 
       // Parallel Execution: Fetch all data (for sorting) and summary concurrently
+      const usePeriodMetrics = !!(query.startDate || query.endDate);
       const [[items, total], summaryRaw] = await Promise.all([
         this.repository.findAll(tenantId, queryForRepo),
         this.repository.getSummary(tenantId, query),
@@ -128,7 +130,7 @@ export class CampaignsService {
         cpm: this.safe(s.impressions) ? Number(((this.safe(s.spend) / this.safe(s.impressions)) * 1000).toFixed(2)) : 0,
       };
 
-      let normalized = items.map((c) => this.normalizeCampaign(c));
+      let normalized = items.map((c) => this.normalizeCampaign(c, usePeriodMetrics));
 
       normalized.sort((a, b) => {
         // @ts-ignore
@@ -278,19 +280,32 @@ export class CampaignsService {
    * when startDate/endDate query params are provided.
    * This ensures spend, impressions, etc. reflect the selected time window.
    */
-  private normalizeCampaign(c: any) {
+  private normalizeCampaign(c: any, usePeriodMetrics = false) {
     const m = c.metrics || [];
 
     // Aggregated metrics (Period-based)
     const periodSpend = m.reduce((s: number, x: Metric) => s + this.safe(x.spend), 0);
     const periodRevenue = m.reduce((s: number, x: Metric) => s + this.safe(x.revenue), 0);
-    
-    // Total metrics (Lifetime-based)
-    const spend = this.safe(c.lifetimeSpend ?? periodSpend);
-    const revenue = this.safe(c.lifetimeRevenue ?? periodRevenue);
-    const clicks = this.safe(c.lifetimeClicks ?? m.reduce((s: number, x: Metric) => s + this.safe(x.clicks), 0));
-    const impressions = this.safe(c.lifetimeImpressions ?? m.reduce((s: number, x: Metric) => s + this.safe(x.impressions), 0));
-    const conversions = this.safe(c.lifetimeConversions ?? m.reduce((s: number, x: Metric) => s + this.safe(x.conversions), 0));
+    const periodClicks = m.reduce((s: number, x: Metric) => s + this.safe(x.clicks), 0);
+    const periodImpressions = m.reduce((s: number, x: Metric) => s + this.safe(x.impressions), 0);
+    const periodConversions = m.reduce((s: number, x: Metric) => s + this.safe(x.conversions), 0);
+
+    // Total metrics (Lifetime-based unless date range is used)
+    const spend = usePeriodMetrics
+      ? periodSpend
+      : this.safe(c.lifetimeSpend ?? periodSpend);
+    const revenue = usePeriodMetrics
+      ? periodRevenue
+      : this.safe(c.lifetimeRevenue ?? periodRevenue);
+    const clicks = usePeriodMetrics
+      ? periodClicks
+      : this.safe(c.lifetimeClicks ?? periodClicks);
+    const impressions = usePeriodMetrics
+      ? periodImpressions
+      : this.safe(c.lifetimeImpressions ?? periodImpressions);
+    const conversions = usePeriodMetrics
+      ? periodConversions
+      : this.safe(c.lifetimeConversions ?? periodConversions);
 
     return {
       id: c.id,
@@ -304,7 +319,7 @@ export class CampaignsService {
       clicks,
       revenue,
       conversions,
-      // Calculated ratios based on Total/Lifetime values
+      // Calculated ratios based on selected metric window
       roas: spend > 0 ? Number((revenue / spend).toFixed(2)) : 0,
       roi: spend > 0 ? Number(((revenue - spend) / spend * 100).toFixed(2)) : 0,
       ctr: impressions > 0 ? Number(((clicks / impressions) * 100).toFixed(2)) : 0,

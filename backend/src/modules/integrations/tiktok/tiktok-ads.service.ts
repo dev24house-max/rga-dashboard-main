@@ -3,13 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import { MarketingPlatformAdapter, PlatformCredentials, DateRange } from '../common/marketing-platform.adapter';
 import { Campaign, Metric, CampaignStatus, AdPlatform, Prisma } from '@prisma/client';
 import axios from 'axios';
+import { AdsApiLogService } from '../../../common/services/ads-api-log.service';
 
 @Injectable()
 export class TikTokAdsService implements MarketingPlatformAdapter {
   private readonly logger = new Logger(TikTokAdsService.name);
   private readonly baseUrl = 'https://business-api.tiktok.com/open_api/v1.3';
 
-  constructor(private readonly configService: ConfigService) { }
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly adsApiLogService: AdsApiLogService,
+  ) { }
 
   async validateCredentials(credentials: PlatformCredentials): Promise<boolean> {
     try {
@@ -31,6 +35,15 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
   }
 
   async fetchCampaigns(credentials: PlatformCredentials): Promise<Partial<Campaign>[]> {
+    await this.adsApiLogService.info('TikTokAds', 'Fetching campaigns', {
+      accountId: credentials.accountId,
+      endpoint: `${this.baseUrl}/campaign/get/`,
+      params: {
+        advertiser_id: credentials.accountId,
+        page_size: 1000,
+      },
+    });
+
     try {
       const response = await axios.get(`${this.baseUrl}/campaign/get/`, {
         headers: {
@@ -43,16 +56,30 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
       });
 
       if (response.data?.code !== 0) {
+        await this.adsApiLogService.error('TikTokAds', 'fetchCampaigns API returned non-zero code', null, {
+          response: response.data,
+        });
         throw new Error(`TikTok API Error: ${response.data?.message}`);
       }
 
       const campaignList = response.data.data.list || [];
+      await this.adsApiLogService.info('TikTokAds', 'Fetched campaigns', {
+        accountId: credentials.accountId,
+        count: campaignList.length,
+        sample: campaignList.slice(0, 2),
+      });
       const campaignIds = campaignList.map((c: any) => c.campaign_id);
 
       // 2. Fetch Absolute Lifetime Metrics for these campaigns
       // We use a very wide range to simulate "Lifetime"
       let lifetimeMetricsMap = new Map();
       if (campaignIds.length > 0) {
+        await this.adsApiLogService.info('TikTokAds', 'Fetching lifetime metrics', {
+          accountId: credentials.accountId,
+          endpoint: `${this.baseUrl}/report/integrated/get/`,
+          campaignIds: campaignIds.slice(0, 10),
+        });
+
         try {
           const metricsResponse = await axios.get(`${this.baseUrl}/report/integrated/get/`, {
             headers: { 'Access-Token': credentials.accessToken },
@@ -61,7 +88,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
               report_type: 'BASIC',
               data_level: 'AUCTION_CAMPAIGN',
               dimensions: JSON.stringify(['campaign_id']),
-              metrics: JSON.stringify(['impressions', 'clicks', 'spend', 'conversion', 'total_conversion_value']),
+              metrics: JSON.stringify(['impressions', 'clicks', 'spend', 'conversion', 'conversion_value']),
               start_date: '2020-01-01',
               end_date: new Date().toISOString().split('T')[0],
               filters: JSON.stringify([{ field_name: 'campaign_ids', filter_type: 'IN', filter_value: campaignIds }]),
@@ -84,6 +111,10 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
           }
         } catch (e) {
           this.logger.warn(`Failed to fetch lifetime metrics for TikTok campaigns: ${e.message}`);
+          await this.adsApiLogService.warn('TikTokAds', 'Failed to fetch lifetime metrics', {
+            error: e instanceof Error ? e.message : e,
+            accountId: credentials.accountId,
+          });
         }
       }
 
@@ -139,6 +170,13 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
     campaignId: string,
     range: DateRange,
   ): Promise<Partial<Metric>[]> {
+    await this.adsApiLogService.info('TikTokAds', 'Fetching metrics', {
+      campaignId,
+      accountId: credentials.accountId,
+      startDate: range.startDate.toISOString().split('T')[0],
+      endDate: range.endDate.toISOString().split('T')[0],
+    });
+
     try {
       // TikTok Reporting API
       const response = await axios.get(`${this.baseUrl}/report/integrated/get/`, {
@@ -155,7 +193,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
             'clicks',
             'spend',
             'conversion',
-            'total_conversion_value',
+            'conversion_value',
           ]),
           start_date: range.startDate.toISOString().split('T')[0],
           end_date: range.endDate.toISOString().split('T')[0],
@@ -171,10 +209,18 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
       });
 
       if (response.data?.code !== 0) {
+        await this.adsApiLogService.error('TikTokAds', 'fetchMetrics API returned non-zero code', null, {
+          response: response.data,
+          campaignId,
+        });
         throw new Error(`TikTok API Error: ${response.data?.message}`);
       }
 
       const list = response.data.data.list || [];
+      await this.adsApiLogService.info('TikTokAds', `Fetched ${list.length} metric rows`, {
+        campaignId,
+        sample: list.slice(0, 2),
+      });
 
       // DEBUG: Log sample metric row to see structure
       if (list.length > 0) {
@@ -218,6 +264,10 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
       });
     } catch (error) {
       this.logger.error(`Failed to fetch TikTok metrics: ${error.message}`);
+      await this.adsApiLogService.error('TikTokAds', 'fetchMetrics failed', error, {
+        campaignId,
+        accountId: credentials.accountId,
+      });
       return [];
     }
   }

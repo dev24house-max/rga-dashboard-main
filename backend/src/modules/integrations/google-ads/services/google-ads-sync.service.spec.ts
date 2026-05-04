@@ -5,6 +5,7 @@ import { GoogleAdsApiService } from './google-ads-api.service';
 import { GoogleAdsMapperService } from './google-ads-mapper.service';
 import { MockDataSeederService } from '../../../dashboard/mock-data-seeder.service';
 import { NotFoundException } from '@nestjs/common';
+import { describe, beforeEach, it, expect, jest } from '@jest/globals';
 
 describe('GoogleAdsSyncService', () => {
     let service: GoogleAdsSyncService;
@@ -12,7 +13,7 @@ describe('GoogleAdsSyncService', () => {
     let apiService: GoogleAdsApiService;
     let mapperService: GoogleAdsMapperService;
 
-    const mockPrismaService = {
+    const mockPrismaService: any = {
         googleAdsAccount: {
             findUnique: jest.fn(),
             update: jest.fn(),
@@ -30,18 +31,18 @@ describe('GoogleAdsSyncService', () => {
         },
     };
 
-    const mockApiService = {
+    const mockApiService: any = {
         fetchCampaigns: jest.fn(),
         fetchCampaignMetrics: jest.fn(),
     };
 
-    const mockMapperService = {
+    const mockMapperService: any = {
         transformCampaigns: jest.fn(),
         transformMetrics: jest.fn(),
     };
 
-    const mockSeederService = {
-        seedCampaignMetrics: jest.fn().mockResolvedValue({ createdCount: 5 }),
+    const mockSeederService: any = {
+        seedCampaignMetrics: jest.fn<() => Promise<{createdCount: number}>>().mockResolvedValue({ createdCount: 5 }),
     };
 
     beforeEach(async () => {

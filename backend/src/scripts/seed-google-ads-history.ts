@@ -23,6 +23,11 @@ function addUtcDays(date: Date, days: number): Date {
 async function main() {
   console.log('[seed-google-ads-history] starting...');
 
+  if (process.env.ALLOW_SEED !== 'true') {
+    console.log('[seed-google-ads-history] Seeding disabled. Set ALLOW_SEED=true to enable. Exiting.');
+    process.exit(0);
+  }
+
   // Use UTC-midnight dates to avoid off-by-one issues when filtering/grouping by day.
   const now = new Date();
   const todayUtc = toUtcDateOnly(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())));

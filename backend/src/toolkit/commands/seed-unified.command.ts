@@ -221,6 +221,11 @@ export class SeedUnifiedCommandHandler implements ICommandHandler<SeedUnifiedCom
         const sourceTag = `toolkit:unified:${scenario}:${seed}`;
         let targetPlatforms: ToolkitPlatform[] = SEEDABLE_PLATFORMS;
 
+        // Safety: prevent accidental writes unless explicitly allowed via env var
+        if (!dryRun && process.env.ALLOW_SEED !== 'true') {
+            throw new HygieneError('Seeding disabled by configuration. Set ALLOW_SEED=true to enable.');
+        }
+
         // 1. Tenant Precheck (Hygiene)
         const hygieneStep = builder.startStep('VALIDATE_INPUT');
         try {
