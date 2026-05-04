@@ -6,7 +6,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class AiAnalyticsService {
     private readonly logger = new Logger(AiAnalyticsService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     // 📊 Collect User Behavior Data
     async collectUserBehavior(tenantId: string, userId: string, action: string, data: any) {
@@ -35,6 +35,8 @@ export class AiAnalyticsService {
                     timestamp: new Date(),
                 }
             });
+
+            await this.triggerInsightsWhenMetricsChange(tenantId, metrics);
         } catch (error) {
             this.logger.error(`Failed to track business metrics: ${error.message}`);
         }
@@ -88,9 +90,27 @@ export class AiAnalyticsService {
 
     // 🔄 Daily Analytics Processing
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    @Cron(CronExpression.EVERY_10_MINUTES)
+    async processScheduledAnalytics() {
+        this.logger.log('Processing AI summary every 10 minutes...');
+
+        const tenants = await this.prisma.tenant.findMany({
+            select: { id: true }
+        });
+
+        for (const tenant of tenants) {
+            try {
+                await this.generateScheduledInsights(tenant.id);
+            } catch (error) {
+                this.logger.error(`Failed to process scheduled analytics for tenant ${tenant.id}: ${error.message}`);
+            }
+        }
+    }
+
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async processDailyAnalytics() {
         this.logger.log('Processing daily analytics...');
-        
+
         const tenants = await this.prisma.tenant.findMany({
             select: { id: true }
         });
@@ -135,6 +155,11 @@ export class AiAnalyticsService {
         };
     }
 
+    private async generateScheduledInsights(tenantId: string) {
+        // Generate insights more frequently for update-driven summaries
+        await this.generateInsights(tenantId, 'scheduled-summary');
+    }
+
     private async generateDailyInsights(tenantId: string) {
         // Generate daily AI insights based on data patterns
         await this.generateInsights(tenantId, 'daily-summary');
@@ -143,5 +168,42 @@ export class AiAnalyticsService {
     private async aggregateDailyMetrics(tenantId: string) {
         // Aggregate daily metrics for reporting
         // Implementation here
+    }
+
+    private async triggerInsightsWhenMetricsChange(tenantId: string, metrics: any) {
+        try {
+            const previousMetric = await this.prisma.businessMetric.findFirst({
+                where: { tenantId },
+                orderBy: { timestamp: 'desc' },
+                skip: 1,
+            });
+
+            const shouldGenerate = !previousMetric || this.haveMetricsChanged(previousMetric.metrics, metrics);
+            if (shouldGenerate) {
+                this.logger.log(`Business metrics changed for tenant ${tenantId}, generating AI insights...`);
+                await this.generateInsights(tenantId, 'metrics-change');
+            }
+        } catch (error) {
+            this.logger.error(`Failed to trigger insights on metric change: ${error.message}`);
+        }
+    }
+
+    private haveMetricsChanged(previous: any, current: any): boolean {
+        return JSON.stringify(this.normalizeJson(previous)) !== JSON.stringify(this.normalizeJson(current));
+    }
+
+    private normalizeJson(value: any): any {
+        if (Array.isArray(value)) {
+            return value.map((item) => this.normalizeJson(item));
+        }
+
+        if (value && typeof value === 'object') {
+            return Object.keys(value).sort().reduce((result, key) => {
+                result[key] = this.normalizeJson(value[key]);
+                return result;
+            }, {} as any);
+        }
+
+        return value;
     }
 }

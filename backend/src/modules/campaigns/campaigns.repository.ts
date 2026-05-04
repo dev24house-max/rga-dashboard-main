@@ -81,7 +81,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     const ids = query.ids ? query.ids.split(',').filter(id => id.trim().length > 0) : undefined;
 
-    const where: Prisma.CampaignWhereInput = { 
+    const where: Prisma.CampaignWhereInput = {
       tenantId,
     };
 
@@ -147,6 +147,16 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     }
 
     // 1. Fetch campaigns with date-filtered metrics
+    const metricsWhere: Prisma.MetricWhereInput = {
+      source: { not: 'lifetime_summary' },
+      ...(startDate || endDate ? {
+        date: {
+          ...(startDate && { gte: startDate }),
+          ...(endDate && { lte: endDate }),
+        },
+      } : {}),
+    };
+
     const [rawCampaigns, total] = await Promise.all([
       this.prisma.campaign.findMany({
         where,
@@ -154,13 +164,8 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
         skip,
         include: {
           metrics: {
-            where: (startDate || endDate) ? {
-              date: {
-                ...(startDate && { gte: startDate }),
-                ...(endDate && { lte: endDate })
-              }
-            } : undefined
-          }
+            where: metricsWhere,
+          },
         },
         orderBy,
       }),
@@ -313,15 +318,17 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     });
     const lifetimeSummaryIds = lifetimeSummaryRows.map(s => s.campaignId);
 
-    // 3. Aggregate metrics for these campaigns
-    const [periodAgg, summaryTotals, fallbackTotals, budgetAgg] = await Promise.all([
-      // A. Period-filtered metrics (Standard behavior for date range)
-      this.prisma.metric.aggregate({
-        where: metricWhere,
-        _sum: {
-          spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
-        },
-      }),
+    const periodAgg = await this.prisma.metric.aggregate({
+      where: {
+        ...metricWhere,
+        source: { not: 'lifetime_summary' },
+      },
+      _sum: {
+        spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
+      },
+    });
+
+    const [summaryTotals, fallbackTotals, budgetAgg] = await Promise.all([
       // B. Absolute Totals (from special lifetime rows)
       this.prisma.metric.aggregate({
         where: { campaignId: { in: lifetimeSummaryIds }, source: 'lifetime_summary' },
@@ -353,6 +360,22 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       const val2 = agg2?._sum?.[field] || 0;
       return Number(val1) + Number(val2);
     };
+
+    const isDateRange = !!(startDate || endDate);
+    if (isDateRange) {
+      return {
+        _sum: {
+          spent: Number(periodAgg._sum.spend || 0),
+          spend: Number(periodAgg._sum.spend || 0),
+          revenue: Number(periodAgg._sum.revenue || 0),
+          impressions: Number(periodAgg._sum.impressions || 0),
+          clicks: Number(periodAgg._sum.clicks || 0),
+          conversions: Number(periodAgg._sum.conversions || 0),
+          budget: Number(budgetAgg._sum.budget || 0),
+          periodSpent: Number(periodAgg._sum.spend || 0),
+        },
+      };
+    }
 
     return {
       _sum: {

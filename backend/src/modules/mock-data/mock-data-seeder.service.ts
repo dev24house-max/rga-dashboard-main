@@ -18,11 +18,19 @@ export class MockDataSeederService {
 
     constructor(private readonly prisma: PrismaService) { }
 
+    private ensureAllowSeed() {
+        if (process.env.ALLOW_SEED !== 'true') {
+            this.logger.warn('Mock data writes are disabled. Set ALLOW_SEED=true to enable seeding.');
+            throw new Error('Mock data writes disabled by configuration.');
+        }
+    }
+
     // ============================================
     // Google Ads Account Seeding
     // ============================================
 
     async seedGoogleAdsAccount(tenantId: string) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding mock Google Ads account for tenant ${tenantId}`);
 
         // Check if account already exists
@@ -53,6 +61,7 @@ export class MockDataSeederService {
     }
 
     async seedCampaignMetrics(campaignId: string, days: number = 30) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding ${days} days of mock metrics for campaign ${campaignId}`);
 
         // First, get the campaign to retrieve tenantId and platform
@@ -120,6 +129,7 @@ export class MockDataSeederService {
     // ============================================
 
     async seedGA4Metrics(tenantId: string, propertyId: string, days: number = 30) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding ${days} days of mock GA4 metrics for property ${propertyId}`);
 
         let createdCount = 0;
@@ -166,6 +176,7 @@ export class MockDataSeederService {
     // ============================================
 
     async seedAlerts(tenantId: string, count: number = 8) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding ${count} mock alerts for tenant ${tenantId}`);
 
         // Get or create default alert rule
@@ -230,6 +241,7 @@ export class MockDataSeederService {
     // ============================================
 
     async seedSyncLogs(tenantId: string, count: number = 12) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding ${count} mock sync logs for tenant ${tenantId}`);
 
         let createdCount = 0;
@@ -250,6 +262,7 @@ export class MockDataSeederService {
     // ============================================
 
     async seedCampaigns(tenantId: string, platforms?: string[]) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding mock campaigns for tenant ${tenantId}`);
 
         const platformList = platforms || ['GOOGLE_ADS', 'FACEBOOK', 'TIKTOK', 'LINE_ADS'];
@@ -308,6 +321,7 @@ export class MockDataSeederService {
             ...options,
         };
 
+        this.ensureAllowSeed();
         this.logger.log(`Starting full mock data seed for tenant ${tenantId}`);
         const results: Record<string, unknown> = {};
 
@@ -390,6 +404,7 @@ export class MockDataSeederService {
      * Seed metrics สำหรับ campaigns ทั้งหมดของ tenant
      */
     async seedAllCampaignMetrics(tenantId: string, days: number = 30) {
+        this.ensureAllowSeed();
         this.logger.log(`Seeding ${days} days of metrics for all campaigns in tenant ${tenantId}`);
 
         const campaigns = await this.prisma.campaign.findMany({

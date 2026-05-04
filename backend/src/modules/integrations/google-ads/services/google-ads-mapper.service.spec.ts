@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GoogleAdsMapperService } from './google-ads-mapper.service';
-
+import { describe, beforeEach, it, expect } from '@jest/globals';
 describe('GoogleAdsMapperService', () => {
     let service: GoogleAdsMapperService;
 
