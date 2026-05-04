@@ -35,6 +35,7 @@ const CHECKLIST_PLATFORM_IDS = [
     'google-ads',
     'google-analytics',
     'facebook-ads',
+    'line-ads',
     'tiktok-ads',
 ] as const;
 
@@ -42,6 +43,7 @@ const statusKeyMap: Record<string, keyof IntegrationStatus> = {
     'google-ads': 'googleAds',
     'google-analytics': 'googleAnalytics',
     'facebook-ads': 'facebookAds',
+    'line-ads': 'lineAds',
     'tiktok-ads': 'tiktokAds',
 };
 
@@ -243,7 +245,7 @@ export function IntegrationChecklist() {
                                     className={`
                                         group w-full rounded-2xl px-5 py-4 text-left
                                         transition-all duration-300 ease-out
-                                        border bg-gradient-to-br ${styles.bgGradient}
+                                        border bg-linear-to-br ${styles.bgGradient}
                                         hover:shadow-lg hover:-translate-y-1 ${styles.hoverBorder} ${styles.glowColor}
                                         ${!isConnected
                                             ? 'grayscale opacity-60 hover:opacity-80'

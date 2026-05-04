@@ -63,7 +63,7 @@ const PLATFORM_ROUTES: Record<PlatformId, PlatformRoutes> = {
         externalIdField: 'advertiserId',
     },
     line: {
-        authBaseUrl: '/auth/line/ads',
+        authBaseUrl: '/auth/line',
         integrationBaseUrl: '/integrations/line-ads',
         externalIdField: 'accountId', // Placeholder, LINE OAuth not implemented
     },
@@ -281,5 +281,9 @@ export function parseOAuthCallback(searchParams: URLSearchParams): OAuthCallback
  * Check if URL contains OAuth callback parameters
  */
 export function isOAuthCallback(searchParams: URLSearchParams): boolean {
-    return !!(searchParams.get('tempToken') || searchParams.get('error'));
+    return !!(
+        searchParams.get('tempToken') ||
+        searchParams.get('error') ||
+        searchParams.get('status')
+    );
 }

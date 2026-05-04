@@ -29,9 +29,13 @@ export function FacebookAdsCard({ platform }: Props) {
     const checkConnection = async () => {
         try {
             const response = await apiClient.get('/auth/facebook/ads/accounts');
-            if (response.data && response.data.length > 0) {
+            const accountsResponse = Array.isArray(response.data)
+                ? response.data
+                : response.data?.accounts ?? [];
+
+            if (accountsResponse.length > 0) {
                 setIsConnected(true);
-                setAccounts(response.data);
+                setAccounts(accountsResponse);
             } else {
                 setIsConnected(false);
             }

@@ -1,5 +1,5 @@
 
-import { Injectable, Logger, BadRequestException, Inject } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
@@ -8,6 +8,8 @@ import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom } from 'rxjs';
 import { EncryptionService } from '../../../common/services/encryption.service';
+import { UnifiedSyncService } from '../../sync/unified-sync.service';
+import { AdPlatform } from '@prisma/client';
 
 @Injectable()
 export class FacebookAdsOAuthService {
@@ -23,6 +25,7 @@ export class FacebookAdsOAuthService {
         private readonly httpService: HttpService,
 
         private readonly encryptionService: EncryptionService,
+        @Inject(forwardRef(() => UnifiedSyncService)) private readonly unifiedSyncService: UnifiedSyncService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {
         this.appId = this.configService.get<string>('FACEBOOK_APP_ID');
@@ -189,6 +192,15 @@ export class FacebookAdsOAuthService {
         });
 
         await this.cacheManager.del(`fb_temp_token:${tempToken}`);
+
+        try {
+            this.logger.log(`[OAuth Sync] Starting initial sync for Facebook account ${account.id}`);
+            await this.unifiedSyncService.syncAccount(AdPlatform.FACEBOOK, account.id, tenantId);
+            this.logger.log('[OAuth Sync] Facebook initial sync completed successfully');
+        } catch (syncError: any) {
+            this.logger.error(`[OAuth Sync] Initial sync failed: ${syncError.message}`);
+            this.logger.error(syncError.stack);
+        }
 
         return account;
     }

@@ -91,12 +91,29 @@ export function useIntegrationAuth() {
         // Handle error
         if (params.error) {
             toast.error(`Integration error: ${decodeURIComponent(params.error)}`);
-            // Clean URL
             window.history.replaceState({}, '', '/data-sources');
             return;
         }
 
-        // Handle success callback with tempToken
+        // Handle LINE success callback
+        if (params.status === 'success' && params.platform === 'line') {
+            toast.success('LINE Ads connected successfully!');
+            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
+            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            window.history.replaceState({}, '', '/data-sources');
+            return;
+        }
+
+        // Handle TikTok success callback (sandbox or auto-connect mode)
+        if (params.status === 'success' && params.platform === 'tiktok') {
+            toast.success('TikTok Ads connected successfully!');
+            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
+            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            window.history.replaceState({}, '', '/data-sources');
+            return;
+        }
+
+        // Handle success callback with tempToken for selection flows
         if (params.tempToken && params.platform) {
             const platform = normalizePlatformId(params.platform);
 
@@ -106,10 +123,7 @@ export function useIntegrationAuth() {
                 return;
             }
 
-            // Clean URL immediately to prevent re-trigger on refresh
             window.history.replaceState({}, '', '/data-sources');
-
-            // Fetch temp accounts
             fetchTempAccountsAndOpenDialog(platform, params.tempToken);
         }
     }, []);
