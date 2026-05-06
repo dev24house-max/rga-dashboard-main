@@ -67,7 +67,9 @@ const PLANS: Plan[] = [
 export default function EcommerceLandingPage() {
     return (
         <main className="min-h-screen bg-slate-50/50">
-            <HeroSection />
+            <div data-tutorial="ecommerce-hero">
+                <HeroSection />
+            </div>
 
             <section className="w-full py-20 lg:py-24">
                 <div className="container px-4 mx-auto max-w-6xl space-y-24">
@@ -104,7 +106,7 @@ export default function EcommerceLandingPage() {
                     </div>
 
                     {/* Pricing Section */}
-                    <div id="pricing" className="space-y-12 relative">
+                    <div id="pricing" data-tutorial="ecommerce-pricing" className="space-y-12 relative">
                         {/* Decorative background blur */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-indigo-100/50 blur-[100px] -z-10 rounded-full mix-blend-multiply opacity-70" />
 

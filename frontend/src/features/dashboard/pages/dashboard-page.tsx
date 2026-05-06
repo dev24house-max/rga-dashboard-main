@@ -243,16 +243,27 @@ export function DashboardPage() {
         <DashboardLayout>
             <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5 md:gap-6 md:p-8">
                 {/* Page Header */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between dashboard-header">
                     <div className="space-y-1">
                         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h2>
                         <p className="text-sm text-muted-foreground sm:text-base">
                             Monitor your advertising performance across all platforms.
                         </p>
                     </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.dispatchEvent(new Event('rga-tutorial-start'))}
+                        >
+                            Show tour
+                        </Button>
+                    </div>
                 </div>
 
-                <section id="integration-checklist" className="w-full">
+                <section id="integration-checklist" className="w-full quick-actions">
                     <h3 className="sr-only">Integration Checklist</h3>
                     <IntegrationChecklist />
                 </section>
@@ -261,7 +272,7 @@ export function DashboardPage() {
                 {error && <ErrorState error={error} onRetry={refetch} />}
 
                 {/* Metrics Grid */}
-                <section className="w-full">
+                <section className="w-full dashboard-metrics">
                     <div className="flex items-center gap-2 mb-4">
                         <h3 className="text-base font-semibold sm:text-lg">Key Performance Metrics</h3>
                         <InfoTooltip content="Track your essential advertising metrics including total cost, clicks, impressions, conversions, and ROAS across all platforms within the selected period." />
@@ -299,7 +310,7 @@ export function DashboardPage() {
                                 <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                             ) : (
                                 <TrendChart
-                                    className="h-full"
+                                    className="h-full trend-chart"
                                     data={data?.trends ?? []}
                                     period={period}
                                     onPeriodChange={setPeriod}

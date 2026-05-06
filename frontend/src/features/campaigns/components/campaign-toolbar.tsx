@@ -158,7 +158,7 @@ export function CampaignToolbar({
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
 
                 {/* Search Input */}
-                <div className="relative w-full md:max-w-sm group">
+                <div data-tutorial="campaigns-search" className="relative w-full md:max-w-sm group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
                     </div>
@@ -184,16 +184,17 @@ export function CampaignToolbar({
                 {/* Filters & Actions */}
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
 
-                    {/* Status Filter */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className={`h-10 border-dashed rounded-lg px-3 lg:px-4 font-normal ${status.has('ALL')
-                                        ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                        : 'border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-50'
-                                    }`}
-                            >
+                    {/* Status + Platform Filters */}
+                    <div data-tutorial="campaigns-filters" className="flex flex-wrap items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={`h-10 border-dashed rounded-lg px-3 lg:px-4 font-normal ${status.has('ALL')
+                                            ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            : 'border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-50'
+                                        }`}
+                                >
                                 <ListFilter className={`mr-2 h-4 w-4 ${status.has('ALL') ? 'opacity-50' : 'text-blue-600'}`} />
                                 <span className="truncate max-w-[100px] lg:max-w-none">
                                     {status.has('ALL') ? 'Status' : `${status.size} Selected`}
@@ -261,12 +262,14 @@ export function CampaignToolbar({
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
 
                     {/* Divider */}
                     <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block" />
 
                     {/* Only Select Filter */}
                     <Button
+                        data-tutorial="campaigns-selection-toggle"
                         variant={showSelectedOnly ? 'secondary' : 'ghost'}
                         onClick={() => onShowSelectedOnlyChange(!showSelectedOnly)}
                         disabled={selectedCount === 0}

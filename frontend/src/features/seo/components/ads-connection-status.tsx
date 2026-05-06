@@ -1,7 +1,9 @@
 import { AlertCircle, Loader2, Link, Unlink } from "lucide-react";
+import { useLocation } from 'wouter';
 import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
 
 export function AdsConnectionStatus() {
+    const [, setLocation] = useLocation();
     const { status, ga4Account, isLoading, error } = useIntegrationStatus();
 
     const baseClasses = "inline-flex items-center gap-2.5 px-4 py-2.5 rounded-lg border transition-all duration-200 backdrop-blur-sm";
@@ -48,11 +50,22 @@ export function AdsConnectionStatus() {
     }
 
     return (
-        <div className={`${baseClasses} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 shadow-sm hover:shadow-md`}>
-            <Unlink className="w-4 h-4 text-orange-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-orange-900 tracking-wide">
-                ยังไม่เชื่อมต่อ Google Analytics
-            </span>
-        </div>
+        <button
+            type="button"
+            onClick={() => setLocation('/data-sources')}
+            className={`${baseClasses} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 shadow-sm hover:shadow-md text-left`}
+        >
+            <div className="flex items-center gap-2.5">
+                <Unlink className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-orange-900 tracking-wide">
+                        ยังไม่เชื่อมต่อ Google Analytics
+                    </span>
+                    <span className="text-xs text-orange-700 opacity-90">
+                        ไปที่ Data Sources เพื่อเชื่อมต่อ
+                    </span>
+                </div>
+            </div>
+        </button>
     );
 }

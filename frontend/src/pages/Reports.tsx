@@ -99,7 +99,7 @@ export default function Reports() {
             <DashboardLayout>
                 <div className="space-y-6">
                     {/* Header */}
-                    <div>
+                    <div data-tutorial="reports-header">
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Reports & Export</h1>
                         <p className="text-sm text-slate-500 mt-1">
                             Download campaign data and performance metrics
@@ -107,7 +107,7 @@ export default function Reports() {
                     </div>
 
                     {/* Filters Section */}
-                    <Card>
+                    <Card data-tutorial="reports-filters">
                         <CardHeader>
                             <CardTitle className="text-base">Export Filters</CardTitle>
                             <CardDescription>Configure filters before exporting</CardDescription>

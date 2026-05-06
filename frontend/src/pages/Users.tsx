@@ -227,7 +227,7 @@ export default function Users() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div data-tutorial="users-header" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Users</h1>
               <p className="text-muted-foreground">
@@ -262,7 +262,7 @@ export default function Users() {
             {renderUserForm(true)}
           </FormDialog>
 
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-slate-200 shadow-sm" data-tutorial="users-table">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div className="space-y-1">
                 <CardTitle className="flex items-center gap-2">
