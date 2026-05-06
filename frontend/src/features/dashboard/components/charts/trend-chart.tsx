@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { formatCurrencyTHB, formatCompactNumber } from '@/lib/formatters';
-import type { TrendDataPoint, PeriodEnum } from '../../schemas';
+import type { TrendDataPoint, PeriodEnum, WeekStartsOn } from '../../schemas';
 import { DashboardDateFilter } from '../../components/dashboard-date-filter';
 
 // =============================================================================
@@ -84,6 +84,8 @@ interface TrendChartProps {
     onPeriodChange: (value: any) => void;
     customRange: { from: Date; to: Date } | undefined;
     onCustomRangeChange: (range: { from: Date; to: Date } | undefined) => void;
+    weekStartsOn: WeekStartsOn;
+    onWeekStartsOnChange: (value: WeekStartsOn) => void;
 }
 
 // =============================================================================
@@ -199,7 +201,9 @@ export function TrendChart({
     period,
     onPeriodChange,
     customRange,
-    onCustomRangeChange
+    onCustomRangeChange,
+    weekStartsOn,
+    onWeekStartsOnChange
 }: TrendChartProps) {
     const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>([
         'cost',
@@ -267,6 +271,8 @@ export function TrendChart({
                         onValueChange={onPeriodChange}
                         customRange={customRange}
                         onCustomRangeChange={onCustomRangeChange}
+                        weekStartsOn={weekStartsOn}
+                        onWeekStartsOnChange={onWeekStartsOnChange}
                     />
                 </div>
 

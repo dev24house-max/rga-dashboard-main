@@ -1,17 +1,22 @@
-import { PeriodEnum } from '../../modules/dashboard/dto/dashboard-overview.dto';
+import { PeriodEnum, WeekStartsOnEnum } from '../../modules/dashboard/dto/dashboard-overview.dto';
 
 export class DateRangeUtil {
     /**
      * Get date range based on PeriodEnum
      * Supports:
      * - 1d: today
+     * - this_week: current week to today
+     * - last_week: full previous week
      * - 7d: last 7 days including today
      * - this_month: first day of current month to today
      * - last_month: full previous month
      * - last_3_months: full previous 3 months excluding current month
      * - 30d / 90d: legacy fallback mapped to last_month / last_3_months
      */
-    static getDateRangeByPeriod(period: PeriodEnum): { startDate: Date; endDate: Date } {
+    static getDateRangeByPeriod(
+        period: PeriodEnum,
+        weekStartsOn: WeekStartsOnEnum = WeekStartsOnEnum.MONDAY
+    ): { startDate: Date; endDate: Date } {
         const now = new Date();
 
         switch (period) {
@@ -20,6 +25,12 @@ export class DateRangeUtil {
 
             case PeriodEnum.YESTERDAY:
                 return this.getYesterdayRange();
+
+            case PeriodEnum.THIS_WEEK:
+                return this.getWeekRange(0, weekStartsOn);
+
+            case PeriodEnum.LAST_WEEK:
+                return this.getWeekRange(-1, weekStartsOn);
 
             case PeriodEnum.SEVEN_DAYS:
                 return this.getDateRange(7);
@@ -79,6 +90,12 @@ export class DateRangeUtil {
 
         if (period === '1d') return 1;
         if (period === 'yesterday') return 1;
+        if (period === 'this_week') {
+            const now = new Date();
+            const daysSinceMonday = (now.getDay() - 1 + 7) % 7;
+            return daysSinceMonday + 1;
+        }
+        if (period === 'last_week') return 7;
         if (period === '7d') return 7;
         if (period === '14d') return 14;
 
@@ -138,6 +155,41 @@ export class DateRangeUtil {
             now.getFullYear(),
             now.getMonth(),
             0,
+            23,
+            59,
+            59,
+            999
+        ));
+
+        return { startDate, endDate };
+    }
+
+    static getWeekRange(
+        offsetWeeks: 0 | -1,
+        weekStartsOn: WeekStartsOnEnum = WeekStartsOnEnum.MONDAY
+    ): { startDate: Date; endDate: Date } {
+        const now = new Date();
+        const weekStartDay = weekStartsOn === WeekStartsOnEnum.SUNDAY ? 0 : 1;
+        const daysSinceWeekStart = (now.getDay() - weekStartDay + 7) % 7;
+
+        const startDate = new Date(Date.UTC(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() - daysSinceWeekStart + offsetWeeks * 7,
+            0,
+            0,
+            0,
+            0
+        ));
+
+        const endDayOffset = offsetWeeks === 0
+            ? 0
+            : -daysSinceWeekStart - 1;
+
+        const endDate = new Date(Date.UTC(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + endDayOffset,
             23,
             59,
             59,

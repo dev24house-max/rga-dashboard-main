@@ -6,7 +6,12 @@ interface BrandLogoProps {
 }
 
 export function BrandLogo({ platformId, className }: BrandLogoProps) {
-    switch (platformId.toLowerCase().replace('_', '-')) {
+    const normalizedPlatformId = platformId
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_]+/g, '-');
+
+    switch (normalizedPlatformId) {
         case 'google-ads':
         case 'google':
             return (

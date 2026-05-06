@@ -733,7 +733,7 @@ export class DashboardService {
     } else {
       // Use period-based date range (existing logic)
       period = query.period || PeriodEnum.SEVEN_DAYS;
-      const dateRange = DateRangeUtil.getDateRangeByPeriod(period);
+      const dateRange = DateRangeUtil.getDateRangeByPeriod(period, query.weekStartsOn);
       startDate = dateRange.startDate;
       endDate = dateRange.endDate;
     }
@@ -806,7 +806,7 @@ export class DashboardService {
       where: {
         campaignId: { in: campaignIds },
         campaign: { tenantId },
-        ...(hideMockData && { isMock: false }),
+        ...(hideMockData && { isMockData: false }),
       },
       _sum: {
         spend: true,

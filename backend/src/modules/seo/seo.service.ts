@@ -292,11 +292,24 @@ export class SeoService {
         }
     }
 
-    async getSeoHistory(tenantId: string, days?: number) {
+    async getSeoHistory(tenantId: string, days?: number, startDateValue?: string, endDateValue?: string) {
         const endDate = new Date();
         let startDate: Date;
-        
-        if (days) {
+
+        if (startDateValue && endDateValue) {
+            startDate = new Date(startDateValue);
+            const customEndDate = new Date(endDateValue);
+
+            if (isNaN(startDate.getTime()) || isNaN(customEndDate.getTime())) {
+                throw new Error('Invalid date range. Use YYYY-MM-DD.');
+            }
+
+            if (startDate > customEndDate) {
+                throw new Error('startDate must be before or equal to endDate');
+            }
+
+            endDate.setTime(customEndDate.getTime());
+        } else if (days) {
             startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
         } else {

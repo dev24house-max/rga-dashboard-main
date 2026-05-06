@@ -20,7 +20,8 @@ import { RecentCampaigns } from '../components/widgets/recent-campaigns';
 import { ConversionFunnel } from '../components/widgets/conversion-funnel';
 import { FinancialOverview } from '../components/widgets/financial-overview';
 import { useDashboardOverview } from '../hooks/use-dashboard';
-import type { AdPlatform, PeriodEnum, RecentCampaign } from '../schemas';
+import { DEFAULT_WEEK_STARTS_ON, isWeekPeriod } from '@/lib/date-range-utils';
+import type { AdPlatform, PeriodEnum, RecentCampaign, WeekStartsOn } from '../schemas';
 
 // =============================================================================
 // Error State Component
@@ -155,12 +156,15 @@ export function DashboardPage() {
     // Period state for date filtering
     const [period, setPeriod] = useState<PeriodEnum>('this_month');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
 
     // Fetch dashboard data with selected period or custom range
     const isCustomRange = period === 'custom' && customRange?.from && customRange?.to;
+    const currentWeekStartsOn = isWeekPeriod(period) ? weekStartsOn : undefined;
 
     const { data, isLoading, error, refetch } = useDashboardOverview({
         period: isCustomRange ? undefined : period,
+        weekStartsOn: isCustomRange ? undefined : currentWeekStartsOn,
         startDate: isCustomRange ? format(customRange.from, 'yyyy-MM-dd') : undefined,
         endDate: isCustomRange ? format(customRange.to, 'yyyy-MM-dd') : undefined,
     });
@@ -276,6 +280,8 @@ export function DashboardPage() {
                                     onPeriodChange={handlePeriodChange}
                                     customRange={customRange}
                                     onCustomRangeChange={setCustomRange}
+                                    weekStartsOn={weekStartsOn}
+                                    onWeekStartsOnChange={setWeekStartsOn}
                                 />
                             )}
                         </div>

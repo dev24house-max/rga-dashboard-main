@@ -25,14 +25,18 @@ import { CampaignAnalytics } from '../components/campaign-analytics';
 import { CampaignVisualization } from '../components/campaign-visualization';
 
 import { BulkActionBar } from '../components/bulk-action-bar';
-import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFileDownload } from '@/hooks/use-file-download';
 import { useCampaigns } from '../hooks/use-campaigns';
 import { useDeleteCampaign, useToggleCampaignStatus } from '../hooks/use-campaign-mutations';
 import { exportService } from '@/features/dashboard/services/export-service';
+import {
+    DEFAULT_WEEK_STARTS_ON,
+    formatLocalDate,
+    getDateRangeFromPeriod,
+} from '@/lib/date-range-utils';
 import type { Campaign } from '../types';
-import type { PeriodEnum } from '@/features/dashboard/schemas';
+import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 
 // =============================================================================
 // Constants
@@ -41,93 +45,6 @@ import type { PeriodEnum } from '@/features/dashboard/schemas';
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_SELECTION_LIMIT = 20;
 const GLOBAL_QUERY_LIMIT = 1000;
-
-// =============================================================================
-// Period to Date Range Converter
-// =============================================================================
-
-function formatLocalDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-}
-
-function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDate: string } {
-    const today = new Date();
-    const endDate = formatLocalDate(today);
-    // const endDate = today.toISOString().split('T')[0];
-
-    switch (period) {
-        case '1d': {
-            return { startDate: endDate, endDate };
-        }
-        case 'yesterday': {
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            const date = formatLocalDate(yesterday);
-            return { startDate: date, endDate: date };
-        }
-        case '7d': {
-            const start = new Date(today);
-            start.setDate(start.getDate() - 6);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
-        }
-        case '14d': {
-            const start = new Date(today);
-            start.setDate(start.getDate() - 13);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
-        }
-        // case '90d': {
-        //     const start = new Date(today);
-        //     start.setDate(start.getDate() - 89);
-        //     return { startDate: formatLocalDate(start), endDate };
-        // }
-        case 'this_month': {
-            const start = new Date(today.getFullYear(), today.getMonth(), 1);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
-        }
-        case 'last_month': {
-            const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const end = new Date(today.getFullYear(), today.getMonth(), 0);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate: formatLocalDate(end),
-            };
-        }
-        case 'last_3_months': {
-            const start = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-            const end = new Date(today.getFullYear(), today.getMonth(), 0);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate: formatLocalDate(end),
-            };
-        }
-        case 'custom': {
-            return { startDate: endDate, endDate };
-        }
-
-        default: {
-            return { startDate: endDate, endDate };
-        }
-    }
-}
 
 function formatDateDisplay(dateStr: string): string {
     if (!dateStr) return '';
@@ -181,6 +98,7 @@ export function CampaignsPage() {
     // Period filter state for time-window metrics
     const [period, setPeriod] = useState<PeriodEnum>('this_month');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
 
     // Search and filter state
     const [search, setSearch] = useState('');
@@ -214,7 +132,7 @@ export function CampaignsPage() {
         setPage(1);
         // Removed: setSelectedIds(new Set()); // Allow keeping selection across filter changes
         // Removed: setShowSelectedOnly(false); // Allow keeping "Selected Only" mode
-    }, [debouncedSearch, status, platform, period, sortBy, sortOrder]);
+    }, [debouncedSearch, status, platform, period, weekStartsOn, sortBy, sortOrder]);
 
     // ==========================================================================
     // Auto-exit "Selected Only" Mode when selection is empty
@@ -245,8 +163,8 @@ export function CampaignsPage() {
             };
         }
 
-        return getDateRangeFromPeriod(period);
-    }, [period, customRange]);
+        return getDateRangeFromPeriod(period, weekStartsOn);
+    }, [period, customRange, weekStartsOn]);
 
     // Reset custom range if user switches off custom mode
     useEffect(() => {
@@ -609,6 +527,8 @@ export function CampaignsPage() {
                     onPeriodChange={handlePeriodChange}
                     customRange={customRange ?? undefined}
                     onCustomRangeChange={setCustomRange}
+                    weekStartsOn={weekStartsOn}
+                    onWeekStartsOnChange={setWeekStartsOn}
                     showSelectedOnly={showSelectedOnly}
                     onShowSelectedOnlyChange={setShowSelectedOnly}
                     selectedCount={selectedIds.size}

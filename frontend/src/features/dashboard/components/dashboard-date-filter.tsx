@@ -20,7 +20,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
-import type { PeriodEnum } from '../schemas';
+import { DEFAULT_WEEK_STARTS_ON, isWeekPeriod } from '@/lib/date-range-utils';
+import type { PeriodEnum, WeekStartsOn } from '../schemas';
 
 // =============================================================================
 // Types
@@ -35,6 +36,10 @@ export interface DashboardDateFilterProps {
     customRange?: { from: Date; to: Date };
     /** Callback when custom range changes */
     onCustomRangeChange?: (range: { from: Date; to: Date }) => void;
+    /** Which weekday starts this/last week presets */
+    weekStartsOn?: WeekStartsOn;
+    /** Callback when week start changes */
+    onWeekStartsOnChange?: (value: WeekStartsOn) => void;
     /** Optional className */
     className?: string;
 }
@@ -46,6 +51,8 @@ export interface DashboardDateFilterProps {
 const PERIOD_OPTIONS: { value: PeriodEnum; label: string }[] = [
     { value: '1d', label: 'Today' },
     { value: 'yesterday', label: 'Yesterday' },
+    { value: 'this_week', label: 'This week' },
+    { value: 'last_week', label: 'Last week' },
     { value: '7d', label: 'Last 7 days' },
     { value: '14d', label: 'Last 14 days' },
     { value: 'this_month', label: 'This month' },
@@ -92,6 +99,8 @@ export function DashboardDateFilter({
     onValueChange,
     customRange,
     onCustomRangeChange,
+    weekStartsOn = DEFAULT_WEEK_STARTS_ON,
+    onWeekStartsOnChange,
     className,
 }: DashboardDateFilterProps) {
     const [open, setOpen] = useState(false);
@@ -120,6 +129,19 @@ export function DashboardDateFilter({
         setOpen(false);
     };
 
+    const handlePeriodChange = (nextValue: string) => {
+        const nextPeriod = nextValue as PeriodEnum;
+        onValueChange(nextPeriod);
+
+        if (!isWeekPeriod(nextPeriod)) {
+            setOpen(false);
+        }
+    };
+
+    const handleWeekStartsOnChange = (nextValue: WeekStartsOn) => {
+        onWeekStartsOnChange?.(nextValue);
+    };
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -144,10 +166,7 @@ export function DashboardDateFilter({
                             <div className="text-[11px] font-medium text-muted-foreground">Period</div>
                             <Select
                                 value={value}
-                                onValueChange={(v) => {
-                                    onValueChange(v as PeriodEnum);
-                                    setOpen(false);
-                                }}
+                                onValueChange={handlePeriodChange}
                             >
                                 <SelectTrigger className="h-8 w-full rounded-lg bg-background shadow-sm text-xs">
                                     <SelectValue placeholder="Select period" />
@@ -161,6 +180,35 @@ export function DashboardDateFilter({
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {isWeekPeriod(value) && (
+                            <div className="space-y-2">
+                                <div className="text-[11px] font-medium text-muted-foreground">Week starts</div>
+                                <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                                    {([
+                                        { value: 'sunday', label: 'Sunday' },
+                                        { value: 'monday', label: 'Monday' },
+                                    ] as const).map((option) => {
+                                        const isSelected = weekStartsOn === option.value;
+
+                                        return (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() => handleWeekStartsOnChange(option.value)}
+                                                className={`h-8 rounded-md px-2 text-xs font-medium transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-background text-foreground shadow-sm'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="h-px bg-border" />
 

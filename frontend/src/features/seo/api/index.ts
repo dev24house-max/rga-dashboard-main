@@ -9,8 +9,14 @@ export const SeoService = {
         const response = await apiClient.get(url);
         return response.data;
     },
-    getHistory: async (days: number = 30): Promise<any[]> => {
-        const response = await apiClient.get(`/seo/history?days=${days}`);
+    getHistory: async (
+        range: number | { startDate: string; endDate: string } = 30
+    ): Promise<any[]> => {
+        const params = typeof range === 'number'
+            ? { days: range }
+            : { startDate: range.startDate, endDate: range.endDate };
+
+        const response = await apiClient.get('/seo/history', { params });
         return response.data;
     },
     getKeywordIntent: async (): Promise<{ type: string, keywords: number, traffic: number }[]> => {
