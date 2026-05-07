@@ -291,9 +291,9 @@ export const tutorialSteps: TutorialRouteStep[] = [
     id: 'settings-page',
     path: '/settings',
     target: '[data-tutorial="settings-header"]',
-    title: 'Settings',
+    title: 'Settings Overview',
     description:
-      'Configure your workspace preferences, notifications, and regional settings.',
+      'Manage all workspace preferences, notifications, and alert configurations from this page.',
     position: 'bottom',
   },
   {
@@ -302,7 +302,97 @@ export const tutorialSteps: TutorialRouteStep[] = [
     target: '[data-tutorial="settings-tabs"]',
     title: 'Settings Tabs',
     description:
-      'Switch between general preferences and alert rule settings using the tabs here.',
+      'Choose between General settings for your preferences, or Alert Rules to configure automated alerts.',
+    position: 'bottom',
+  },
+  {
+    id: 'settings-appearance',
+    path: '/settings',
+    target: '[data-tutorial="settings-appearance"]',
+    title: 'Appearance Settings',
+    description:
+      'Customize the dashboard appearance. Toggle dark mode for low-light environments or compact view for more density.',
+    position: 'top',
+  },
+  {
+    id: 'settings-regional',
+    path: '/settings',
+    target: '[data-tutorial="settings-regional"]',
+    title: 'Regional Configuration',
+    description:
+      'Configure your language, timezone, currency, and date format preferences to match your location.',
+    position: 'top',
+  },
+  {
+    id: 'settings-language',
+    path: '/settings',
+    target: '[data-tutorial="settings-language"]',
+    title: 'Language Selection',
+    description:
+      'Choose your preferred interface language. Currently supports Thai and English.',
+    position: 'bottom',
+  },
+  {
+    id: 'settings-timezone',
+    path: '/settings',
+    target: '[data-tutorial="settings-timezone"]',
+    title: 'Timezone Setting',
+    description:
+      'Set your timezone to ensure all dates and times are displayed correctly for your location.',
+    position: 'bottom',
+  },
+  {
+    id: 'settings-currency',
+    path: '/settings',
+    target: '[data-tutorial="settings-currency"]',
+    title: 'Currency Preference',
+    description:
+      'Select your preferred currency for financial metrics and cost calculations throughout the dashboard.',
+    position: 'bottom',
+  },
+  {
+    id: 'settings-dateformat',
+    path: '/settings',
+    target: '[data-tutorial="settings-dateformat"]',
+    title: 'Date Format',
+    description:
+      'Choose how dates are displayed. Options include DD/MM/YYYY, MM/DD/YYYY, or YYYY-MM-DD formats.',
+    position: 'bottom',
+  },
+  {
+    id: 'settings-notifications',
+    path: '/settings',
+    target: '[data-tutorial="settings-notifications"]',
+    title: 'Notification Preferences',
+    description:
+      'Control how you receive alerts. Enable or disable in-app notifications, email alerts, and LINE integrations.',
+    position: 'top',
+  },
+  {
+    id: 'settings-inapp-notify',
+    path: '/settings',
+    target: '[data-tutorial="settings-inapp-notify"]',
+    title: 'In-App Notifications',
+    description:
+      'When enabled, important alerts and updates will appear directly in your dashboard notification panel.',
+    position: 'top',
+  },
+  {
+    id: 'settings-email-notify',
+    path: '/settings',
+    target: '[data-tutorial="settings-email-notify"]',
+    title: 'Email Notifications',
+    description:
+      'Email alerts are currently unavailable but will be coming soon. You\'ll be able to receive critical updates via email.',
+    position: 'top',
+  },
+  {
+    id: 'settings-line-notify',
+    path: '/settings',
+    target: '[data-tutorial="settings-line-notify"]',
+    title: 'LINE Notifications',
+    description:
+      'LINE integration for alerts is coming soon. You\'ll be able to receive notifications directly on LINE.',
     position: 'top',
   },
   {

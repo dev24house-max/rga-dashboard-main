@@ -14,7 +14,7 @@ export function AdsConnectionStatus() {
             <div className={`${baseClasses} bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 shadow-sm hover:shadow-md`}>
                 <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
                 <span className="text-sm font-semibold text-amber-900 tracking-wide">
-                    กำลังตรวจสอบการเชื่อมต่อ Google Analytics...
+                    Checking Google Analytics connection...
                 </span>
             </div>
         );
@@ -25,7 +25,7 @@ export function AdsConnectionStatus() {
             <div className={`${baseClasses} bg-gradient-to-r from-red-50 to-rose-50 border-red-200 shadow-sm hover:shadow-md`}>
                 <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
                 <span className="text-sm font-semibold text-red-900 tracking-wide">
-                    ไม่สามารถตรวจสอบการเชื่อมต่อ Google Analytics
+                    Unable to verify Google Analytics connection
                 </span>
             </div>
         );
@@ -37,7 +37,7 @@ export function AdsConnectionStatus() {
                 <Link className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold text-emerald-900 tracking-wide">
-                        เชื่อมต่อ Google Analytics แล้ว
+                        Google Analytics connected
                     </span>
                     {ga4Account?.propertyName && (
                         <span className="text-xs text-emerald-800 opacity-90">
@@ -59,10 +59,10 @@ export function AdsConnectionStatus() {
                 <Unlink className="w-4 h-4 text-orange-600 flex-shrink-0" />
                 <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold text-orange-900 tracking-wide">
-                        ยังไม่เชื่อมต่อ Google Analytics
+                        Google Analytics not connected
                     </span>
                     <span className="text-xs text-orange-700 opacity-90">
-                        ไปที่ Data Sources เพื่อเชื่อมต่อ
+                        Go to Data Sources to connect
                     </span>
                 </div>
             </div>

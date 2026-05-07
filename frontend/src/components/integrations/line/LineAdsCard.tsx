@@ -72,6 +72,10 @@ export function LineAdsCard({ platform }: LineAdsCardProps) {
         }
     };
 
+    const openDashboard = () => {
+        window.location.href = '/reports';
+    };
+
     return (
         <DataSourceCard
             name={platform.name}
@@ -83,37 +87,55 @@ export function LineAdsCard({ platform }: LineAdsCardProps) {
             onConnect={handleConnect}
             onDisconnect={handleDisconnect}
         >
-            {isConnected && lineAdsAccounts.length > 0 && (
+            {isConnected && (
                 <div className="mt-4 space-y-3">
-                    <div className="text-sm font-medium text-slate-700">Connected Accounts:</div>
-                    <div className="space-y-2">
-                        {lineAdsAccounts.map((account: any) => (
-                            <div
-                                key={account.id}
-                                className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium text-slate-900">
-                                            {account.channelName || account.channelId}
+                    {lineAdsAccounts.length > 0 ? (
+                        <>
+                            <div className="text-sm font-medium text-slate-700">Connected Accounts:</div>
+                            <div className="space-y-2">
+                                {lineAdsAccounts.map((account: any) => (
+                                    <div
+                                        key={account.id}
+                                        className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-slate-900">
+                                                    {account.channelName || account.channelId}
+                                                </span>
+                                                <span className="text-xs text-slate-500">ID: {account.channelId}</span>
+                                            </div>
+                                        </div>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${account.status === 'ACTIVE'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            {account.status}
                                         </span>
-                                        <span className="text-xs text-slate-500">ID: {account.channelId}</span>
                                     </div>
-                                </div>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${account.status === 'ACTIVE'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-slate-100 text-slate-600'
-                                    }`}>
-                                    {account.status}
-                                </span>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div className="text-xs text-slate-500 text-right">
-                        Last synced: {lineAdsAccounts[0]?.lastSyncAt
-                            ? new Date(lineAdsAccounts[0].lastSyncAt).toLocaleString()
-                            : 'Never'}
+                            <div className="text-xs text-slate-500 text-right">
+                                Last synced: {lineAdsAccounts[0]?.lastSyncAt
+                                    ? new Date(lineAdsAccounts[0].lastSyncAt).toLocaleString()
+                                    : 'Never'}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                            LINE Ads is connected, but no active LINE account data is available yet.
+                        </div>
+                    )}
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={openDashboard}
+                        >
+                            Open Dashboard
+                        </Button>
                     </div>
                 </div>
             )}

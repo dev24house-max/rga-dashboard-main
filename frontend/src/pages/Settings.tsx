@@ -26,7 +26,7 @@ function GeneralSettingsTab() {
     return (
         <div className="space-y-6">
             {/* Appearance Settings */}
-            <Card>
+            <Card data-tutorial="settings-appearance">
                 <CardHeader>
                     <CardTitle>Appearance</CardTitle>
                     <CardDescription>
@@ -56,7 +56,7 @@ function GeneralSettingsTab() {
             </Card>
 
             {/* Regional Settings */}
-            <Card>
+            <Card data-tutorial="settings-regional">
                 <CardHeader>
                     <CardTitle>Regional</CardTitle>
                     <CardDescription>
@@ -65,7 +65,7 @@ function GeneralSettingsTab() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-language">
                             <Label>Language</Label>
                             <Select defaultValue="th" disabled>
                                 <SelectTrigger>
@@ -77,7 +77,7 @@ function GeneralSettingsTab() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-timezone">
                             <Label>Timezone</Label>
                             <Select defaultValue="asia-bangkok" disabled>
                                 <SelectTrigger>
@@ -91,7 +91,7 @@ function GeneralSettingsTab() {
                         </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-currency">
                             <Label>Currency</Label>
                             <Select defaultValue="thb" disabled>
                                 <SelectTrigger>
@@ -103,7 +103,7 @@ function GeneralSettingsTab() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-dateformat">
                             <Label>Date Format</Label>
                             <Select defaultValue="dmy" disabled>
                                 <SelectTrigger>
@@ -121,7 +121,7 @@ function GeneralSettingsTab() {
             </Card>
 
             {/* Notification Preferences */}
-            <Card>
+            <Card data-tutorial="settings-notifications">
                 <CardHeader>
                     <CardTitle>Notification Preferences</CardTitle>
                     <CardDescription>
@@ -129,7 +129,7 @@ function GeneralSettingsTab() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-inapp-notify">
                         <div className="space-y-0.5">
                             <Label>In-App Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ function GeneralSettingsTab() {
                         </div>
                         <Switch defaultChecked disabled />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-email-notify">
                         <div className="space-y-0.5">
                             <Label>Email Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ function GeneralSettingsTab() {
                         </div>
                         <Switch disabled />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-line-notify">
                         <div className="space-y-0.5">
                             <Label>LINE Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -197,12 +197,12 @@ export default function Settings() {
                         </TabsList>
 
                         {/* General Settings Tab */}
-                        <TabsContent value="general">
+                        <TabsContent value="general" data-tutorial="settings-general-content">
                             <GeneralSettingsTab />
                         </TabsContent>
 
                         {/* Alert Rules Tab */}
-                        <TabsContent value="alerts">
+                        <TabsContent value="alerts" data-tutorial="settings-alert-rules">
                             <AlertRulesTab />
                         </TabsContent>
                     </Tabs>
