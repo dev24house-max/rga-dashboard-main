@@ -17,7 +17,6 @@ export enum PeriodEnum {
     SEVEN_DAYS = '7d',
     FOURTEEN_DAYS = '14d',
 
-    // legacy / fallback
     THIRTY_DAYS = '30d',
     NINETY_DAYS = '90d',
 

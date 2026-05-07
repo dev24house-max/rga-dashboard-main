@@ -7,11 +7,10 @@ export class DateRangeUtil {
      * - 1d: today
      * - this_week: current week to today
      * - last_week: full previous week
-     * - 7d: last 7 days including today
+     * - 7d / 14d / 30d / 90d: previous N days ending yesterday
      * - this_month: first day of current month to today
      * - last_month: full previous month
      * - last_3_months: full previous 3 months excluding current month
-     * - 30d / 90d: legacy fallback mapped to last_month / last_3_months
      */
     static getDateRangeByPeriod(
         period: PeriodEnum,
@@ -33,16 +32,16 @@ export class DateRangeUtil {
                 return this.getWeekRange(-1, weekStartsOn);
 
             case PeriodEnum.SEVEN_DAYS:
-                return this.getDateRange(7);
+                return this.getTrailingDateRangeEndingYesterday(7);
 
             case PeriodEnum.FOURTEEN_DAYS:
-                return this.getDateRange(14);
+                return this.getTrailingDateRangeEndingYesterday(14);
 
             case PeriodEnum.THIRTY_DAYS:
-                return this.getLastFullMonthsRange(1);
+                return this.getTrailingDateRangeEndingYesterday(30);
 
             case PeriodEnum.NINETY_DAYS:
-                return this.getLastFullMonthsRange(3);
+                return this.getTrailingDateRangeEndingYesterday(90);
 
             case PeriodEnum.THIS_MONTH: {
                 const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
@@ -190,6 +189,32 @@ export class DateRangeUtil {
             now.getFullYear(),
             now.getMonth(),
             now.getDate() + endDayOffset,
+            23,
+            59,
+            59,
+            999
+        ));
+
+        return { startDate, endDate };
+    }
+
+    static getTrailingDateRangeEndingYesterday(days: number): { startDate: Date; endDate: Date } {
+        const now = new Date();
+
+        const startDate = new Date(Date.UTC(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() - days,
+            0,
+            0,
+            0,
+            0
+        ));
+
+        const endDate = new Date(Date.UTC(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() - 1,
             23,
             59,
             59,

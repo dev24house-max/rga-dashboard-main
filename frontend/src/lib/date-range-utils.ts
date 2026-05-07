@@ -30,6 +30,16 @@ function startOfLocalWeek(date: Date, weekStartsOn: WeekStartsOn): Date {
     return start;
 }
 
+function getTrailingRangeEndingYesterday(today: Date, days: number): DateRangeStrings {
+    const end = addDays(today, -1);
+    const start = addDays(end, -(days - 1));
+
+    return {
+        startDate: formatLocalDate(start),
+        endDate: formatLocalDate(end),
+    };
+}
+
 export function isWeekPeriod(period: PeriodEnum): boolean {
     return period === 'this_week' || period === 'last_week';
 }
@@ -68,23 +78,19 @@ export function getDateRangeFromPeriod(
         }
 
         case '7d': {
-            const start = addDays(today, -6);
-            return { startDate: formatLocalDate(start), endDate };
+            return getTrailingRangeEndingYesterday(today, 7);
         }
 
         case '14d': {
-            const start = addDays(today, -13);
-            return { startDate: formatLocalDate(start), endDate };
+            return getTrailingRangeEndingYesterday(today, 14);
         }
 
         case '30d': {
-            const start = addDays(today, -29);
-            return { startDate: formatLocalDate(start), endDate };
+            return getTrailingRangeEndingYesterday(today, 30);
         }
 
         case '90d': {
-            const start = addDays(today, -89);
-            return { startDate: formatLocalDate(start), endDate };
+            return getTrailingRangeEndingYesterday(today, 90);
         }
 
         case 'this_month': {

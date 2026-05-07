@@ -106,6 +106,7 @@ export function FinancialOverview({
     const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const computedTotal = total ?? breakdown.reduce((acc, cur) => acc + cur.value, 0);
+    const formattedRoiDelta = `${roiDelta >= 0 ? '+' : ''}${roiDelta.toFixed(1)}`;
 
     useEffect(() => {
         if (cardRef.current) {
@@ -151,7 +152,7 @@ export function FinancialOverview({
                         <CardDescription className="text-xs font-medium pl-3.5">
                             {subtitle}{' '}
                             <span className="text-indigo-500">{roi.toFixed(1)}x</span>{' '}
-                            <span className="text-xs text-muted-foreground">(+{roiDelta.toFixed(1)} vs last month)</span>
+                            <span className="text-xs text-muted-foreground">({formattedRoiDelta} vs last month)</span>
                         </CardDescription>
                     </div>
 
