@@ -250,17 +250,6 @@ export function DashboardPage() {
                             Monitor your advertising performance across all platforms.
                         </p>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.dispatchEvent(new Event('rga-tutorial-start'))}
-                        >
-                            Show tour
-                        </Button>
-                    </div>
                 </div>
 
                 <section id="integration-checklist" className="w-full quick-actions">
