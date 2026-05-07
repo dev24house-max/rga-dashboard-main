@@ -3,6 +3,7 @@ import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AdsApiLogService } from '../../../common/services/ads-api-log.service';
 import {
     MarketingPlatformAdapter,
     PlatformCredentials,
@@ -31,6 +32,7 @@ export class FacebookAdsService implements MarketingPlatformAdapter {
         private readonly prisma: PrismaService,
         private readonly config: ConfigService,
         private readonly httpService: HttpService,
+        private readonly adsApiLogService: AdsApiLogService,
     ) {
         this.apiVersion = this.config.get<string>('FACEBOOK_API_VERSION', 'v18.0');
         this.baseUrl = this.config.get<string>('FACEBOOK_API_BASE_URL', 'https://graph.facebook.com');
@@ -59,16 +61,21 @@ export class FacebookAdsService implements MarketingPlatformAdapter {
      */
     async fetchCampaigns(credentials: PlatformCredentials): Promise<Partial<Campaign>[]> {
         this.logger.log(`Fetching Facebook campaigns for account ${credentials.accountId}`);
+        await this.adsApiLogService.info('FacebookAds', 'Fetching campaigns', {
+            accountId: credentials.accountId,
+            url: `${this.baseUrl}/${this.apiVersion}/${credentials.accountId}/campaigns`,
+        });
 
         try {
             const url = `${this.baseUrl}/${this.apiVersion}/${credentials.accountId}/campaigns`;
+            const params = {
+                access_token: credentials.accessToken,
+                fields: 'id,name,status,objective,start_time,stop_time,daily_budget,lifetime_budget',
+                limit: 100,
+            };
             const { data } = await firstValueFrom(
                 this.httpService.get<{ data: FacebookCampaignResponse[] }>(url, {
-                    params: {
-                        access_token: credentials.accessToken,
-                        fields: 'id,name,status,objective,start_time,stop_time,daily_budget,lifetime_budget',
-                        limit: 100,
-                    },
+                    params,
                 }),
             );
 
@@ -86,9 +93,16 @@ export class FacebookAdsService implements MarketingPlatformAdapter {
                 endDate: c.stop_time ? new Date(c.stop_time) : null,
             }));
 
+            await this.adsApiLogService.info('FacebookAds', `Fetched ${campaigns.length} campaigns`, {
+                sample: campaigns.slice(0, 2),
+            });
+
             return campaigns;
         } catch (error) {
             this.logger.error(`Failed to fetch campaigns: ${error.message}`);
+            await this.adsApiLogService.error('FacebookAds', 'fetchCampaigns failed', error, {
+                accountId: credentials.accountId,
+            });
             throw error;
         }
     }
@@ -102,21 +116,28 @@ export class FacebookAdsService implements MarketingPlatformAdapter {
         range: DateRange
     ): Promise<Partial<Metric>[]> {
         this.logger.log(`Fetching metrics for campaign ${campaignId}`);
+        await this.adsApiLogService.info('FacebookAds', 'Fetching metrics', {
+            campaignId,
+            accountId: credentials.accountId,
+            startDate: range.startDate.toISOString().split('T')[0],
+            endDate: range.endDate.toISOString().split('T')[0],
+        });
 
         try {
             const url = `${this.baseUrl}/${this.apiVersion}/${campaignId}/insights`;
+            const params = {
+                access_token: credentials.accessToken,
+                fields: 'impressions,clicks,spend,conversions,purchase_roas,actions',
+                time_range: {
+                    since: range.startDate.toISOString().split('T')[0],
+                    until: range.endDate.toISOString().split('T')[0],
+                },
+                time_increment: 1, // Daily breakdown
+                breakdowns: 'publisher_platform',
+            };
             const { data } = await firstValueFrom(
                 this.httpService.get<{ data: FacebookInsightsResponse[] }>(url, {
-                    params: {
-                        access_token: credentials.accessToken,
-                        fields: 'impressions,clicks,spend,conversions,purchase_roas,actions',
-                        time_range: {
-                            since: range.startDate.toISOString().split('T')[0],
-                            until: range.endDate.toISOString().split('T')[0],
-                        },
-                        time_increment: 1, // Daily breakdown
-                        breakdowns: 'publisher_platform',
-                    },
+                    params,
                 }),
             );
 
@@ -142,9 +163,17 @@ export class FacebookAdsService implements MarketingPlatformAdapter {
                 };
             });
 
+            await this.adsApiLogService.info('FacebookAds', `Fetched ${metrics.length} metric rows`, {
+                sample: metrics.slice(0, 2),
+            });
+
             return metrics;
         } catch (error) {
             this.logger.error(`Failed to fetch metrics: ${error.message}`);
+            await this.adsApiLogService.error('FacebookAds', 'fetchMetrics failed', error, {
+                campaignId,
+                accountId: credentials.accountId,
+            });
             throw error;
         }
     }

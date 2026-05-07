@@ -11,12 +11,18 @@ import { CampaignStatus, AdPlatform } from '@prisma/client';
  */
 export enum PeriodEnum {
     ONE_DAY = '1d',
+    YESTERDAY = 'yesterday',
     SEVEN_DAYS = '7d',
+    FOURTEEN_DAYS = '14d',
+
+    // legacy / fallback
     THIRTY_DAYS = '30d',
     NINETY_DAYS = '90d',
     ONE_YEAR = '365d',
     THIS_MONTH = 'this_month',
     LAST_MONTH = 'last_month',
+    LAST_3_MONTHS = 'last_3_months',
+    CUSTOM = 'custom',
 }
 
 /**

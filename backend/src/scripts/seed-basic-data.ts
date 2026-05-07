@@ -7,9 +7,14 @@ async function seedBasicData() {
   try {
     console.log('🌱 Starting basic data seeding...');
 
+    if (process.env.ALLOW_SEED !== 'true') {
+      console.log('Basic data seeding disabled. Set ALLOW_SEED=true to enable. Exiting.');
+      return;
+    }
+
     // Get tenants
     const tenants = await prisma.tenant.findMany();
-    
+
     if (tenants.length === 0) {
       console.log('❌ No tenants found. Please create a tenant first.');
       return;
@@ -17,7 +22,7 @@ async function seedBasicData() {
 
     for (const tenant of tenants) {
       console.log(`📊 Seeding basic data for tenant: ${tenant.name}`);
-      
+
       // Create campaigns
       const campaigns = [];
       for (let i = 0; i < 5; i++) {
@@ -44,7 +49,7 @@ async function seedBasicData() {
       for (const campaign of campaigns) {
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
           const date = new Date(d);
-          
+
           await prisma.metric.create({
             data: {
               tenantId: tenant.id,
@@ -79,7 +84,7 @@ async function seedBasicData() {
       // Create web analytics data
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const date = new Date(d);
-        
+
         await prisma.webAnalyticsDaily.create({
           data: {
             tenantId: tenant.id,
@@ -97,7 +102,7 @@ async function seedBasicData() {
     }
 
     console.log('🌟 Basic data seeding completed successfully!');
-    
+
   } catch (error) {
     console.error('❌ Error seeding basic data:', error);
   } finally {

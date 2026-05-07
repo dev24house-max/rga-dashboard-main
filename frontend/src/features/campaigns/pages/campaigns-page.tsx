@@ -1,8 +1,14 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Loader2, Download } from 'lucide-react';
+import { Plus, Loader2, Download, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -43,23 +49,67 @@ const MAX_SELECTION_LIMIT = 20;
 const GLOBAL_QUERY_LIMIT = 1000;
 
 // =============================================================================
+// Info Tooltip Component
+// =============================================================================
+
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
+// =============================================================================
 // Period to Date Range Converter
 // =============================================================================
 
+function formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
 function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDate: string } {
     const today = new Date();
-    const endDate = today.toISOString().split('T')[0];
+    const endDate = formatLocalDate(today);
+    // const endDate = today.toISOString().split('T')[0];
 
     switch (period) {
         case '1d': {
             return { startDate: endDate, endDate };
         }
+        case 'yesterday': {
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const date = formatLocalDate(yesterday);
+            return { startDate: date, endDate: date };
+        }
         case '7d': {
             const start = new Date(today);
             start.setDate(start.getDate() - 6);
-            return { startDate: start.toISOString().split('T')[0], endDate };
+
+            return {
+                startDate: formatLocalDate(start),
+                endDate,
+            };
         }
-        case '90d': {
+        case '14d': {
             const start = new Date(today);
             start.setDate(start.getDate() - 89);
             return { startDate: start.toISOString().split('T')[0], endDate };
@@ -67,24 +117,48 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
         case '365d': {
             const start = new Date(today);
             start.setDate(start.getDate() - 364);
+<<<<<<< HEAD
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
         case 'this_month': {
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
+=======
+>>>>>>> 1f81090712387900e4b2a403c139ac5bbcb161bd
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
-        case 'last_month': {
-            const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        case 'this_month': {
+            const start = new Date(today.getFullYear(), today.getMonth(), 1);
+
             return {
-                startDate: firstDayLastMonth.toISOString().split('T')[0],
-                endDate: lastDayLastMonth.toISOString().split('T')[0],
+                startDate: formatLocalDate(start),
+                endDate,
             };
         }
-        case 'custom':
+        case 'last_month': {
+            const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const end = new Date(today.getFullYear(), today.getMonth(), 0);
+
+            return {
+                startDate: formatLocalDate(start),
+                endDate: formatLocalDate(end),
+            };
+        }
+        case 'last_3_months': {
+            const start = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+            const end = new Date(today.getFullYear(), today.getMonth(), 0);
+
+            return {
+                startDate: formatLocalDate(start),
+                endDate: formatLocalDate(end),
+            };
+        }
+        case 'custom': {
             return { startDate: endDate, endDate };
-        default:
+        }
+
+        default: {
             return { startDate: endDate, endDate };
+        }
     }
 }
 
@@ -187,13 +261,23 @@ export function CampaignsPage() {
     // ==========================================================================
     // Compute Date Range from Period or Custom Range
     // ==========================================================================
+    // const dateRange = useMemo(() => {
+    //     if (period === 'custom' && customRange) {
+    //         return {
+    //             startDate: customRange.from.toISOString().split('T')[0],
+    //             endDate: customRange.to.toISOString().split('T')[0],
+    //         };
+    //     }
+    //     return getDateRangeFromPeriod(period);
+    // }, [period, customRange]);
     const dateRange = useMemo(() => {
         if (period === 'custom' && customRange) {
             return {
-                startDate: customRange.from.toISOString().split('T')[0],
-                endDate: customRange.to.toISOString().split('T')[0],
+                startDate: formatLocalDate(customRange.from),
+                endDate: formatLocalDate(customRange.to),
             };
         }
+
         return getDateRangeFromPeriod(period);
     }, [period, customRange]);
 
@@ -448,6 +532,14 @@ export function CampaignsPage() {
         // Persist selection on page change (do not clear)
     };
 
+    const handlePeriodChange = useCallback((nextPeriod: PeriodEnum) => {
+        setPeriod(nextPeriod);
+
+        if (nextPeriod !== 'custom') {
+            setCustomRange(null);
+        }
+    }, []);
+
     // ==========================================================================
     // Loading State
     // ==========================================================================
@@ -547,7 +639,7 @@ export function CampaignsPage() {
                     onPlatformChange={setPlatform}
                     isLoading={isFetching}
                     period={period}
-                    onPeriodChange={setPeriod}
+                    onPeriodChange={handlePeriodChange}
                     customRange={customRange ?? undefined}
                     onCustomRangeChange={setCustomRange}
                     showSelectedOnly={showSelectedOnly}
@@ -593,19 +685,37 @@ export function CampaignsPage() {
 
 
                 {/* Campaign Summary Dashboard (Middle Section) */}
-                <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold sm:text-lg">Campaign Summary</h3>
+                        <InfoTooltip content="View aggregated metrics for all campaigns in your selection, including total spend, impressions, clicks, and conversion rates." />
+                    </div>
+                    <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
+                </div>
 
                 {/* Visualization Panel (Bottom) */}
                 {!isLoading && campaignsResponse?.summary && (
                     <>
-                        <CampaignVisualization
-                            campaigns={displayedGlobalCampaigns}
-                            summary={campaignsResponse.summary}
-                            onDownload={handleExport}
-                        />
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-semibold sm:text-lg">Campaign Performance</h3>
+                                <InfoTooltip content="Visual breakdown of campaign performance by status and platform, including spend distribution and platform-specific metrics." />
+                            </div>
+                            <CampaignVisualization
+                                campaigns={displayedGlobalCampaigns}
+                                summary={campaignsResponse.summary}
+                                onDownload={handleExport}
+                            />
+                        </div>
 
                         {/* Campaign Analytics (Conversion Rate) */}
-                        <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-semibold sm:text-lg">Analytics</h3>
+                                <InfoTooltip content="Analyze conversion rates, cost per conversion, and ROI metrics across your campaigns." />
+                            </div>
+                            <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
+                        </div>
                     </>
                 )}
             </div>

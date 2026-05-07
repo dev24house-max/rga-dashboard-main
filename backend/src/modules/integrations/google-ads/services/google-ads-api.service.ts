@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, NotFoundException } from '@nes
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GoogleAdsClientService } from './google-ads-client.service';
 import { EncryptionService } from '../../../../common/services/encryption.service';
+import { AdsApiLogService } from '../../../../common/services/ads-api-log.service';
 
 @Injectable()
 export class GoogleAdsApiService {
@@ -11,6 +12,7 @@ export class GoogleAdsApiService {
     private readonly prisma: PrismaService,
     private readonly googleAdsClientService: GoogleAdsClientService,
     private readonly encryptionService: EncryptionService,
+    private readonly adsApiLogService: AdsApiLogService,
   ) { }
 
   /**
@@ -52,6 +54,12 @@ export class GoogleAdsApiService {
 
     try {
       this.logger.log(`[fetchCampaigns] Executing Raw REST query for account ${account.customerId}`);
+      await this.adsApiLogService.info('GoogleAds', '[fetchCampaigns] Executing Raw REST query', {
+        customerId: account.customerId,
+        loginCustomerId: account.loginCustomerId,
+        query: query.trim(),
+      });
+
       const results = await this.googleAdsClientService.rawRestQuery(
         account.customerId,
         decryptedRefreshToken,
@@ -60,10 +68,16 @@ export class GoogleAdsApiService {
       );
 
       this.logger.log(`[fetchCampaigns] Successfully retrieved ${results.length} campaigns via REST.`);
-      this.logger.log(`[fetchCampaigns] Sample campaign data: ${JSON.stringify(results.slice(0, 2), null, 2)}`);
+      await this.adsApiLogService.info('GoogleAds', `[fetchCampaigns] Retrieved ${results.length} campaigns`, {
+        sample: results.slice(0, 2),
+      });
+
       return results;
     } catch (error: any) {
       this.logger.error(`❌ Google Ads REST Error (fetching campaigns): ${error.message}`);
+      await this.adsApiLogService.error('GoogleAds', 'fetchCampaigns failed', error, {
+        customerId: account.customerId,
+      });
 
       // Parse error for better user feedback
       let userMessage = `Failed to fetch campaigns via REST: ${error.message}`;
@@ -112,7 +126,14 @@ export class GoogleAdsApiService {
 
     try {
       this.logger.debug(`[fetchCampaignMetrics] Executing Raw REST query for campaign ${campaignId}`);
-      this.logger.debug(`[fetchCampaignMetrics] Query: ${query}`);
+      await this.adsApiLogService.info('GoogleAds', '[fetchCampaignMetrics] Executing Raw REST query', {
+        customerId: account.customerId,
+        campaignId,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        query: query.trim(),
+      });
+
       const results = await this.googleAdsClientService.rawRestQuery(
         account.customerId,
         decryptedRefreshToken,
@@ -121,17 +142,28 @@ export class GoogleAdsApiService {
       );
 
       this.logger.debug(`[fetchCampaignMetrics] Retrieved ${results.length} daily metric records via REST.`);
+      await this.adsApiLogService.info('GoogleAds', `[fetchCampaignMetrics] Retrieved ${results.length} metrics records`, {
+        campaignId,
+        sample: results.slice(0, 1),
+      });
 
-      if (results.length > 0) {
-        this.logger.debug(`[fetchCampaignMetrics] Sample metric data: ${JSON.stringify(results.slice(0, 1), null, 2)}`);
-      } else {
+      if (results.length === 0) {
         this.logger.warn(`[fetchCampaignMetrics] ⚠️ No metrics returned for campaign ${campaignId} from ${startDateStr} to ${endDateStr}`);
+        await this.adsApiLogService.warn('GoogleAds', 'No metrics returned for campaign', {
+          campaignId,
+          startDate: startDateStr,
+          endDate: endDateStr,
+        });
       }
 
       return results;
     } catch (error: any) {
       this.logger.error(`❌ Google Ads REST Error (fetching metrics): ${error.message}`);
       this.logger.error(`[fetchCampaignMetrics] Stack: ${error.stack}`);
+      await this.adsApiLogService.error('GoogleAds', 'fetchCampaignMetrics failed', error, {
+        campaignId,
+        customerId: account.customerId,
+      });
 
       let userMessage = `Failed to fetch metrics via REST: ${error.message}`;
 

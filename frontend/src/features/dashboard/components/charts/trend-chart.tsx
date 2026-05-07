@@ -92,7 +92,7 @@ interface TrendChartProps {
 
 function EmptyState() {
     return (
-        <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
+        <div className="h-[260px] flex flex-col items-center justify-center text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-3 opacity-40" />
             <p className="text-sm">No data available for the selected period</p>
         </div>
@@ -252,7 +252,7 @@ export function TrendChart({
     const hasData = data && data.length > 0;
 
     return (
-        <Card className={`h-[400px] flex flex-col ${className ?? ''}`}>
+        <Card className={`min-h-[400px] flex flex-col ${className ?? ''}`}>
             <CardHeader className="flex flex-col gap-4 space-y-0 pb-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">

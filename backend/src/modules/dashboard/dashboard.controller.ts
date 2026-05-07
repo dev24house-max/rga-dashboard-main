@@ -190,6 +190,7 @@ export class DashboardController {
   @Get('export/campaigns/csv')
   async exportCampaignsCSV(
     @CurrentUser() user: any,
+    @Res() res: Response,
     @Query('platform') platform?: string,
     @Query('status') status?: string,
   ) {
@@ -197,12 +198,19 @@ export class DashboardController {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    return this.exportService.streamCampaignsCSV(user.tenantId, {
+    const file = await this.exportService.streamCampaignsCSV(user.tenantId, {
       startDate,
       endDate,
       platform,
       status,
     });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="campaigns-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}.csv"`,
+    );
+    file.getStream().pipe(res);
   }
 
   @Get('export/metrics/pdf')

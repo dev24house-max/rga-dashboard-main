@@ -11,6 +11,37 @@ import { AdsConnectionStatus } from '../components/ads-connection-status';
 import { SeoAnchorText } from '../components/seo-anchor-text';
 import { TopOrganicKeywords } from '../components/top-organic-keywords';
 import { SeoOffPageMetrics } from '../components/seo-offpage-metrics';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
+
+// =============================================================================
+// Info Tooltip Component
+// =============================================================================
+
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
 
 export function SeoPage() {
     const { data, isLoading } = useSeoSummary();
@@ -30,72 +61,112 @@ export function SeoPage() {
         backlinks: null,
         referringDomains: null,
         keywords: null,
-        trafficCost: null,
-        activeUsers: 0,
-        activeUsersTrend: 0,
-        screenPageViews: 0,
-        screenPageViewsTrend: 0,
-        engagementRate: 0,
-        engagementRateTrend: 0,
-        bounceRateTrend: 0
+        trafficCost: null
     };
 
 
     return (
         <DashboardLayout>
-            <div className="space-y-4 p-4 sm:space-y-6 sm:p-6 md:p-8">
-                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">SEO & Web Analytics</h1>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <AdsConnectionStatus
-                                data={integrationStatus}
-                                isLoading={integrationLoading}
-                                error={integrationError ?? null}
-                            />
-                        </div>
-                        <p className="text-sm text-muted-foreground sm:text-base md:text-lg">
-                            Track your organic search performance and website engagement.
-                        </p>
+            <div className="space-y-6 p-4 sm:p-6 md:p-8">
+                {/* Page Header */}
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl mb-2">SEO & Web Analytics</h1>
+                    <div className="flex items-center gap-3 mb-3">
+                        <AdsConnectionStatus
+                            data={integrationStatus}
+                            isLoading={integrationLoading}
+                            error={integrationError ?? null}
+                        />
                     </div>
+                    <p className="text-sm text-muted-foreground sm:text-base">
+                        Track your organic search performance and website engagement.
+                    </p>
                 </div>
 
-                {/* Standard Summary Cards */}
-                <div className="w-full">
+                {/* Section 1: Performance Summary */}
+                <section className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">Performance Summary</h2>
+                        <InfoTooltip content="Key metrics including organic sessions, engagement time, bounce rate, and goal completions from Google Analytics." />
+                    </div>
                     <SeoSummaryCards data={displayData} isLoading={isLoading} />
-                </div>
+                </section>
 
-                {/* Premium SEO Metrics (Ahrefs Style) */}
-                <div className="w-full">
+                {/* Section 2: Advanced SEO Metrics */}
+                <section className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">Advanced SEO Metrics</h2>
+                        <InfoTooltip content="Advanced metrics including domain authority, backlinks, referring domains, and estimated search traffic value from Ahrefs data." />
+                    </div>
                     <SeoPremiumCards data={displayData} isLoading={isLoading} />
-                </div>
+                </section>
 
-                {/* Charts Area */}
-                <div className="grid gap-4 grid-cols-1 sm:gap-6">
-                    <div className="col-span-1">
-                        <SeoPerformanceChart />
+                {/* Section 3: Performance Trends */}
+                <section className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">Performance Trends</h2>
+                        <InfoTooltip content="Track your organic search performance metrics over time including sessions, clicks, and rankings." />
                     </div>
-                </div>
+                    <SeoPerformanceChart />
+                </section>
 
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-2 sm:gap-6">
-                    <div className="col-span-1">
-                        <TopOrganicKeywords />
-                    </div>
-                    <div className="col-span-1">
-                        <TrafficByLocation isLoading={isLoading} />
-                    </div>
-                    <div className="col-span-1">
-                        <OrganicKeywordsByIntent isLoading={isLoading} />
-                    </div>
-                    <div className="col-span-1">
-                        <SeoAnchorText />
-                    </div>
-                </div>
+                {/* Section 4: Keyword & Traffic Analysis Grid */}
+                <section className="space-y-4">
+                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 auto-rows-max">
+                        {/* Top Organic Keywords */}
+                        <div className="space-y-3 w-full">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">Top Organic Keywords</h3>
+                                <InfoTooltip content="Your highest-performing keywords ranked in organic search results, ranked by traffic and position." />
+                            </div>
+                            <div className="w-full">
+                                <TopOrganicKeywords />
+                            </div>
+                        </div>
 
-                {/* Off-page Metrics */}
-                <div className="w-full">
+                        {/* Traffic by Location */}
+                        <div className="space-y-3 w-full">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">Traffic by Location</h3>
+                                <InfoTooltip content="Geographic distribution of your organic search traffic showing which regions drive the most sessions." />
+                            </div>
+                            <div className="w-full">
+                                <TrafficByLocation isLoading={isLoading} />
+                            </div>
+                        </div>
+
+                        {/* Keywords by Intent */}
+                        <div className="space-y-3 w-full">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">Keywords by Intent</h3>
+                                <InfoTooltip content="Keywords grouped by search intent type including informational, navigational, and transactional queries." />
+                            </div>
+                            <div className="w-full">
+                                <OrganicKeywordsByIntent isLoading={isLoading} />
+                            </div>
+                        </div>
+
+                        {/* Anchor Text Analysis */}
+                        <div className="space-y-3 w-full">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">Anchor Text Analysis</h3>
+                                <InfoTooltip content="Analysis of anchor text used in backlinks pointing to your site, helping identify linking patterns and opportunities." />
+                            </div>
+                            <div className="w-full">
+                                <SeoAnchorText />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section 5: Off-Page Metrics */}
+                <section className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">Off-Page Metrics</h2>
+                        <InfoTooltip content="External factors affecting SEO performance including backlink profile, referring domains, and link quality analysis." />
+                    </div>
                     <SeoOffPageMetrics />
-                </div>
+                </section>
             </div>
         </DashboardLayout>
     );

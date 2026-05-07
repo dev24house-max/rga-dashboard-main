@@ -25,7 +25,7 @@ export class MetricsService {
     /**
      * Get metrics trends for a specific period
      * @param tenantId - Tenant ID
-     * @param period - Time period ('7d', '14d', '30d', '90d')
+     * @param period - Time period ('1d', 'yesterday', '7d', '14d', '30d', '90d', 'this_month', 'last_month', 'last_3_months')
      * @param compareWith - Compare with previous period (optional)
      */
     async getMetricsTrends(
@@ -34,8 +34,8 @@ export class MetricsService {
         compareWith?: 'previous_period',
         platform?: AdPlatform,
     ) {
-        const days = DateRangeUtil.parsePeriodDays(period);
-        const { startDate, endDate } = DateRangeUtil.getDateRange(days);
+        const selectedPeriod = period as PeriodEnum;
+        const { startDate, endDate } = DateRangeUtil.getDateRangeByPeriod(selectedPeriod);
 
         // Current period metrics from DB
         const currentMetrics = await this.getAggregatedMetrics(
@@ -47,8 +47,14 @@ export class MetricsService {
 
         // Previous period metrics (if comparison requested)
         let previousMetrics = null;
+
         if (compareWith === 'previous_period') {
-            const { startDate: prevStartDate, endDate: prevEndDate } = DateRangeUtil.getPreviousPeriodDateRange(startDate, days);
+            const { startDate: prevStartDate, endDate: prevEndDate } =
+                DateRangeUtil.getPreviousPeriodByPeriod(
+                    selectedPeriod,
+                    startDate,
+                    endDate,
+                );
 
             previousMetrics = await this.getAggregatedMetrics(
                 tenantId,
@@ -219,7 +225,6 @@ export class MetricsService {
                     spend,
                     conversions: m._sum.conversions ?? 0,
                     revenue,
-                    // Calculated fields (Safe Math):
                     ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
                     roas: spend > 0 ? revenue / spend : 0,
                 };

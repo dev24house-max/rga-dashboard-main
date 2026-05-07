@@ -107,6 +107,14 @@ export class GoogleAdsSeederService {
         progressReporter: IProgressReporter = new NoOpProgressReporter()
     ): Promise<SeederResult> {
         try {
+            // Safety: prevent accidental seeding unless explicitly allowed via env var
+            if (process.env.ALLOW_SEED !== 'true') {
+                return {
+                    success: false,
+                    status: 'error',
+                    message: 'Seeding disabled by configuration. Set ALLOW_SEED=true to enable.',
+                };
+            }
             await this.assertSchemaParity();
 
             // Map ToolkitPlatform -> AdPlatform for DB Query

@@ -92,6 +92,10 @@ export class SeedDataCommandHandler implements ICommandHandler<SeedDataCommand> 
         const { platform, days, trend, injectAnomaly } = command.params;
 
         this.logger.info(`Starting data seeding for ${platform}...`);
+        // Safety: prevent accidental writes unless explicitly allowed
+        if (!context.dryRun && process.env.ALLOW_SEED !== 'true') {
+            return Result.failure(new SeederError('Seeding disabled by configuration. Set ALLOW_SEED=true to enable.'));
+        }
         await assertToolkitWriteSchemaParity(this.prisma);
 
         // Map params to SeederConfig
