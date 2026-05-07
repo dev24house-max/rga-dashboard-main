@@ -76,89 +76,40 @@ function InfoTooltip({ content }: { content: string }) {
 // Period to Date Range Converter
 // =============================================================================
 
-function formatLocalDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-}
-
 function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDate: string } {
     const today = new Date();
-    const endDate = formatLocalDate(today);
-    // const endDate = today.toISOString().split('T')[0];
+    const endDate = today.toISOString().split('T')[0];
 
     switch (period) {
         case '1d': {
             return { startDate: endDate, endDate };
         }
-        case 'yesterday': {
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            const date = formatLocalDate(yesterday);
-            return { startDate: date, endDate: date };
-        }
         case '7d': {
             const start = new Date(today);
             start.setDate(start.getDate() - 6);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
+            return { startDate: start.toISOString().split('T')[0], endDate };
         }
-        case '14d': {
+        case '90d': {
             const start = new Date(today);
             start.setDate(start.getDate() - 89);
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
-        case '365d': {
-            const start = new Date(today);
-            start.setDate(start.getDate() - 364);
-<<<<<<< HEAD
-            return { startDate: start.toISOString().split('T')[0], endDate };
-        }
         case 'this_month': {
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
-=======
->>>>>>> 1f81090712387900e4b2a403c139ac5bbcb161bd
             return { startDate: start.toISOString().split('T')[0], endDate };
-        }
-        case 'this_month': {
-            const start = new Date(today.getFullYear(), today.getMonth(), 1);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate,
-            };
         }
         case 'last_month': {
-            const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const end = new Date(today.getFullYear(), today.getMonth(), 0);
-
+            const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
             return {
-                startDate: formatLocalDate(start),
-                endDate: formatLocalDate(end),
+                startDate: firstDayLastMonth.toISOString().split('T')[0],
+                endDate: lastDayLastMonth.toISOString().split('T')[0],
             };
         }
-        case 'last_3_months': {
-            const start = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-            const end = new Date(today.getFullYear(), today.getMonth(), 0);
-
-            return {
-                startDate: formatLocalDate(start),
-                endDate: formatLocalDate(end),
-            };
-        }
-        case 'custom': {
+        case 'custom':
             return { startDate: endDate, endDate };
-        }
-
-        default: {
+        default:
             return { startDate: endDate, endDate };
-        }
     }
 }
 
@@ -212,7 +163,7 @@ export function CampaignsPage() {
     const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null);
 
     // Period filter state for time-window metrics
-    const [period, setPeriod] = useState<PeriodEnum>('1d');
+    const [period, setPeriod] = useState<PeriodEnum>('7d');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
 
     // Search and filter state
@@ -261,23 +212,13 @@ export function CampaignsPage() {
     // ==========================================================================
     // Compute Date Range from Period or Custom Range
     // ==========================================================================
-    // const dateRange = useMemo(() => {
-    //     if (period === 'custom' && customRange) {
-    //         return {
-    //             startDate: customRange.from.toISOString().split('T')[0],
-    //             endDate: customRange.to.toISOString().split('T')[0],
-    //         };
-    //     }
-    //     return getDateRangeFromPeriod(period);
-    // }, [period, customRange]);
     const dateRange = useMemo(() => {
         if (period === 'custom' && customRange) {
             return {
-                startDate: formatLocalDate(customRange.from),
-                endDate: formatLocalDate(customRange.to),
+                startDate: customRange.from.toISOString().split('T')[0],
+                endDate: customRange.to.toISOString().split('T')[0],
             };
         }
-
         return getDateRangeFromPeriod(period);
     }, [period, customRange]);
 
@@ -532,14 +473,6 @@ export function CampaignsPage() {
         // Persist selection on page change (do not clear)
     };
 
-    const handlePeriodChange = useCallback((nextPeriod: PeriodEnum) => {
-        setPeriod(nextPeriod);
-
-        if (nextPeriod !== 'custom') {
-            setCustomRange(null);
-        }
-    }, []);
-
     // ==========================================================================
     // Loading State
     // ==========================================================================
@@ -600,7 +533,7 @@ export function CampaignsPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-8 relative z-10">
                 {/* Page Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div data-tutorial="campaigns-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
                         <p className="text-muted-foreground">
@@ -630,22 +563,24 @@ export function CampaignsPage() {
                 </div>
 
                 {/* Search and Filter Toolbar */}
-                <CampaignToolbar
-                    search={search}
-                    onSearchChange={setSearch}
-                    status={status}
-                    onStatusChange={setStatus}
-                    platform={platform}
-                    onPlatformChange={setPlatform}
-                    isLoading={isFetching}
-                    period={period}
-                    onPeriodChange={handlePeriodChange}
-                    customRange={customRange ?? undefined}
-                    onCustomRangeChange={setCustomRange}
-                    showSelectedOnly={showSelectedOnly}
-                    onShowSelectedOnlyChange={setShowSelectedOnly}
-                    selectedCount={selectedIds.size}
-                />
+                <div data-tutorial="campaigns-toolbar">
+                    <CampaignToolbar
+                        search={search}
+                        onSearchChange={setSearch}
+                        status={status}
+                        onStatusChange={setStatus}
+                        platform={platform}
+                        onPlatformChange={setPlatform}
+                        isLoading={isFetching}
+                        period={period}
+                        onPeriodChange={setPeriod}
+                        customRange={customRange ?? undefined}
+                        onCustomRangeChange={setCustomRange}
+                        showSelectedOnly={showSelectedOnly}
+                        onShowSelectedOnlyChange={setShowSelectedOnly}
+                        selectedCount={selectedIds.size}
+                    />
+                </div>
 
 
 
@@ -663,29 +598,31 @@ export function CampaignsPage() {
                 {/* Pagination Header (Removed - Moved to Table) */}
 
                 {/* Campaigns Table with Sorting and Selection */}
-                <CampaignsTable
-                    campaigns={displayedCampaigns}
-                    isLoading={isFetching}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    onToggleAll={handleToggleAll}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteClick}
+                <div data-tutorial="campaigns-table">
+                    <CampaignsTable
+                        campaigns={displayedCampaigns}
+                        isLoading={isFetching}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        selectedIds={selectedIds}
+                        onToggleSelect={handleToggleSelect}
+                        onToggleAll={handleToggleAll}
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteClick}
 
-                    page={showSelectedOnly ? 1 : page}
-                    totalPages={totalPages}
-                    totalItems={totalItems}
-                    pageSize={DEFAULT_PAGE_SIZE}
-                    onPageChange={handlePageChange}
-                />
+                        page={showSelectedOnly ? 1 : page}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        pageSize={DEFAULT_PAGE_SIZE}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
 
 
 
                 {/* Campaign Summary Dashboard (Middle Section) */}
-                <div className="space-y-2">
+                <div data-tutorial="campaigns-summary" className="space-y-2">
                     <div className="flex items-center gap-2">
                         <h3 className="text-base font-semibold sm:text-lg">Campaign Summary</h3>
                         <InfoTooltip content="View aggregated metrics for all campaigns in your selection, including total spend, impressions, clicks, and conversion rates." />
@@ -696,7 +633,7 @@ export function CampaignsPage() {
                 {/* Visualization Panel (Bottom) */}
                 {!isLoading && campaignsResponse?.summary && (
                     <>
-                        <div className="space-y-2">
+                        <div data-tutorial="campaigns-visualization" className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <h3 className="text-base font-semibold sm:text-lg">Campaign Performance</h3>
                                 <InfoTooltip content="Visual breakdown of campaign performance by status and platform, including spend distribution and platform-specific metrics." />
@@ -709,7 +646,7 @@ export function CampaignsPage() {
                         </div>
 
                         {/* Campaign Analytics (Conversion Rate) */}
-                        <div className="space-y-2">
+                        <div data-tutorial="campaigns-analytics" className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <h3 className="text-base font-semibold sm:text-lg">Analytics</h3>
                                 <InfoTooltip content="Analyze conversion rates, cost per conversion, and ROI metrics across your campaigns." />

@@ -88,12 +88,8 @@ export function useIntegrationCallback(): IntegrationCallbackState {
             return;
         }
 
-        // Handle LINE callback
-        if (status === 'success' && platform === 'line') {
-            toast.success('LINE Ads connected successfully');
-            window.history.replaceState({}, '', '/integrations');
-            return;
-        }
+        // LINE callback is handled inside the LINE Ads card itself
+        // so that the card can also refresh integration status after OAuth.
 
     }, [setLocation]);
 

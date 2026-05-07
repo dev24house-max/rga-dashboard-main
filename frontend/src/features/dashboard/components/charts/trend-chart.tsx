@@ -267,6 +267,7 @@ export function TrendChart({
                         onValueChange={onPeriodChange}
                         customRange={customRange}
                         onCustomRangeChange={onCustomRangeChange}
+                        className="date-filter"
                     />
                 </div>
 

@@ -96,7 +96,7 @@ export default function DataSourcesPage() {
         <DashboardLayout>
             <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
                 {/* Page Header */}
-                <div className="flex items-center justify-between">
+                <div data-tutorial="data-sources-header" className="flex items-center justify-between">
                     <div className="space-y-1">
                         <h2 className="text-3xl font-bold tracking-tight">Data Sources</h2>
                         <p className="text-muted-foreground">
@@ -111,7 +111,7 @@ export default function DataSourcesPage() {
                         <h3 className="text-base font-semibold sm:text-lg">Connected Platforms</h3>
                         <InfoTooltip content="Connect ad platforms to automatically import your campaigns, spending data, and performance metrics. You can manage and disconnect platforms anytime." />
                     </div>
-                    <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div data-tutorial="data-sources-grid" className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {DISPLAY_PLATFORMS.map((platform) => (
                         <DataSourceCard
                             key={platform}

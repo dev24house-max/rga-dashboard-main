@@ -21,6 +21,7 @@ import { DataSourcesPage } from "@/features/data-sources";
 import { SeoPage } from "@/features/seo";
 import { AiInsightsPage } from "@/features/ai-insights";
 import { EcommerceLandingPage } from '@/features/ecommerce-landing';
+import { TutorialFlow } from '@/features/tutorial/TutorialFlow';
 import Users from "./pages/Users";
 import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
@@ -124,6 +125,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <TutorialFlow />
           </TooltipProvider>
         </ThemeProvider>
       </ErrorBoundary>

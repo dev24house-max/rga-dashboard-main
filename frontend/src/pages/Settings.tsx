@@ -66,7 +66,7 @@ function GeneralSettingsTab({
     return (
         <div className="space-y-6">
             {/* Appearance Settings */}
-            <Card>
+            <Card data-tutorial="settings-appearance">
                 <CardHeader>
                     <CardTitle>Appearance</CardTitle>
                     <CardDescription>
@@ -103,7 +103,7 @@ function GeneralSettingsTab({
             </Card>
 
             {/* Regional Settings */}
-            <Card>
+            <Card data-tutorial="settings-regional">
                 <CardHeader>
                     <CardTitle>Regional</CardTitle>
                     <CardDescription>
@@ -112,7 +112,7 @@ function GeneralSettingsTab({
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-language">
                             <Label>Language</Label>
                             <Select value={language} onValueChange={onLanguageChange}>
                                 <SelectTrigger>
@@ -124,7 +124,7 @@ function GeneralSettingsTab({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-timezone">
                             <Label>Timezone</Label>
                             <Select value={timezone} onValueChange={onTimezoneChange}>
                                 <SelectTrigger>
@@ -138,7 +138,7 @@ function GeneralSettingsTab({
                         </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-currency">
                             <Label>Currency</Label>
                             <Select value={currency} onValueChange={onCurrencyChange}>
                                 <SelectTrigger>
@@ -150,7 +150,7 @@ function GeneralSettingsTab({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-tutorial="settings-dateformat">
                             <Label>Date Format</Label>
                             <Select value={dateFormat} onValueChange={onDateFormatChange}>
                                 <SelectTrigger>
@@ -168,7 +168,7 @@ function GeneralSettingsTab({
             </Card>
 
             {/* Notification Preferences */}
-            <Card>
+            <Card data-tutorial="settings-notifications">
                 <CardHeader>
                     <CardTitle>Notification Preferences</CardTitle>
                     <CardDescription>
@@ -176,7 +176,7 @@ function GeneralSettingsTab({
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-inapp-notify">
                         <div className="space-y-0.5">
                             <Label>In-App Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -188,7 +188,7 @@ function GeneralSettingsTab({
                             onCheckedChange={onInAppNotificationsChange}
                         />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-email-notify">
                         <div className="space-y-0.5">
                             <Label>Email Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -200,7 +200,7 @@ function GeneralSettingsTab({
                             onCheckedChange={onEmailNotificationsChange}
                         />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-tutorial="settings-line-notify">
                         <div className="space-y-0.5">
                             <Label>LINE Notifications</Label>
                             <p className="text-sm text-muted-foreground">
@@ -270,7 +270,7 @@ export default function Settings() {
             <DashboardLayout>
                 <div className="space-y-6">
                     {/* Page Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div data-tutorial="settings-header" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                                 Settings
@@ -283,7 +283,7 @@ export default function Settings() {
 
                     {/* Settings Tabs */}
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList className="grid w-full max-w-md grid-cols-2">
+                        <TabsList data-tutorial="settings-tabs" className="grid w-full max-w-md grid-cols-2">
                             <TabsTrigger value="general" className="flex items-center gap-2">
                                 <Settings2 className="h-4 w-4" />
                                 General
@@ -295,30 +295,12 @@ export default function Settings() {
                         </TabsList>
 
                         {/* General Settings Tab */}
-                        <TabsContent value="general">
-                            <GeneralSettingsTab
-                                theme={theme}
-                                toggleTheme={toggleTheme}
-                                switchable={switchable}
-                                language={language}
-                                timezone={timezone}
-                                currency={currency}
-                                dateFormat={dateFormat}
-                                inAppNotifications={inAppNotifications}
-                                emailNotifications={emailNotifications}
-                                lineNotifications={lineNotifications}
-                                onLanguageChange={setLanguage}
-                                onTimezoneChange={setTimezone}
-                                onCurrencyChange={setCurrency}
-                                onDateFormatChange={setDateFormat}
-                                onInAppNotificationsChange={setInAppNotifications}
-                                onEmailNotificationsChange={setEmailNotifications}
-                                onLineNotificationsChange={setLineNotifications}
-                            />
+                        <TabsContent value="general" data-tutorial="settings-general-content">
+                            <GeneralSettingsTab />
                         </TabsContent>
 
                         {/* Alert Rules Tab */}
-                        <TabsContent value="alerts">
+                        <TabsContent value="alerts" data-tutorial="settings-alert-rules">
                             <AlertRulesTab />
                         </TabsContent>
                     </Tabs>

@@ -821,7 +821,7 @@ export function AiAssistant() {
                     // Chat Interface
                     <>
                         {/* Chat Header */}
-                        <div className="border-b border-slate-100 bg-white/80 backdrop-blur px-6 sticky top-0 z-10 shrink-0">
+                        <div className="border-b border-slate-100 bg-white/80 backdrop-blur px-6 sticky top-0 z-10 shrink-0" data-tutorial="ai-insights-header">
                             <div className="h-14 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     {/* Mobile/Desktop Toggle */}
@@ -844,7 +844,7 @@ export function AiAssistant() {
                                 </div>
                             </div>
                             <div className="pb-3">
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2" data-tutorial="ai-insights-roles">
                                     {ROLE_OPTIONS.map((role) => (
                                         <button
                                             key={role.id}
@@ -904,6 +904,7 @@ export function AiAssistant() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-8">
                                                 {/* AI Detail Summary Button (Primary) */}
                                                 <motion.button
+                                                    data-tutorial="ai-insights-summary"
                                                     whileHover={{ scale: 1.02 }}
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => setViewMode('summary')}
@@ -935,6 +936,7 @@ export function AiAssistant() {
 
                                                 {/* Campaign Tools Button (Secondary) */}
                                                 <motion.button
+                                                    data-tutorial="ai-insights-tools"
                                                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(248, 250, 252, 1)' }}
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => setViewMode('tools')}
@@ -1033,11 +1035,12 @@ export function AiAssistant() {
 
                         {/* Input Fixed at Bottom */}
                         <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-slate-100 sticky bottom-0 z-10 transition-all">
-                            <div className="relative group max-w-3xl mx-auto">
+                            <div className="relative group max-w-3xl mx-auto" data-tutorial="ai-insights-input">
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-200/20 to-amber-200/20 rounded-[1.5rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 <div className="relative bg-white rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 p-1.5 flex items-center gap-2 pr-2">
                                     <div className="pl-1">
                                         <button
+                                            data-tutorial="ai-insights-new-chat"
                                             type="button"
                                             onClick={handleNewChat}
                                             className="p-2 bg-slate-50 rounded-full text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors duration-300 cursor-pointer hover:shadow-sm"

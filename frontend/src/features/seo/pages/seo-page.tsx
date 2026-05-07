@@ -69,7 +69,7 @@ export function SeoPage() {
         <DashboardLayout>
             <div className="space-y-6 p-4 sm:p-6 md:p-8">
                 {/* Page Header */}
-                <div>
+                <div data-tutorial="seo-header">
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl mb-2">SEO & Web Analytics</h1>
                     <div className="flex items-center gap-3 mb-3">
                         <AdsConnectionStatus
@@ -84,7 +84,7 @@ export function SeoPage() {
                 </div>
 
                 {/* Section 1: Performance Summary */}
-                <section className="space-y-3">
+                <section data-tutorial="seo-performance" className="space-y-3">
                     <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold">Performance Summary</h2>
                         <InfoTooltip content="Key metrics including organic sessions, engagement time, bounce rate, and goal completions from Google Analytics." />
@@ -92,17 +92,8 @@ export function SeoPage() {
                     <SeoSummaryCards data={displayData} isLoading={isLoading} />
                 </section>
 
-                {/* Section 2: Advanced SEO Metrics */}
-                <section className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Advanced SEO Metrics</h2>
-                        <InfoTooltip content="Advanced metrics including domain authority, backlinks, referring domains, and estimated search traffic value from Ahrefs data." />
-                    </div>
-                    <SeoPremiumCards data={displayData} isLoading={isLoading} />
-                </section>
-
-                {/* Section 3: Performance Trends */}
-                <section className="space-y-3">
+                {/* Section 2: Performance Trends */}
+                <section data-tutorial="seo-performance-trends" className="space-y-3">
                     <div className="flex items-center gap-2">
                         <h2 className="text-lg font-semibold">Performance Trends</h2>
                         <InfoTooltip content="Track your organic search performance metrics over time including sessions, clicks, and rankings." />
@@ -110,13 +101,17 @@ export function SeoPage() {
                     <SeoPerformanceChart />
                 </section>
 
-                {/* Section 4: Keyword & Traffic Analysis Grid */}
-                <section className="space-y-4">
+                {/* Section 3: Keyword & Traffic Analysis */}
+                <section data-tutorial="seo-keyword-analysis" className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold">Keyword & Traffic Analysis</h2>
+                        <InfoTooltip content="Comprehensive analysis of your organic keywords, traffic sources, search intent, and anchor text patterns." />
+                    </div>
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 auto-rows-max">
                         {/* Top Organic Keywords */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold">Top Organic Keywords</h3>
+                                <h3 className="text-base font-medium">Top Organic Keywords</h3>
                                 <InfoTooltip content="Your highest-performing keywords ranked in organic search results, ranked by traffic and position." />
                             </div>
                             <div className="w-full">
@@ -127,7 +122,7 @@ export function SeoPage() {
                         {/* Traffic by Location */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold">Traffic by Location</h3>
+                                <h3 className="text-base font-medium">Traffic by Location</h3>
                                 <InfoTooltip content="Geographic distribution of your organic search traffic showing which regions drive the most sessions." />
                             </div>
                             <div className="w-full">
@@ -138,7 +133,7 @@ export function SeoPage() {
                         {/* Keywords by Intent */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold">Keywords by Intent</h3>
+                                <h3 className="text-base font-medium">Keywords by Intent</h3>
                                 <InfoTooltip content="Keywords grouped by search intent type including informational, navigational, and transactional queries." />
                             </div>
                             <div className="w-full">
@@ -149,7 +144,7 @@ export function SeoPage() {
                         {/* Anchor Text Analysis */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold">Anchor Text Analysis</h3>
+                                <h3 className="text-base font-medium">Anchor Text Analysis</h3>
                                 <InfoTooltip content="Analysis of anchor text used in backlinks pointing to your site, helping identify linking patterns and opportunities." />
                             </div>
                             <div className="w-full">
@@ -159,13 +154,24 @@ export function SeoPage() {
                     </div>
                 </section>
 
-                {/* Section 5: Off-Page Metrics */}
-                <section className="space-y-3 pt-2">
+                {/* Section 4: Off-Page & Authority */}
+                <section data-tutorial="seo-offpage-metrics" className="space-y-6">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Off-Page Metrics</h2>
-                        <InfoTooltip content="External factors affecting SEO performance including backlink profile, referring domains, and link quality analysis." />
+                        <h2 className="text-lg font-semibold">Off-Page & Authority</h2>
+                        <InfoTooltip content="External SEO factors including domain authority, backlink profile, referring domains, and link quality analysis from Ahrefs data." />
                     </div>
-                    <SeoOffPageMetrics />
+
+                    {/* Advanced SEO Metrics Sub-section */}
+                    <div className="space-y-3">
+                        <h3 className="text-base font-medium text-muted-foreground">Authority Metrics</h3>
+                        <SeoPremiumCards data={displayData} isLoading={isLoading} />
+                    </div>
+
+                    {/* Off-Page Metrics Sub-section */}
+                    <div className="space-y-3">
+                        <h3 className="text-base font-medium text-muted-foreground">Backlink Profile</h3>
+                        <SeoOffPageMetrics />
+                    </div>
                 </section>
             </div>
         </DashboardLayout>

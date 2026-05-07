@@ -4,6 +4,7 @@
 // Features: Glassmorphism, Gradient Active States, Smooth Animations
 // =============================================================================
 
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore, selectUser } from '@/stores/auth-store';
 import { UserRole } from '@/types/enums';
@@ -21,8 +22,19 @@ import {
     Users,
     Zap,
     ChevronRight,
-    Sparkles
+    Sparkles,
+    AlertCircle
 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import logo from '@/assets/logo.png';
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -78,6 +90,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function AppSidebar() {
     const [location, setLocation] = useLocation();
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     const user = useAuthStore(selectUser);
     const logout = useAuthStore((state) => state.logout);
 
@@ -85,7 +98,12 @@ export function AppSidebar() {
     const isActive = (url: string) =>
         location === url || location.startsWith(`${url}/`);
 
-    const handleLogout = () => {
+    const handleLogoutClick = () => {
+        setIsLogoutDialogOpen(true);
+    };
+
+    const handleConfirmLogout = () => {
+        setIsLogoutDialogOpen(false);
         logout();
         setLocation('/login');
     };
@@ -229,7 +247,7 @@ export function AppSidebar() {
 
                         {/* Logout Button */}
                         <button
-                            onClick={handleLogout}
+                            onClick={handleLogoutClick}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                             title="Sign out"
                         >
@@ -239,6 +257,34 @@ export function AppSidebar() {
                 </div>
 
             </div>
+
+            {/* Logout Confirmation Dialog */}
+            <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                <AlertDialogContent className="sm:max-w-[425px]">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                                <AlertCircle className="h-5 w-5 text-red-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg">ยืนยันการออกจากระบบ</AlertDialogTitle>
+                        </div>
+                    </AlertDialogHeader>
+                    <AlertDialogDescription className="text-base">
+                        คุณต้องการออกจากระบบใช่หรือไม่? คุณสามารถเข้าสู่ระบบได้ในภายหลัง
+                    </AlertDialogDescription>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-slate-100 text-slate-900 hover:bg-slate-200">
+                            ยกเลิก
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmLogout}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                        >
+                            ออกจากระบบ
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Sidebar>
     );
 }
