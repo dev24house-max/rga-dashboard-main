@@ -16,6 +16,8 @@ export const PeriodEnumSchema = z.enum(['1d', '7d', '30d', '90d', '365d', 'this_
 export const PeriodEnumSchema = z.enum([
     '1d',
     'yesterday',
+    'this_week',
+    'last_week',
     '7d',
     '14d',
     '30d',
@@ -27,6 +29,9 @@ export const PeriodEnumSchema = z.enum([
 ]);
 >>>>>>> 1f81090712387900e4b2a403c139ac5bbcb161bd
 export type PeriodEnum = z.infer<typeof PeriodEnumSchema>;
+
+export const WeekStartsOnSchema = z.enum(['sunday', 'monday']);
+export type WeekStartsOn = z.infer<typeof WeekStartsOnSchema>;
 
 export const CampaignStatusSchema = z.enum([
     'ACTIVE',
@@ -248,6 +253,7 @@ export type DashboardOverviewResponse = z.infer<typeof DashboardOverviewResponse
 
 export const DashboardOverviewQuerySchema = z.object({
     period: PeriodEnumSchema.optional(),
+    weekStartsOn: WeekStartsOnSchema.optional(),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     tenantId: z.string().uuid().optional(),

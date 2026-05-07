@@ -40,7 +40,7 @@ const DASHBOARD_ENDPOINTS = {
 export async function getDashboardOverview(
     params: DashboardOverviewQuery = {}
 ): Promise<DashboardOverviewData> {
-    const { period, tenantId, startDate, endDate } = params;
+    const { period, tenantId, startDate, endDate, weekStartsOn } = params;
 
     const isCustomRange = Boolean(startDate && endDate);
 
@@ -49,6 +49,7 @@ export async function getDashboardOverview(
         {
             params: {
                 ...(!isCustomRange && { period: period ?? 'this_month' }),
+                ...(!isCustomRange && weekStartsOn && { weekStartsOn }),
                 ...(tenantId && { tenantId }),
                 ...(startDate && { startDate }),
                 ...(endDate && { endDate }),

@@ -6,7 +6,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DashboardService } from './dashboard.service';
 import { MetricsService } from './metrics.service';
 import { ExportService } from './export.service';
-import { GetDashboardOverviewDto, DashboardOverviewResponseDto, PeriodEnum } from './dto/dashboard-overview.dto';
+import { GetDashboardOverviewDto, DashboardOverviewResponseDto, PeriodEnum, WeekStartsOnEnum } from './dto/dashboard-overview.dto';
 import { TenantCacheInterceptor } from '../../common/interceptors/tenant-cache.interceptor';
 import { IntegrationSwitchService } from '../data-sources/integration-switch.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
@@ -32,6 +32,7 @@ export class DashboardController {
   @Get('overview')
   @ApiOperation({ summary: 'Get dashboard overview data (Smart Switch: Demo vs Live)' })
   @ApiQuery({ name: 'period', enum: PeriodEnum, required: false })
+  @ApiQuery({ name: 'weekStartsOn', enum: WeekStartsOnEnum, required: false })
   @ApiQuery({ name: 'tenantId', required: false, description: 'Tenant override (SUPER_ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Dashboard overview data', type: DashboardOverviewResponseDto })
   async getOverview(

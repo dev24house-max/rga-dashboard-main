@@ -16,16 +16,13 @@ import { formatCompactNumber } from '@/lib/formatters';
 import { useQuery } from '@tanstack/react-query';
 import { SeoService } from "../api";
 import { DashboardDateFilter } from "@/features/dashboard/components/dashboard-date-filter";
+import {
+    DEFAULT_WEEK_STARTS_ON,
+    formatLocalDate,
+    getDateRangeFromPeriod,
+} from '@/lib/date-range-utils';
+import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 
-type PeriodEnum =
-    | '1d'
-    | 'yesterday'
-    | '7d'
-    | '14d'
-    | 'this_month'
-    | 'last_month'
-    | 'last_3_months'
-    | 'custom';
 type MetricKey =
     | 'organicTraffic'
     | 'paidTraffic'
@@ -153,51 +150,23 @@ function EmptyState() {
 export function SeoPerformanceChart() {
     const [period, setPeriod] = useState<PeriodEnum>('this_month');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
     const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>(['organicTraffic', 'avgPosition']);
 
-    // Helper to calculate days for API based on period
-    const getDaysFromPeriod = (p: PeriodEnum, custom?: { from: Date; to: Date }): number => {
-        if (p === '1d') return 1;
-
-        if (p === 'yesterday') return 1;
-
-        if (p === '7d') return 7;
-
-        if (p === '14d') return 14;
-
-        if (p === 'this_month') {
-            const now = new Date();
-            return now.getDate();
+    const dateRange = useMemo(() => {
+        if (period === 'custom' && customRange) {
+            return {
+                startDate: formatLocalDate(customRange.from),
+                endDate: formatLocalDate(customRange.to),
+            };
         }
 
-        if (p === 'last_month') {
-            const now = new Date();
-            return new Date(now.getFullYear(), now.getMonth(), 0).getDate();
-        }
-
-        if (p === 'last_3_months') {
-            const now = new Date();
-            const start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-            const end = new Date(now.getFullYear(), now.getMonth(), 0);
-
-            return Math.ceil(
-                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-            ) + 1;
-        }
-
-        if (p === 'custom' && custom) {
-            const diffTime = Math.abs(custom.to.getTime() - custom.from.getTime());
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        }
-
-        return new Date().getDate();
-    };
-
-    const days = getDaysFromPeriod(period, customRange);
+        return getDateRangeFromPeriod(period, weekStartsOn);
+    }, [period, customRange, weekStartsOn]);
 
     const { data, isLoading } = useQuery({
-        queryKey: ['seo-history', days],
-        queryFn: () => SeoService.getHistory(days)
+        queryKey: ['seo-history', dateRange.startDate, dateRange.endDate],
+        queryFn: () => SeoService.getHistory(dateRange)
     });
 
     const toggleMetric = (metric: MetricKey) => {
@@ -262,6 +231,8 @@ export function SeoPerformanceChart() {
                     onValueChange={(val) => setPeriod(val)}
                     customRange={customRange}
                     onCustomRangeChange={(range) => setCustomRange(range)}
+                    weekStartsOn={weekStartsOn}
+                    onWeekStartsOnChange={setWeekStartsOn}
                 />
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-2 min-h-[250px] sm:min-h-0">

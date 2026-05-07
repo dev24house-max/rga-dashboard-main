@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardOverview } from '../services/dashboard.service';
-import type { DashboardOverviewData, PeriodEnum } from '../schemas';
+import type { DashboardOverviewData, PeriodEnum, WeekStartsOn } from '../schemas';
 import { useAuthStore, selectUser } from '@/stores/auth-store';
 
 // =============================================================================
@@ -26,6 +26,8 @@ export const dashboardKeys = {
 interface UseDashboardOverviewOptions {
     /** Time period for aggregation */
     period?: PeriodEnum;
+    /** Week start for this_week/last_week periods */
+    weekStartsOn?: WeekStartsOn;
     /** Custom start date (YYYY-MM-DD) */
     startDate?: string;
     /** Custom end date (YYYY-MM-DD) */
@@ -74,6 +76,7 @@ export function useDashboardOverview(options: UseDashboardOverviewOptions = {}) 
 
     const {
         period,
+        weekStartsOn,
         startDate,
         endDate,
         tenantId,
@@ -92,6 +95,7 @@ export function useDashboardOverview(options: UseDashboardOverviewOptions = {}) 
             ...dashboardKeys.overview(),
             {
                 period: effectivePeriod,
+                weekStartsOn,
                 startDate,
                 endDate,
                 tenantId: tenantIdForCacheKey,
@@ -100,6 +104,7 @@ export function useDashboardOverview(options: UseDashboardOverviewOptions = {}) 
         queryFn: () =>
             getDashboardOverview({
                 period: effectivePeriod,
+                weekStartsOn,
                 startDate,
                 endDate,
                 tenantId,

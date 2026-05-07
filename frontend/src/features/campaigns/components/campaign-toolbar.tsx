@@ -24,7 +24,7 @@ import {
     DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
-import type { PeriodEnum } from '@/features/dashboard/schemas';
+import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 
 // =============================================================================
 // Types
@@ -54,6 +54,10 @@ export interface CampaignToolbarProps {
     customRange?: { from: Date; to: Date };
     /** Callback when custom range changes */
     onCustomRangeChange?: (value: { from: Date; to: Date }) => void;
+    /** Week start for this_week/last_week periods */
+    weekStartsOn: WeekStartsOn;
+    /** Callback when week start changes */
+    onWeekStartsOnChange: (value: WeekStartsOn) => void;
     /** Toggle to show only selected items */
     showSelectedOnly: boolean;
     /** Callback when show selected only toggle changes */
@@ -97,6 +101,8 @@ export function CampaignToolbar({
     onPeriodChange,
     customRange,
     onCustomRangeChange,
+    weekStartsOn,
+    onWeekStartsOnChange,
     showSelectedOnly,
     onShowSelectedOnlyChange,
     selectedCount,
@@ -296,6 +302,8 @@ export function CampaignToolbar({
                             onValueChange={onPeriodChange}
                             customRange={customRange}
                             onCustomRangeChange={onCustomRangeChange}
+                            weekStartsOn={weekStartsOn}
+                            onWeekStartsOnChange={onWeekStartsOnChange}
                         />
                     </div>
 

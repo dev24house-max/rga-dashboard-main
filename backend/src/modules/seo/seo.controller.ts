@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -21,7 +21,20 @@ export class SeoController {
 
     @Get('history')
     @ApiOperation({ summary: 'Get SEO history for chart' })
-    async getHistory(@CurrentUser() user: any, @Query('days') days?: number) {
+    async getHistory(
+        @CurrentUser() user: any,
+        @Query('days') days?: number,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        if (startDate || endDate) {
+            if (!startDate || !endDate) {
+                throw new BadRequestException('startDate and endDate must be provided together');
+            }
+
+            return this.seoService.getSeoHistory(user.tenantId, undefined, startDate, endDate);
+        }
+
         return this.seoService.getSeoHistory(user.tenantId, days ? Number(days) : undefined);
     }
 
