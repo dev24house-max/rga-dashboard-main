@@ -250,17 +250,6 @@ export class DashboardService {
       ? days === 1
         ? useMockCurrent
           ? !!(await this.prisma.metric.findFirst({
-              where: {
-                tenantId,
-                date: {
-                  gte: currentStartDate,
-                  lte: today,
-                },
-                isMockData: true,
-              },
-            }))
-          : false
-        : !!(await this.prisma.metric.findFirst({
             where: {
               tenantId,
               date: {
@@ -270,6 +259,17 @@ export class DashboardService {
               isMockData: true,
             },
           }))
+          : false
+        : !!(await this.prisma.metric.findFirst({
+          where: {
+            tenantId,
+            date: {
+              gte: currentStartDate,
+              lte: today,
+            },
+            isMockData: true,
+          },
+        }))
       : false;
 
     return {
@@ -389,15 +389,6 @@ export class DashboardService {
       ? days === 1
         ? useMockCurrent
           ? await this.prisma.metric.findFirst({
-              where: {
-                tenantId,
-                date: { gte: currentStartDate, lte: today },
-                ...(platform !== 'ALL' ? { platform: platformEnum } : {}),
-                isMockData: true,
-              },
-            })
-          : null
-        : await this.prisma.metric.findFirst({
             where: {
               tenantId,
               date: { gte: currentStartDate, lte: today },
@@ -405,6 +396,15 @@ export class DashboardService {
               isMockData: true,
             },
           })
+          : null
+        : await this.prisma.metric.findFirst({
+          where: {
+            tenantId,
+            date: { gte: currentStartDate, lte: today },
+            ...(platform !== 'ALL' ? { platform: platformEnum } : {}),
+            isMockData: true,
+          },
+        })
       : null;
 
     return {
@@ -806,7 +806,7 @@ export class DashboardService {
       where: {
         campaignId: { in: campaignIds },
         campaign: { tenantId },
-        ...(hideMockData && { isMock: false }),
+        ...(hideMockData && { isMockData: false }),
       },
       _sum: {
         spend: true,

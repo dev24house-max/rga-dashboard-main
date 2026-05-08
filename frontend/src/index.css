@@ -1,3 +1,36 @@
+/* Improve input, select, button, and placeholder readability in dark mode */
+.dark input,
+.dark textarea,
+.dark select {
+  color: var(--foreground) !important;
+  background-color: #18191b !important;
+  border-color: var(--border) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #b7c0c8 !important; /* muted-foreground */
+  opacity: 1 !important;
+}
+.dark button,
+.dark [role="button"],
+.dark [type="button"],
+.dark [type="submit"],
+.dark [type="reset"] {
+  color: var(--foreground) !important;
+}
+/* Override Tailwind gray text classes in dark mode for better readability */
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: var(--foreground) !important;
+}
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: var(--muted-foreground) !important;
+}
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: var(--muted-foreground) !important;
+}
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -82,22 +115,23 @@
   --primary-foreground: var(--color-blue-50);
   --sidebar-primary: var(--color-blue-500);
   --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
+  /* Dark mode color adjustments for improved readability */
+  --background: #0b0b0d; /* near-black background */
+  --foreground: #e6eef6; /* primary readable text */
+  --card: #0f1113; /* card background slightly lighter than page bg */
+  --card-foreground: #e6eef6; /* card text uses same readable foreground */
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.85 0.005 65);
   --secondary: oklch(0.24 0.006 286.033);
   --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
+  --muted: #9099a3; /* secondary / muted text */
+  --muted-foreground: #b7c0c8; /* tertiary / disabled text */
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.92 0.005 65);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: rgba(255, 255, 255, 0.06);
+  --input: rgba(255, 255, 255, 0.08);
   --ring: oklch(0.488 0.243 264.376);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
@@ -110,6 +144,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.488 0.243 264.376);
+}
+
+/* Make any explicit `text-white` usage softer in dark mode so it doesn't
+   blow out contrast against near-black backgrounds. Prefer semantic
+   `text-foreground` but this helps existing components. */
+.dark .text-white {
+  color: var(--foreground) !important;
 }
 
 @layer base {

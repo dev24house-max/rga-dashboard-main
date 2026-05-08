@@ -1,10 +1,10 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Download } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { formatCompactCurrency, formatCurrencyFull } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import { downloadCsv } from '@/lib/download-utils';
 import { ExportDropdown } from '@/components/ui/export-dropdown';
 
@@ -28,7 +28,6 @@ export interface FinancialOverviewProps {
     roi?: number;
     roiDelta?: number;
     total?: number;
-    currency?: string;
     breakdown?: FinancialBreakdownItem[];
     summary?: FinancialSummaryItem[];
 }
@@ -98,10 +97,10 @@ export function FinancialOverview({
     roi = 3.4,
     roiDelta = 0.2,
     total,
-    currency = 'USD',
     breakdown = DEFAULT_BREAKDOWN,
     summary = DEFAULT_SUMMARY,
 }: FinancialOverviewProps) {
+    const { formatCurrency } = useFormatter();
     const cardRef = useRef<HTMLDivElement>(null);
     const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -205,7 +204,7 @@ export function FinancialOverview({
                                             formatter={(value: number | string, name: string | number) => {
                                                 const label = typeof name === 'string' ? name : String(name ?? '');
                                                 if (label === 'No Data') return ['0', label];
-                                                return [formatCurrencyFull(Number(value), currency), label];
+                                                return [formatCurrency(Number(value), { maximumFractionDigits: 0, minimumFractionDigits: 0 }), label];
                                             }}
                                             contentStyle={{
                                                 backgroundColor: 'var(--popover)',
@@ -223,7 +222,7 @@ export function FinancialOverview({
                                 <p className="text-[10px] uppercase text-gray-400 tracking-wide">TOTAL</p>
                                 <div className="max-w-[200px]">
                                     <p className="text-lg md:text-xl font-semibold text-gray-900 leading-none whitespace-nowrap">
-                                        {formatCompactCurrency(computedTotal, currency)}
+                                        {formatCurrency(computedTotal, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}
                                     </p>
                                 </div>
                             </div>
@@ -261,8 +260,8 @@ export function FinancialOverview({
                                         className="font-semibold theme-text whitespace-nowrap text-xs"
                                         style={{ color: 'var(--theme-text, var(--foreground))' }}
                                     >
-                                        <span className="md:hidden">{item.name === 'No Data' ? '0' : formatCompactCurrency(item.value, currency)}</span>
-                                        <span className="hidden md:inline">{item.name === 'No Data' ? '0' : formatCurrencyFull(item.value, currency)}</span>
+                                        <span className="md:hidden">{item.name === 'No Data' ? '0' : formatCurrency(item.value, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}</span>
+                                        <span className="hidden md:inline">{item.name === 'No Data' ? '0' : formatCurrency(item.value, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}</span>
                                     </span>
                                 </div>
                             ))}
@@ -277,8 +276,8 @@ export function FinancialOverview({
                                 {item.label}
                             </p>
                             <p className="text-base font-bold text-foreground tracking-tight">
-                                <span className="md:hidden">{formatCompactCurrency(item.value, currency)}</span>
-                                <span className="hidden md:inline">{formatCurrencyFull(item.value, currency)}</span>
+                                <span className="md:hidden">{formatCurrency(item.value, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}</span>
+                                <span className="hidden md:inline">{formatCurrency(item.value, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}</span>
                             </p>
                             {item.deltaLabel ? (
                                 <p className={cn('text-xs font-medium', item.deltaClassName)}>{item.deltaLabel}</p>

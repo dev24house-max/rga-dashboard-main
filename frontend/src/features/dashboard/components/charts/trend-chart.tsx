@@ -25,7 +25,8 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { formatCurrencyTHB, formatCompactNumber } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
+import { formatCompactNumber } from '@/lib/formatters';
 import type { TrendDataPoint, PeriodEnum } from '../../schemas';
 import { DashboardDateFilter } from '../../components/dashboard-date-filter';
 
@@ -42,30 +43,21 @@ interface MetricConfig {
     formatValue: (value: number) => string;
 }
 
-const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
-    cost: {
-        label: 'Cost',
-        color: '#10b981',
-        gradientId: 'gradientCost',
-        formatValue: formatCurrencyTHB,
-    },
+const METRIC_CONFIG_BASE: Record<Exclude<MetricKey, 'cost'>, Omit<MetricConfig, 'formatValue'>> = {
     impressions: {
         label: 'Impressions',
         color: '#3b82f6',
         gradientId: 'gradientImpressions',
-        formatValue: formatCompactNumber,
     },
     clicks: {
         label: 'Clicks',
         color: '#f59e0b',
         gradientId: 'gradientClicks',
-        formatValue: formatCompactNumber,
     },
     conversions: {
         label: 'Conversions',
         color: '#8b5cf6',
         gradientId: 'gradientConversions',
-        formatValue: formatCompactNumber,
     },
 };
 
@@ -143,9 +135,10 @@ interface CustomTooltipProps {
     }>;
     label?: string;
     activeMetrics: MetricKey[];
+    metricConfig: Record<MetricKey, MetricConfig>;
 }
 
-function CustomTooltip({ active, payload, activeMetrics }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, activeMetrics, metricConfig }: CustomTooltipProps) {
     if (!active || !payload || payload.length === 0) {
         return null;
     }
@@ -160,7 +153,7 @@ function CustomTooltip({ active, payload, activeMetrics }: CustomTooltipProps) {
             </p>
             <div className="flex flex-col gap-1.5">
                 {activeMetrics.map(metricKey => {
-                    const config = METRIC_CONFIG[metricKey];
+                    const config = metricConfig[metricKey];
                     const item = payload.find(p => p.dataKey === metricKey);
                     if (!item) return null;
 
@@ -201,11 +194,33 @@ export function TrendChart({
     customRange,
     onCustomRangeChange
 }: TrendChartProps) {
+    const { formatCurrency } = useFormatter();
     const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>([
         'cost',
         'impressions',
         'clicks'
     ]);
+
+    const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
+        cost: {
+            label: 'Cost',
+            color: '#10b981',
+            gradientId: 'gradientCost',
+            formatValue: formatCurrency,
+        },
+        impressions: {
+            ...METRIC_CONFIG_BASE.impressions,
+            formatValue: formatCompactNumber,
+        },
+        clicks: {
+            ...METRIC_CONFIG_BASE.clicks,
+            formatValue: formatCompactNumber,
+        },
+        conversions: {
+            ...METRIC_CONFIG_BASE.conversions,
+            formatValue: formatCompactNumber,
+        },
+    };
 
     // Toggle metric selection
     const toggleMetric = (metric: MetricKey) => {
@@ -294,9 +309,8 @@ export function TrendChart({
                                 } : undefined}
                             >
                                 <div
-                                    className={`h-2 w-2 rounded-full transition-all ${
-                                        isActive ? 'opacity-100' : 'opacity-40 grayscale'
-                                    }`}
+                                    className={`h-2 w-2 rounded-full transition-all ${isActive ? 'opacity-100' : 'opacity-40 grayscale'
+                                        }`}
                                     style={{ backgroundColor: config.color }}
                                 />
                                 {config.label}
@@ -344,7 +358,7 @@ export function TrendChart({
 
                             <Tooltip
                                 content={
-                                    <CustomTooltip activeMetrics={activeMetrics} />
+                                    <CustomTooltip activeMetrics={activeMetrics} metricConfig={METRIC_CONFIG} />
                                 }
                                 cursor={{
                                     stroke: 'var(--muted-foreground)',

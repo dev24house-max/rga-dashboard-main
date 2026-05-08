@@ -66,24 +66,24 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
     // Show loading state
     if (isLoading && !data) {
         return (
-            <div className="flex-1 flex flex-col h-full bg-white relative animate-in fade-in zoom-in-95 duration-300">
-                <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
+            <div className="flex-1 flex flex-col h-full bg-white dark:bg-zinc-900 relative animate-in fade-in zoom-in-95 duration-300">
+                <div className="h-16 border-b border-slate-100 dark:border-zinc-700 flex items-center justify-between px-6 bg-white dark:bg-zinc-800 backdrop-blur sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onBack}
-                            className="group flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200"
+                            className="group flex items-center gap-3 px-4 py-2 bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-500 hover:shadow-md transition-all duration-200"
                         >
-                            <div className="p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                <ArrowLeft className="w-4 h-4 text-indigo-600" />
+                            <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
+                                <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                             </div>
-                            <span className="hidden md:inline text-sm font-bold text-slate-700 group-hover:text-slate-900">Back to AI Assistant</span>
+                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
                         </button>
                     </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <Loader className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-3" />
-                        <p className="text-slate-600 font-medium">Loading summary data...</p>
+                        <Loader className="w-8 h-8 text-indigo-600 dark:text-orange-500 animate-spin mx-auto mb-3" />
+                        <p className="text-slate-600 dark:text-zinc-400 font-medium">Loading summary data...</p>
                     </div>
                 </div>
             </div>
@@ -93,24 +93,24 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
     // Show error state
     if (error && !data) {
         return (
-            <div className="flex-1 flex flex-col h-full bg-white relative animate-in fade-in zoom-in-95 duration-300">
-                <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
+            <div className="flex-1 flex flex-col h-full bg-white dark:bg-zinc-900 relative animate-in fade-in zoom-in-95 duration-300">
+                <div className="h-16 border-b border-slate-100 dark:border-zinc-700 flex items-center justify-between px-6 bg-white dark:bg-zinc-800 backdrop-blur sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onBack}
-                            className="group flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200"
+                            className="group flex items-center gap-3 px-4 py-2 bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-500 hover:shadow-md transition-all duration-200"
                         >
-                            <div className="p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                <ArrowLeft className="w-4 h-4 text-indigo-600" />
+                            <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
+                                <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                             </div>
-                            <span className="hidden md:inline text-sm font-bold text-slate-700 group-hover:text-slate-900">Back to AI Assistant</span>
+                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
                         </button>
                     </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center p-8">
                     <div className="max-w-md text-center">
-                        <p className="text-rose-600 font-medium mb-2">Failed to Load Data</p>
-                        <p className="text-slate-600 text-sm">{error?.message || 'Could not fetch summary data from the server.'}</p>
+                        <p className="text-red-600 dark:text-red-400 font-medium mb-2">Failed to Load Data</p>
+                        <p className="text-slate-600 dark:text-zinc-500 text-sm">{error?.message || 'Could not fetch summary data from the server.'}</p>
                     </div>
                 </div>
             </div>
@@ -118,24 +118,24 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
     }
 
     return (
-        <div className="flex-1 flex flex-col h-full bg-white relative animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex-1 flex flex-col h-full bg-white dark:bg-zinc-900 relative animate-in fade-in zoom-in-95 duration-300">
             {/* Summary Header */}
-            <div className="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
+            <div className="h-16 border-b border-slate-100 dark:border-zinc-700 flex items-center justify-between px-6 bg-white dark:bg-zinc-800 backdrop-blur sticky top-0 z-10">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
-                        className="group flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200"
+                        className="group flex items-center gap-3 px-4 py-2 bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-500 hover:shadow-md transition-all duration-200"
                     >
-                        <div className="p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                            <ArrowLeft className="w-4 h-4 text-indigo-600" />
+                        <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
+                            <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                         </div>
-                        <span className="hidden md:inline text-sm font-bold text-slate-700 group-hover:text-slate-900">Back to AI Assistant</span>
+                        <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
                     </button>
                 </div>
             </div>
 
             {/* Summary Content Body */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-slate-50/50">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-slate-50/50 dark:bg-zinc-900/50">
                 <div className="max-w-4xl mx-auto space-y-6">
 
                     {/* Hero Banner */}
@@ -169,9 +169,9 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                     </motion.div>
 
                     {!hasSummaryData ? (
-                        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-                            <p className="text-base font-semibold text-slate-800">No Summary Data Available</p>
-                            <p className="mt-2 text-sm text-slate-500">Ask the AI assistant to generate a summary report first, then come back to view it here.</p>
+                        <div className="rounded-3xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 text-center shadow-sm">
+                            <p className="text-base font-semibold text-slate-800 dark:text-zinc-100">No Summary Data Available</p>
+                            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Ask the AI assistant to generate a summary report first, then come back to view it here.</p>
                         </div>
                     ) : (
                         <>
@@ -183,18 +183,18 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
-                                        className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 group cursor-pointer"
+                                        className="bg-white dark:bg-zinc-800 rounded-xl p-4 border border-slate-200 dark:border-zinc-700 shadow-sm hover:border-slate-300 dark:hover:border-zinc-600 hover:shadow-md transition-all duration-300 group cursor-pointer"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className={`text-xs font-bold uppercase tracking-wider text-slate-500 transition-colors ${item.bg ?? ''}`}>
+                                            <p className={`text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 transition-colors ${item.bg ?? ''}`}>
                                                 {item.label}
                                             </p>
-                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${item.trend === 'up' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${item.trend === 'up' ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'}`}>
                                                 {item.delta}
                                             </span>
                                         </div>
-                                        <p className="text-2xl font-bold tracking-tight text-slate-800 mb-1">{item.value}</p>
-                                        <p className="text-[11px] text-slate-400">From last period</p>
+                                        <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-zinc-100 mb-1">{item.value}</p>
+                                        <p className="text-[11px] text-slate-400 dark:text-zinc-500">From last period</p>
                                     </motion.div>
                                 ))}
                             </div>
@@ -208,16 +208,16 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
-                        className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6 shadow-sm flex items-start gap-4"
+                        className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl p-6 shadow-sm flex items-start gap-4"
                     >
-                        <div className="p-3 bg-amber-100 rounded-full shrink-0">
-                            <Lightbulb className="w-6 h-6 text-amber-600" />
+                        <div className="p-3 bg-amber-100 dark:bg-amber-500/20 rounded-full shrink-0">
+                            <Lightbulb className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800 mb-1">{data!.insight.title}</h3>
-                            <p className="text-slate-600 text-sm leading-relaxed">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-1">{data!.insight.title}</h3>
+                            <p className="text-slate-600 dark:text-zinc-400 text-sm leading-relaxed">
                                 {data!.insight.message}
-                                <strong className="text-amber-700 block mt-1">{data!.insight.recommendation}</strong>
+                                <strong className="text-amber-700 dark:text-amber-400 block mt-1">{data!.insight.recommendation}</strong>
                             </p>
                         </div>
                     </motion.div>
@@ -240,7 +240,7 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: 0.2 + idx * 0.1 }}
-                                    className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden col-span-1 h-fit`}
+                                    className="bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden col-span-1 h-fit"
                                 >
                                     {/* Premium Header - Compact */}
                                     <button
@@ -252,13 +252,13 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                         </div>
                                         <div className="flex-1 pt-0.5">
                                             <div className="flex items-center justify-between">
-                                                <h3 className="text-base font-bold text-slate-800">{section.title}</h3>
-                                                <div className={`p-1 rounded-full hover:bg-slate-100 transition-colors ${isExpanded ? 'bg-slate-100' : ''}`}>
-                                                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                                <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100">{section.title}</h3>
+                                                <div className={`p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors ${isExpanded ? 'bg-slate-100 dark:bg-zinc-700' : ''}`}>
+                                                    <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-zinc-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                                                 </div>
                                             </div>
                                             {!isExpanded && (
-                                                <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">
+                                                <p className="text-slate-500 dark:text-zinc-500 text-xs mt-0.5 line-clamp-1">
                                                     {section.events[0]}
                                                 </p>
                                             )}
@@ -277,18 +277,18 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                             >
                                                 <div className="px-4 pb-4 pt-0 space-y-4">
                                                     {/* Divider */}
-                                                    <div className="h-px w-full bg-slate-50" />
+                                                    <div className="h-px w-full bg-slate-100 dark:bg-zinc-700" />
 
                                                     {/* What Happened */}
                                                     <div>
-                                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-1.5">
+                                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-500 mb-3 flex items-center gap-1.5">
                                                             KEY EVENTS
                                                         </h4>
                                                         <ul className="space-y-3">
                                                             {section.events.map((event, i) => (
-                                                                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-800 leading-relaxed group/item">
+                                                                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed group/item">
                                                                     <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${section.iconColor}`} />
-                                                                    <span className="font-medium group-hover/item:text-slate-950 transition-colors">{event}</span>
+                                                                    <span className="font-medium group-hover:text-slate-900 dark:group-hover:text-zinc-100 transition-colors">{event}</span>
                                                                 </li>
                                                             ))}
                                                         </ul>
@@ -297,21 +297,21 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                                     {/* Insights Grid */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         {/* Trend */}
-                                                        <div className="bg-emerald-50/50 rounded-lg p-3 border border-emerald-100/50">
-                                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1 flex items-center gap-1.5">
-                                                                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                                                        <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-lg p-3 border border-emerald-100 dark:border-emerald-500/20">
+                                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
+                                                                <TrendingUp className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
                                                                 Trend
                                                             </h4>
-                                                            <p className="text-xs text-emerald-900/80 leading-relaxed font-medium">{section.trend}</p>
+                                                            <p className="text-xs text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-medium">{section.trend}</p>
                                                         </div>
 
                                                         {/* Prediction */}
-                                                        <div className="bg-indigo-50/50 rounded-lg p-3 border border-indigo-100/50">
-                                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1 flex items-center gap-1.5">
-                                                                <Lightbulb className="w-3 h-3 text-indigo-500" />
+                                                        <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-lg p-3 border border-indigo-100 dark:border-indigo-500/20">
+                                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
+                                                                <Lightbulb className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
                                                                 AI Forecast
                                                             </h4>
-                                                            <p className="text-xs text-indigo-900/80 leading-relaxed font-medium">{section.prediction}</p>
+                                                            <p className="text-xs text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed font-medium">{section.prediction}</p>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -88,10 +88,10 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
               report_type: 'BASIC',
               data_level: 'AUCTION_CAMPAIGN',
               dimensions: JSON.stringify(['campaign_id']),
-              metrics: JSON.stringify(['impressions', 'clicks', 'spend', 'conversion', 'conversion_value']),
+              metrics: JSON.stringify(['impressions', 'clicks', 'spend']),
               start_date: '2020-01-01',
               end_date: new Date().toISOString().split('T')[0],
-              filters: JSON.stringify([{ field_name: 'campaign_ids', filter_type: 'IN', filter_value: campaignIds }]),
+              filtering: JSON.stringify([{ field_name: 'campaign_ids', filter_type: 'IN', filter_value: JSON.stringify(campaignIds) }]),
               page_size: 1000,
             },
           });
@@ -146,6 +146,8 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
           externalId: String(c.campaign_id || c.id || ''),
           name: c.campaign_name || c.name || '',
           status: this.mapStatus(c.operation_status || c.status),
+          // Preserve the raw TikTok budget_mode for downstream consumers
+          budgetMode: c.budget_mode || c.budgetMode || null,
           budget: new Prisma.Decimal(budget || dailyBudget || 0),
           startDate: c.start_time ? new Date(c.start_time) : null,
           endDate: c.end_time ? new Date(c.end_time) : null,
@@ -178,81 +180,144 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
     });
 
     try {
-      // TikTok Reporting API
-      const response = await axios.get(`${this.baseUrl}/report/integrated/get/`, {
-        headers: {
-          'Access-Token': credentials.accessToken,
-        },
-        params: {
-          advertiser_id: credentials.accountId,
-          report_type: 'BASIC',
-          data_level: 'AUCTION_CAMPAIGN',
-          dimensions: JSON.stringify(['campaign_id', 'stat_time_day']),
-          metrics: JSON.stringify([
-            'impressions',
-            'clicks',
-            'spend',
-            'conversion',
-            'conversion_value',
-          ]),
-          start_date: range.startDate.toISOString().split('T')[0],
-          end_date: range.endDate.toISOString().split('T')[0],
-          filters: JSON.stringify([
-            {
-              field_name: 'campaign_ids',
-              filter_type: 'IN',
-              filter_value: [campaignId],
-            },
-          ]),
-          page_size: 1000,
-        },
-      });
+      const startDate = new Date(range.startDate);
+      const endDate = new Date(range.endDate);
 
-      if (response.data?.code !== 0) {
-        await this.adsApiLogService.error('TikTokAds', 'fetchMetrics API returned non-zero code', null, {
-          response: response.data,
+      const diffMs = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1; // inclusive-ish
+
+      const maxDays = 30;
+
+      const performRequest = async (sDate: Date, eDate: Date) => {
+        const s = sDate.toISOString().split('T')[0];
+        const e = eDate.toISOString().split('T')[0];
+        await this.adsApiLogService.info('TikTokAds', 'Fetching metrics chunk', {
           campaignId,
+          accountId: credentials.accountId,
+          startDate: s,
+          endDate: e,
         });
-        throw new Error(`TikTok API Error: ${response.data?.message}`);
+
+        const resp = await axios.get(`${this.baseUrl}/report/integrated/get/`, {
+          headers: { 'Access-Token': credentials.accessToken },
+          params: {
+            advertiser_id: credentials.accountId,
+            report_type: 'BASIC',
+            data_level: 'AUCTION_CAMPAIGN',
+            dimensions: JSON.stringify(['campaign_id', 'stat_time_day']),
+            // Request only basic metrics to avoid invalid-field errors
+            metrics: JSON.stringify(['impressions', 'clicks', 'spend']),
+            start_date: s,
+            end_date: e,
+            filtering: JSON.stringify([
+              { field_name: 'campaign_ids', filter_type: 'IN', filter_value: JSON.stringify([campaignId]) },
+            ]),
+            page_size: 1000,
+          },
+        });
+
+        if (resp.data?.code !== 0) {
+          await this.adsApiLogService.error('TikTokAds', 'fetchMetrics API returned non-zero code', null, {
+            response: resp.data,
+            campaignId,
+          });
+          // propagate code so caller can decide
+          const e: any = new Error(`TikTok API Error: ${resp.data?.message}`);
+          e.code = resp.data?.code;
+          throw e;
+        }
+
+        return resp.data.data.list || [];
+      };
+
+      let combined: any[] = [];
+
+      if (diffDays > maxDays) {
+        // Split into <=30-day chunks
+        let cursor = new Date(startDate);
+        while (cursor <= endDate) {
+          const chunkEnd = new Date(Math.min(endDate.getTime(), cursor.getTime() + (maxDays - 1) * 24 * 60 * 60 * 1000));
+          try {
+            const chunkList = await performRequest(cursor, chunkEnd);
+            combined = combined.concat(chunkList || []);
+          } catch (err) {
+            // If TikTok complains about max span, continue with smaller chunks; otherwise log and rethrow
+            if (err?.code === 40002) {
+              this.logger.warn(`TikTok chunk request failed with 40002 for ${cursor.toISOString()} - ${chunkEnd.toISOString()}, trying smaller chunks`);
+              // break chunk into single-day calls as fallback
+              let singleCursor = new Date(cursor);
+              while (singleCursor <= chunkEnd) {
+                const singleEnd = new Date(singleCursor.getTime());
+                try {
+                  const singleList = await performRequest(singleCursor, singleEnd);
+                  combined = combined.concat(singleList || []);
+                } catch (singleErr) {
+                  this.logger.error(`Failed single-day fetch for ${singleCursor.toISOString()}: ${singleErr.message}`);
+                }
+                singleCursor.setDate(singleCursor.getDate() + 1);
+              }
+            } else {
+              this.logger.error(`Chunk fetch failed: ${err?.message || err}`);
+            }
+          }
+          cursor.setDate(cursor.getDate() + maxDays);
+        }
+      } else {
+        // single request
+        try {
+          combined = await performRequest(startDate, endDate);
+        } catch (err) {
+          // If API rejects for span even though our calculation thought it's <=30 days, attempt chunking fallback
+          if (err?.code === 40002) {
+            this.logger.warn('TikTok API returned 40002 despite small range — falling back to chunking');
+            let cursor = new Date(startDate);
+            while (cursor <= endDate) {
+              const chunkEnd = new Date(Math.min(endDate.getTime(), cursor.getTime() + (maxDays - 1) * 24 * 60 * 60 * 1000));
+              try {
+                const chunkList = await performRequest(cursor, chunkEnd);
+                combined = combined.concat(chunkList || []);
+              } catch (chunkErr) {
+                this.logger.error(`Fallback chunk fetch failed: ${chunkErr?.message || chunkErr}`);
+              }
+              cursor.setDate(cursor.getDate() + maxDays);
+            }
+          } else {
+            this.logger.error(`Failed to fetch TikTok metrics: ${err?.message || err}`);
+            await this.adsApiLogService.error('TikTokAds', 'fetchMetrics failed', err, {
+              campaignId,
+              accountId: credentials.accountId,
+            });
+            return [];
+          }
+        }
       }
 
-      const list = response.data.data.list || [];
-      await this.adsApiLogService.info('TikTokAds', `Fetched ${list.length} metric rows`, {
+      await this.adsApiLogService.info('TikTokAds', `Fetched ${combined.length} metric rows (combined)`, {
         campaignId,
-        sample: list.slice(0, 2),
+        sample: combined.slice(0, 2),
       });
 
-      // DEBUG: Log sample metric row to see structure
-      if (list.length > 0) {
-        this.logger.debug(`[TikTok Metrics Sample] First metric row: ${JSON.stringify(list[0], null, 2)}`);
-        this.logger.debug(`[TikTok Metrics Sample] All metric row fields keys: ${JSON.stringify(Object.keys(list[0].metrics || {}))}`);
-      }
-
-      return list.map((row: any, index: number) => {
-        // DEBUG: Log spend parsing for each row
-        const spendRaw = row.metrics.spend || row.metrics.stat_cost;
-        this.logger.debug(`[TikTok Spend Debug] Row ${index}: spend_raw=${spendRaw}, type=${typeof spendRaw}`);
-
+      // Map combined rows to Metric objects
+      return (combined || []).map((row: any, index: number) => {
+        const spendRaw = row.metrics?.spend || row.metrics?.stat_cost;
         const spend = parseFloat(spendRaw || '0');
-
         if (isNaN(spend)) {
           this.logger.warn(`[TikTok Spend NaN] Row ${index}: parseFloat returned NaN for value "${spendRaw}". All metrics: ${JSON.stringify(row.metrics)}`);
         }
-
         const revenue = parseFloat(
-          row.metrics.total_conversion_value ||
-          row.metrics.conversion_value ||
-          row.metrics.total_conversions_value ||
+          row.metrics?.total_conversion_value ||
+          row.metrics?.conversion_value ||
+          row.metrics?.total_conversions_value ||
           '0'
         );
 
         const result = {
-          date: new Date(row.dimensions.stat_time_day),
-          impressions: parseInt(row.metrics.impressions || '0'),
-          clicks: parseInt(row.metrics.clicks || '0'),
+          date: new Date(row.dimensions?.stat_time_day),
+          impressions: parseInt(row.metrics?.impressions || '0'),
+          clicks: parseInt(row.metrics?.clicks || '0'),
           spend: new Prisma.Decimal(isNaN(spend) ? 0 : spend),
-          conversions: parseInt(row.metrics.conversions || row.metrics.total_conversions || row.metrics.conversion || '0'),
-          revenue: new Prisma.Decimal(revenue),
+          conversions: parseInt(row.metrics?.conversions || row.metrics?.total_conversions || row.metrics?.conversion || '0'),
+          revenue: new Prisma.Decimal(isNaN(revenue) ? 0 : revenue),
           roas: new Prisma.Decimal((isNaN(spend) || spend <= 0) ? 0 : revenue / spend),
         };
 

@@ -68,6 +68,7 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
+        case '30d':
         case 'last_month': {
             const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
             const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);

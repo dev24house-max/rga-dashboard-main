@@ -226,10 +226,14 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
             // 2. Exchange code for tokens
             // IMPORTANT: TikTok uses JSON body, not form-urlencoded
             // IMPORTANT: TikTok uses `auth_code`, not `code`
+            // IMPORTANT: TikTok API returns gzip-compressed responses - must decompress
             const tokenResponse = await axios.post(this.tokenUrl, {
                 app_id: this.appId,
                 secret: this.appSecret,
                 auth_code: code,  // TikTok-specific parameter name
+            }, {
+                decompress: true,
+                timeout: 10000,
             });
 
             // TikTok response structure: { code: 0, message: "OK", data: { ... } }
@@ -308,6 +312,8 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
                 params: {
                     advertiser_ids: JSON.stringify(advertiserIds.map(id => String(id))),
                 },
+                decompress: true,
+                timeout: 10000,
             });
 
             if (response.data?.code !== 0) {
@@ -447,7 +453,8 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
     private async triggerInitialSync(accountId: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
         try {
             this.logger.log(`[TikTok OAuth] Triggering initial TikTok initial sync for account: ${accountId}`);
-            await this.unifiedSyncService.syncAccount(AdPlatform.TIKTOK, accountId, tenantId, undefined, 90);
+            // Limit initial sync to 30 days to avoid long-running requests for large accounts
+            await this.unifiedSyncService.syncAccount(AdPlatform.TIKTOK, accountId, tenantId, undefined, 30);
             this.logger.log(`[TikTok OAuth] Initial sync completed for account: ${accountId}`);
             return { success: true };
         } catch (syncError: any) {
@@ -493,6 +500,9 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
                 app_id: this.appId,
                 secret: this.appSecret,
                 refresh_token: decryptedRefreshToken,
+            }, {
+                decompress: true,
+                timeout: 10000,
             });
 
             if (response.data?.code !== 0) {

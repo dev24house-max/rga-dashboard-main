@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GrowthMetrics, SummaryMetrics } from '../schemas';
-import { formatCurrencyTHBDecimal } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import { useAiSummaryCards } from '@/features/ai-insights/hooks/use-ai-summary';
 
 type ItemKey = 'cpm' | 'ctr' | 'roas' | 'roi';
@@ -36,6 +36,8 @@ export function AiSummaries({ summary, growth }: AiSummariesProps) {
     const [displayedItems, setDisplayedItems] = useState<SummaryItem[]>([]);
 
     // When webhook data is fetched, convert it to displayedItems format
+    const { formatCurrency } = useFormatter();
+
     useEffect(() => {
         if (webhookCards && webhookCards.length > 0) {
             // Use webhook data
@@ -53,7 +55,7 @@ export function AiSummaries({ summary, growth }: AiSummariesProps) {
                 {
                     key: 'cpm',
                     label: 'CPM',
-                    value: summary ? formatCurrencyTHBDecimal(summary.averageCpm) : formatCurrencyTHBDecimal(0),
+                    value: summary ? formatCurrency(summary.averageCpm, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formatCurrency(0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
                     delta: growth?.cpmGrowth,
                     accentClassName: 'group-hover:text-blue-500',
                 },

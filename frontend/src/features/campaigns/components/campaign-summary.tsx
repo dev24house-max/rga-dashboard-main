@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CampaignSummaryMetrics } from '../api/campaign-service';
+import { useFormatter } from '@/hooks/use-formatter';
 
 interface CampaignSummaryProps {
     summary?: CampaignSummaryMetrics;
@@ -67,6 +68,8 @@ const SummaryCard = ({
 );
 
 export function CampaignSummary({ summary, isLoading = false }: CampaignSummaryProps) {
+    const { formatCurrency, formatNumber, formatCurrencyShort } = useFormatter();
+
     if (isLoading || !summary) {
         return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 animate-pulse">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -77,14 +80,9 @@ export function CampaignSummary({ summary, isLoading = false }: CampaignSummaryP
 
     // Formatters
     const safeValue = (val?: number) => (val === undefined || val === null || Number.isNaN(val) ? 0 : val);
-    const currency = (val?: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(safeValue(val));
-    const currencyShort = (val?: number) => {
-        const safe = safeValue(val);
-        if (safe >= 1000000) return `฿${(safe / 1000000).toFixed(1)}M`;
-        if (safe >= 1000) return `฿${(safe / 1000).toFixed(0)}K`;
-        return `฿${safe}`;
-    };
-    const number = (val?: number) => new Intl.NumberFormat('th-TH').format(safeValue(val));
+    const currency = (val?: number) => formatCurrency(safeValue(val));
+    const currencyShort = (val?: number) => formatCurrencyShort(safeValue(val));
+    const number = (val?: number) => formatNumber(safeValue(val));
     const percent = (val?: number) => `${safeValue(val).toFixed(2)}%`;
 
     const safe = (val: number | undefined) => {

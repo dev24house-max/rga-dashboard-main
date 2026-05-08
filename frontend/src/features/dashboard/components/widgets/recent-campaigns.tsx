@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatCurrencyTHB } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { HelpCircle, Info } from 'lucide-react';
 import {
@@ -106,6 +106,7 @@ export function RecentCampaigns({
     campaigns,
     className
 }: RecentCampaignsProps) {
+    const { formatCurrency } = useFormatter();
     const hasData = campaigns && campaigns.length > 0;
 
     return (
@@ -120,9 +121,8 @@ export function RecentCampaigns({
 
                 <CardDescription>
                     {hasData
-                        ? `${campaigns.length} most recent campaign${
-                              campaigns.length > 1 ? 's' : ''
-                          }`
+                        ? `${campaigns.length} most recent campaign${campaigns.length > 1 ? 's' : ''
+                        }`
                         : 'No campaigns found'}
                 </CardDescription>
             </CardHeader>
@@ -161,8 +161,8 @@ export function RecentCampaigns({
                                                 platformId: campaign.platform,
                                                 className: 'h-6 w-6',
                                             }) && (
-                                                <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                                            )}
+                                                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                                                )}
                                         </div>
 
                                         {/* Center-Left: Campaign Info */}
@@ -186,20 +186,18 @@ export function RecentCampaigns({
                                         {/* Right: Spending Info */}
                                         <div className="text-right shrink-0 w-16">
                                             <p className="text-sm font-medium leading-tight">
-                                                {formatCurrencyTHB(
-                                                    campaign.spending
-                                                )}
+                                                {formatCurrency(campaign.spending)}
                                             </p>
 
                                             {campaign.budgetUtilization !==
                                                 undefined && (
-                                                <p className="text-xs text-muted-foreground leading-tight">
-                                                    {campaign.budgetUtilization.toFixed(
-                                                        0
-                                                    )}
-                                                    % used
-                                                </p>
-                                            )}
+                                                    <p className="text-xs text-muted-foreground leading-tight">
+                                                        {campaign.budgetUtilization.toFixed(
+                                                            0
+                                                        )}
+                                                        % used
+                                                    </p>
+                                                )}
                                         </div>
                                     </div>
                                 );
