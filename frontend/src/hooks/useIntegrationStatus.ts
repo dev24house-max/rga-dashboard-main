@@ -13,6 +13,8 @@ export interface IntegrationStatus {
     lineAds: boolean;
     tiktokAds: boolean;
     googleAnalytics: boolean;
+    googleSearchConsole: boolean;
+    bingWebmaster: boolean;
 }
 
 export function useIntegrationStatus() {
@@ -25,11 +27,14 @@ export function useIntegrationStatus() {
         lineAds: false,
         tiktokAds: false,
         googleAnalytics: false,
+        googleSearchConsole: false,
+        bingWebmaster: false,
     });
     const [accounts, setAccounts] = useState<any[]>([]);
     const [ga4Account, setGa4Account] = useState<any>(null);
     const [lineAdsAccounts, setLineAdsAccounts] = useState<any[]>([]);
     const [tiktokAdsAccounts, setTiktokAdsAccounts] = useState<any[]>([]);
+    const [gscAccounts, setGscAccounts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -42,11 +47,14 @@ export function useIntegrationStatus() {
                 lineAds: false,
                 tiktokAds: false,
                 googleAnalytics: false,
+                googleSearchConsole: false,
+                bingWebmaster: false,
             });
             setAccounts([]);
             setGa4Account(null);
             setLineAdsAccounts([]);
             setTiktokAdsAccounts([]);
+            setGscAccounts([]);
             setError(null);
             setIsLoading(false);
             return;
@@ -57,12 +65,14 @@ export function useIntegrationStatus() {
             setError(null);
 
             // Fetch all statuses in parallel
-            const [googleAdsRes, facebookAdsRes, ga4Res, lineAdsRes, tiktokAdsRes] = await Promise.allSettled([
+            const [googleAdsRes, facebookAdsRes, ga4Res, lineAdsRes, tiktokAdsRes, gscStatusRes, bingStatusRes] = await Promise.allSettled([
                 integrationService.getGoogleAdsStatus(),
                 integrationService.getFacebookAdsStatus(),
                 integrationService.getGoogleAnalyticsStatus(),
                 integrationService.getLineAdsStatus(),
                 integrationService.getTikTokAdsStatus(),
+                integrationService.getGoogleSearchConsoleStatus(),
+                integrationService.getBingWebmasterStatus(),
             ]);
 
             const googleAdsStatus = googleAdsRes.status === 'fulfilled' ? googleAdsRes.value.data : { isConnected: false, accounts: [] };
@@ -70,6 +80,8 @@ export function useIntegrationStatus() {
             const ga4Status = ga4Res.status === 'fulfilled' ? ga4Res.value.data : { isConnected: false, account: null };
             const lineAdsStatus = lineAdsRes.status === 'fulfilled' ? lineAdsRes.value.data : { isConnected: false, accounts: [] };
             const tiktokAdsStatus = tiktokAdsRes.status === 'fulfilled' ? tiktokAdsRes.value.data : { isConnected: false, accounts: [] };
+            const gscStatus = gscStatusRes.status === 'fulfilled' ? gscStatusRes.value.data : { isConnected: false, accounts: [] };
+            const bingStatus = bingStatusRes.status === 'fulfilled' ? bingStatusRes.value.data : { connected: false, siteUrl: null };
 
             setStatus(prev => ({
                 ...prev,
@@ -78,12 +90,15 @@ export function useIntegrationStatus() {
                 googleAnalytics: ga4Status.isConnected,
                 lineAds: lineAdsStatus.isConnected,
                 tiktokAds: tiktokAdsStatus.isConnected,
+                googleSearchConsole: gscStatus.isConnected,
+                bingWebmaster: bingStatus.connected,
             }));
 
             setAccounts(googleAdsStatus.accounts || []);
             setGa4Account(ga4Status.account || null);
             setLineAdsAccounts(lineAdsStatus.accounts || []);
             setTiktokAdsAccounts(tiktokAdsStatus.accounts || []);
+            setGscAccounts(gscStatus.accounts || []);
         } catch (error) {
             console.error('Failed to fetch integration status:', error);
             setError(error instanceof Error ? error : new Error('Failed to load integration status'));
@@ -110,6 +125,19 @@ export function useIntegrationStatus() {
             setIsSyncing(true);
             await integrationService.syncGoogleAnalytics();
             await fetchStatus(); // Refresh status to get new lastSyncAt
+            return true;
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const syncGoogleSearchConsole = async (days?: number) => {
+        try {
+            setIsSyncing(true);
+            await integrationService.syncGoogleSearchConsole(days);
+            await fetchStatus();
             return true;
         } catch (error) {
             throw error;
@@ -170,6 +198,45 @@ export function useIntegrationStatus() {
         }
     };
 
+    const disconnectGoogleSearchConsole = async () => {
+        try {
+            setIsLoading(true);
+            await integrationService.disconnectGoogleSearchConsole();
+            await fetchStatus();
+            return true;
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const syncBingWebmaster = async () => {
+        try {
+            setIsSyncing(true);
+            await integrationService.syncBingWebmaster();
+            await fetchStatus();
+            return true;
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const disconnectBingWebmaster = async () => {
+        try {
+            setIsLoading(true);
+            await integrationService.disconnectBingWebmaster();
+            await fetchStatus();
+            return true;
+        } catch (error) {
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchStatus();
     }, [fetchStatus]);
@@ -180,15 +247,20 @@ export function useIntegrationStatus() {
         ga4Account,
         lineAdsAccounts,
         tiktokAdsAccounts,
+        gscAccounts,
         isLoading,
         error,
         isSyncing,
         refetch: fetchStatus,
         syncGoogleAds,
         syncGoogleAnalytics,
+        syncGoogleSearchConsole,
+        syncBingWebmaster,
         disconnectGoogleAds,
         disconnectGoogleAnalytics,
         disconnectLineAds,
         disconnectTikTokAds,
+        disconnectGoogleSearchConsole,
+        disconnectBingWebmaster,
     };
 }

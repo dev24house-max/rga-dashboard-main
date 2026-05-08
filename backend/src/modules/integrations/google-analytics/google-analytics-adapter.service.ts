@@ -41,13 +41,15 @@ export class GoogleAnalyticsAdapterService implements MarketingPlatformAdapter {
         credentials: PlatformCredentials,
         campaignId: string,
         range: DateRange
-    ): Promise<Partial<Metric>[]> {
+    ): Promise<any[]> {
         this.logger.log(`Fetching GA4 metrics for property ${credentials.accountId}`);
         try {
             const response = await this.apiService.runReport({
+                id: credentials.accountRecordId,
                 propertyId: credentials.accountId,
                 accessToken: credentials.accessToken,
                 refreshToken: credentials.refreshToken,
+                tokenExpiresAt: credentials.tokenExpiresAt,
             }, {
                 dateRanges: [{
                     startDate: range.startDate.toISOString().split('T')[0],
@@ -74,24 +76,18 @@ export class GoogleAnalyticsAdapterService implements MarketingPlatformAdapter {
 
             this.logger.log(`Fetched ${response.rows.length} rows from GA4`);
 
-            const metrics: Partial<Metric>[] = response.rows.map((row: any) => {
-                const revenue = Number(row.metricValues[3].value);
-
+            const metrics: any[] = response.rows.map((row: any) => {
                 return {
                     date: this.parseDate(row.dimensionValues[0].value),
-                    impressions: Number(row.metricValues[0].value), // Mapping Active Users -> Impressions (approx)
-                    clicks: Number(row.metricValues[1].value),      // Mapping Sessions -> Clicks (approx)
+                    activeUsers: Number(row.metricValues[0].value),
+                    sessions: Number(row.metricValues[1].value),
                     conversions: Math.trunc(Number(row.metricValues[2].value)),
-                    revenue: new Prisma.Decimal(revenue),
-                    spend: new Prisma.Decimal(0), // GA4 doesn't track ad spend directly unless linked
-                    roas: new Prisma.Decimal(0),
-                    metadata: {
-                        newUsers: Number(row.metricValues[4]?.value || 0),
-                        engagementRate: Number(row.metricValues[5]?.value || 0),
-                        screenPageViews: Number(row.metricValues[6]?.value || 0),
-                        bounceRate: Number(row.metricValues[7]?.value || 0),
-                        averageSessionDuration: Number(row.metricValues[8]?.value || 0),
-                    } as any,
+                    totalRevenue: Number(row.metricValues[3].value),
+                    newUsers: Number(row.metricValues[4]?.value || 0),
+                    engagementRate: Number(row.metricValues[5]?.value || 0),
+                    screenPageViews: Number(row.metricValues[6]?.value || 0),
+                    bounceRate: Number(row.metricValues[7]?.value || 0),
+                    averageSessionDuration: Number(row.metricValues[8]?.value || 0),
                 };
             });
 
@@ -99,7 +95,7 @@ export class GoogleAnalyticsAdapterService implements MarketingPlatformAdapter {
 
         } catch (error) {
             this.logger.error(`Failed to fetch metrics: ${error.message}`);
-            return [];
+            throw error;
         }
     }
 

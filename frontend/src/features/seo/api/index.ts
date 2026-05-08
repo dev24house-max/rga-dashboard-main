@@ -46,6 +46,10 @@ export const SeoService = {
     syncGsc: async (days: number = 30): Promise<{ success: boolean, fetched: number, message?: string }> => {
         const response = await apiClient.post(`/seo/sync/gsc?days=${days}`);
         return response.data;
-    }
+    },
+    connectGsc: async (siteUrl: string): Promise<{ success: boolean, siteUrl: string }> => {
+        const response = await apiClient.post('/seo/gsc/connect', { siteUrl });
+        return response.data;
+    },
 };
 

@@ -59,7 +59,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     if (query.platform && query.platform !== 'ALL') {
       const platforms = query.platform.split(',').filter(p => p !== 'ALL').map(p => {
-        const key = p.trim().toUpperCase().replace('-', '_');
+        const key = p.trim().toUpperCase().replace(/[-\s]/g, '_');
 
         // Explicit mapping for known variations
         if (key === 'GOOGLE') return AdPlatform.GOOGLE_ADS;
@@ -148,7 +148,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     // 1. Fetch campaigns with date-filtered metrics
     const metricsWhere: Prisma.MetricWhereInput = {
-      source: { not: 'lifetime_summary' },
+      // Include all metrics (don't filter by source to get Google Ads data)
       ...(startDate || endDate ? {
         date: {
           ...(startDate && { gte: startDate }),
@@ -189,7 +189,13 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     if (missingIds.length > 0) {
       fallbackSums = await this.prisma.metric.groupBy({
         by: ['campaignId'],
-        where: { campaignId: { in: missingIds }, source: { not: 'lifetime_summary' } },
+        where: { 
+          campaignId: { in: missingIds }, 
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ] 
+        },
         _sum: { spend: true, impressions: true, clicks: true, revenue: true, conversions: true }
       });
     }
@@ -321,7 +327,10 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     const periodAgg = await this.prisma.metric.aggregate({
       where: {
         ...metricWhere,
-        source: { not: 'lifetime_summary' },
+        OR: [
+          { source: { not: 'lifetime_summary' } },
+          { source: null }
+        ],
       },
       _sum: {
         spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
@@ -342,7 +351,10 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
           campaignId: {
             in: campaignIds.filter(id => !lifetimeSummaryIds.includes(id))
           },
-          source: { not: 'lifetime_summary' },
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ],
         },
         _sum: {
           spend: true, impressions: true, clicks: true, revenue: true, conversions: true,

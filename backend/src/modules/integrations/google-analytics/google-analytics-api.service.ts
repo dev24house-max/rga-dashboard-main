@@ -48,6 +48,29 @@ export class GoogleAnalyticsApiService {
     }
 
     /**
+     * Run a GA4 realtime report. Realtime data is separate from historical reports.
+     */
+    async runRealtimeReport(account: any, requestBody: any) {
+        try {
+            const auth = await this.getAuthenticatedClient(account);
+
+            const analyticsData = google.analyticsdata({
+                version: 'v1beta',
+                auth: auth
+            });
+
+            const response = await analyticsData.properties.runRealtimeReport({
+                property: `properties/${account.propertyId}`,
+                requestBody: requestBody
+            });
+
+            return response.data;
+        } catch (error) {
+            this.handleApiError(error, account.propertyId);
+        }
+    }
+
+    /**
      * Get authenticated OAuth2 client, refreshing token if needed
      */
     private async getAuthenticatedClient(account: any) {

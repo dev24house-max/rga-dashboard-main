@@ -1,13 +1,19 @@
-import { Controller, Post, Body, Req, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Req, HttpCode, HttpStatus, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register new tenant and admin user' })
@@ -37,6 +43,40 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   verifyEmail(@Query('token') token: string) {
     return this.authService.verifyEmail(token);
+  }
+
+  @Get('google/url')
+  @ApiOperation({ summary: 'Redirect to Google login' })
+  async getGoogleLoginUrl(@Res() res: Response) {
+    const authUrl = await this.authService.getGoogleAuthUrl();
+    return res.redirect(authUrl);
+  }
+
+  @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  async handleGoogleCallback(
+    @Query('code') code: string,
+    @Req() request: Request,
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.handleGoogleLoginCallback(code, request);
+    const frontendUrl = (this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173').replace(/\/$/, '');
+    const redirectUrl = `${frontendUrl}/google-login-callback#accessToken=${encodeURIComponent(result.accessToken)}&refreshToken=${encodeURIComponent(result.refreshToken)}`;
+    return res.redirect(redirectUrl);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  getCurrentUser(@CurrentUser() user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      tenant: user.tenant,
+    };
   }
 
   @Get('test-mail')

@@ -183,6 +183,8 @@ export class GoogleAnalyticsOAuthService {
     }
 
     private async triggerInitialSync(accountId: string, tenantId: string) {
+        let syncLogId: string | null = null;
+
         try {
             this.logger.log(`[Initial Sync] Starting sync for GA4 account ${accountId}`);
 
@@ -197,6 +199,7 @@ export class GoogleAnalyticsOAuthService {
                     startedAt: new Date(),
                 }
             });
+            syncLogId = syncLog.id;
 
             // Run sync
             await this.unifiedSyncService.syncAccount(AdPlatform.GOOGLE_ANALYTICS, accountId, tenantId);
@@ -213,6 +216,16 @@ export class GoogleAnalyticsOAuthService {
             this.logger.log(`[Initial Sync] Completed for GA4 account ${accountId}`);
         } catch (error) {
             this.logger.error(`[Initial Sync] Failed for GA4 account ${accountId}: ${error.message}`);
+            if (syncLogId) {
+                await this.prisma.syncLog.update({
+                    where: { id: syncLogId },
+                    data: {
+                        status: SyncStatus.FAILED,
+                        errorMessage: error.message,
+                        completedAt: new Date(),
+                    },
+                });
+            }
         }
     }
 

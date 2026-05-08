@@ -8,6 +8,7 @@ import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
 import { SeoMetricSummary } from '../types';
 import { OrganicKeywordsByIntent } from '../components/organic-keywords-by-intent';
 import { AdsConnectionStatus } from '../components/ads-connection-status';
+import { BingConnectionStatus } from '../components/bing-connection-status';
 import { SeoAnchorText } from '../components/seo-anchor-text';
 import { TopOrganicKeywords } from '../components/top-organic-keywords';
 import { SeoOffPageMetrics } from '../components/seo-offpage-metrics';
@@ -17,7 +18,10 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
+import { Info, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useSyncGsc } from '../hooks';
+import { useState } from 'react';
 
 // =============================================================================
 // Info Tooltip Component
@@ -44,8 +48,20 @@ function InfoTooltip({ content }: { content: string }) {
 }
 
 export function SeoPage() {
-    const { data, isLoading } = useSeoSummary();
+    const { data, isLoading, refetch } = useSeoSummary();
     const { status: integrationStatus, isLoading: integrationLoading, error: integrationError } = useIntegrationStatus();
+    const syncMutation = useSyncGsc();
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        try {
+            await syncMutation.mutateAsync(30);
+            await refetch();
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     // Default fallback data if API fails or is loading (to prevent crash)
     const displayData: SeoMetricSummary = data || {

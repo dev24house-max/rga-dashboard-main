@@ -203,6 +203,8 @@ export class UnifiedSyncService {
             const credentials = {
                 accessToken: this.tryDecryptToken(accountData.accessToken),
                 refreshToken: this.tryDecryptToken(accountData.refreshToken),
+                accountRecordId: accountData.id,
+                tokenExpiresAt: accountData.tokenExpiresAt,
                 accountId: (() => {
                     switch (platform) {
                         case AdPlatform.GOOGLE_ANALYTICS:
@@ -504,22 +506,22 @@ export class UnifiedSyncService {
                     tenantId,
                     propertyId,
                     date,
-                    activeUsers: m.impressions ?? 0,
-                    sessions: m.clicks ?? 0,
-                    newUsers: (m.metadata as any)?.newUsers ?? 0,
-                    screenPageViews: (m.metadata as any)?.screenPageViews ?? 0,
-                    engagementRate: (m.metadata as any)?.engagementRate ?? 0,
-                    bounceRate: (m.metadata as any)?.bounceRate ?? 0,
-                    avgSessionDuration: (m.metadata as any)?.averageSessionDuration ?? 0,
+                    activeUsers: m.activeUsers ?? 0,
+                    sessions: m.sessions ?? 0,
+                    newUsers: m.newUsers ?? 0,
+                    screenPageViews: m.screenPageViews ?? 0,
+                    engagementRate: m.engagementRate ?? 0,
+                    bounceRate: m.bounceRate ?? 0,
+                    avgSessionDuration: m.averageSessionDuration ?? 0,
                 },
                 update: {
-                    activeUsers: m.impressions ?? 0,
-                    sessions: m.clicks ?? 0,
-                    newUsers: (m.metadata as any)?.newUsers ?? 0,
-                    screenPageViews: (m.metadata as any)?.screenPageViews ?? 0,
-                    engagementRate: (m.metadata as any)?.engagementRate ?? 0,
-                    bounceRate: (m.metadata as any)?.bounceRate ?? 0,
-                    avgSessionDuration: (m.metadata as any)?.averageSessionDuration ?? 0,
+                    activeUsers: m.activeUsers ?? 0,
+                    sessions: m.sessions ?? 0,
+                    newUsers: m.newUsers ?? 0,
+                    screenPageViews: m.screenPageViews ?? 0,
+                    engagementRate: m.engagementRate ?? 0,
+                    bounceRate: m.bounceRate ?? 0,
+                    avgSessionDuration: m.averageSessionDuration ?? 0,
                 },
             });
         }

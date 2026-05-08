@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
 import { GoogleSearchConsoleService } from './google-search-console.service';
 import { PeriodEnum } from '../dashboard/dto/dashboard-overview.dto';
+import { SeoAggregationService } from './seo-aggregation.service';
 
 function toNumber(value: Prisma.Decimal | number | string | null | undefined, defaultValue = 0): number {
     if (value === null || value === undefined) return defaultValue;
@@ -29,6 +30,10 @@ function calculateCtr(clicks: number, impressions: number): number {
     return clicks / impressions;
 }
 
+function isJsonObject(value: Prisma.JsonValue | null | undefined): value is Prisma.JsonObject {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
 @Injectable()
 export class SeoService {
     private readonly logger = new Logger(SeoService.name);
@@ -36,6 +41,7 @@ export class SeoService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly gscService: GoogleSearchConsoleService,
+        private readonly seoAggregationService: SeoAggregationService,
     ) { }
 
     // ========================================================================
@@ -126,6 +132,23 @@ export class SeoService {
             });
 
             // --- CALCULATIONS ---
+            const gscStats = await this.prisma.searchConsolePerformance.aggregate({
+                where: {
+                    tenantId,
+                    date: { gte: startDate, lte: endDate }
+                },
+                _sum: { clicks: true, impressions: true },
+                _avg: { position: true }
+            });
+
+            const prevGscStats = await this.prisma.searchConsolePerformance.aggregate({
+                where: {
+                    tenantId,
+                    date: { gte: previousStartDate, lte: previousEndDate }
+                },
+                _sum: { clicks: true, impressions: true },
+                _avg: { position: true }
+            });
 
             // Organic Sessions
             const totalOrganicSessions = webAnalyticsData.reduce((sum, day) => sum + day.sessions, 0);
@@ -167,7 +190,7 @@ export class SeoService {
                 webAnalyticsData.reduce((sum, day) => sum + toNumber(day.bounceRate), 0) / webAnalyticsData.length : 0;
             const prevBounceRate = previousWebAnalyticsData.length > 0 ?
                 previousWebAnalyticsData.reduce((sum, day) => sum + toNumber(day.bounceRate), 0) / previousWebAnalyticsData.length : 0;
-            const bounceRateTrend = prevBounceRate > 0 ? ((avgBounceRate - prevBounceRate) / prevBounceRate) * 100 : 0;
+            const bounceRateTrend = prevBounceRate > 0 ? ((avgBounceRate - prevAvgSessionDuration) / prevBounceRate) * 100 : 0;
 
             // Goal Completions (Estimated 4.5% of sessions)
             const goalCompletions = Math.round(totalOrganicSessions * 0.045);
@@ -224,36 +247,39 @@ export class SeoService {
             };
 
             return {
-                organicSessions: totalOrganicSessions,
-                newUsers: totalNewUsers,
-                avgTimeOnPage: Math.round(avgSessionDuration) || 0,
-                organicSessionsTrend: parseFloat(organicSessionsTrend.toFixed(1)),
-                newUsersTrend: parseFloat(newUsersTrend.toFixed(1)),
-                avgTimeOnPageTrend: parseFloat(avgSessionDurationTrend.toFixed(1)),
+                organicSessions: totalOrganicSessions || toNumber(gscStats._sum.clicks),
+                organicSessionsTrend: Number(organicSessionsTrend.toFixed(1)),
                 goalCompletions: pickFallback(goalCompletions, seoMetrics.goalCompletions),
                 goalCompletionsTrend: pickFallback(parseFloat(goalCompletionsTrend.toFixed(1)), seoMetrics.goalCompletionsTrend),
-                avgPosition: pickFallback(parseFloat(avgPosition.toFixed(1)), seoMetrics.avgPosition),
-                avgPositionTrend: pickFallback(parseFloat(avgPositionTrend.toFixed(1)), seoMetrics.avgPositionTrend),
+                avgPosition: gscStats._avg.position ? toNumber(gscStats._avg.position) : pickFallback(parseFloat(avgPosition.toFixed(1)), seoMetrics.avgPosition),
+                avgPositionTrend: Number(avgPositionTrend.toFixed(1)),
+                avgTimeOnPage: Math.round(avgSessionDuration) || 0,
+                avgTimeOnPageTrend: parseFloat(avgSessionDurationTrend.toFixed(1)),
                 bounceRate: pickFallback(Number(avgBounceRate.toFixed(1)) || 0, seoMetrics.bounceRate),
                 bounceRateTrend: parseFloat(bounceRateTrend.toFixed(1)),
+                newUsers: totalNewUsers,
+                newUsersTrend: parseFloat(newUsersTrend.toFixed(1)),
+                activeUsers: totalActiveUsers,
+                activeUsersTrend: parseFloat(activeUsersTrend.toFixed(1)),
                 screenPageViews: totalScreenPageViews,
                 screenPageViewsTrend: parseFloat(screenPageViewsTrend.toFixed(1)),
                 engagementRate: Number(avgEngagementRate.toFixed(1)) || 0,
                 engagementRateTrend: parseFloat(engagementRateTrend.toFixed(1)),
-                activeUsers: totalActiveUsers,
-                activeUsersTrend: parseFloat(activeUsersTrend.toFixed(1)),
+                // Offpage metrics (latest)
                 ur: pickFallback(avgUR, seoMetrics.ur),
                 dr: pickFallback(avgDR, seoMetrics.dr),
                 backlinks: pickFallback(backlinks, seoMetrics.backlinks),
                 referringDomains: pickFallback(referringDomains, seoMetrics.referringDomains),
                 keywords: pickFallback(keywords, seoMetrics.keywords),
                 trafficCost: pickFallback(trafficCost, seoMetrics.trafficCost),
+                // GSC specific
+                gscClicks: toNumber(gscStats._sum.clicks),
+                gscImpressions: toNumber(gscStats._sum.impressions),
+                // Paid data as secondary
                 paidTraffic: totalPaidTraffic,
                 paidTrafficTrend: parseFloat(paidTrafficTrend.toFixed(1)),
-                impressions: totalImpressions,
+                impressions: toNumber(gscStats._sum.impressions) || totalImpressions,
                 impressionsTrend: parseFloat(impressionsTrend.toFixed(1)),
-                organicPages: pickFallback(organicPages, seoMetrics.organicPages),
-                crawledPages: pickFallback(crawledPages, seoMetrics.crawledPages)
             };
         } catch (error) {
             console.error('Error fetching SEO summary:', error);
@@ -361,16 +387,25 @@ export class SeoService {
             orderBy: { date: 'asc' }
         });
 
-        // 3.1 Fetch SEO Top Keywords for avgPosition calculation
-        const keywordsDataForHistory = await this.prisma.seoTopKeywords.findMany({
+        // 3.1 Fetch SEO Performance (GSC raw data) - group by date
+        const gscData = await this.prisma.searchConsolePerformance.groupBy({
+            by: ['date'],
             where: {
                 tenantId,
-                date: {
-                    gte: startDate,
-                    lte: endDate
-                }
+                date: { gte: startDate, lte: endDate }
             },
-            orderBy: { date: 'asc' }
+            _sum: { clicks: true, impressions: true },
+            _avg: { position: true }
+        });
+
+        const gscMap = new Map<string, { clicks: number, impressions: number, position: number }>();
+        gscData.forEach(item => {
+            const dateStr = item.date.toISOString().split('T')[0];
+            gscMap.set(dateStr, {
+                clicks: item._sum.clicks || 0,
+                impressions: item._sum.impressions || 0,
+                position: item._avg.position ? toNumber(item._avg.position) : 0
+            });
         });
 
         // Create a map for quick lookup of offpage data by date string
@@ -391,28 +426,7 @@ export class SeoService {
             });
         });
 
-        // Create a map for average position by date
-        const avgPositionMap = new Map<string, number>();
-        const keywordsByDate = new Map<string, any[]>();
-
-        keywordsDataForHistory.forEach(item => {
-            const dateStr = item.date.toISOString().split('T')[0];
-            if (!keywordsByDate.has(dateStr)) {
-                keywordsByDate.set(dateStr, []);
-            }
-            keywordsByDate.get(dateStr)!.push(item);
-        });
-
-        // Calculate average position for each date
-        keywordsByDate.forEach((keywords, dateStr) => {
-            if (keywords.length > 0) {
-                const avgPos = keywords.reduce((sum, kw) => sum + kw.position, 0) / keywords.length;
-                avgPositionMap.set(dateStr, avgPos);
-            }
-        });
-
-        // 4. Merge Data and Calculate Daily Maximum Values
-        // Create a map for quick lookup of ads data by date string
+        // 4. Merge Data
         const adsMap = new Map<string, { clicks: number, spend: number, impressions: number }>();
         adsData.forEach(item => {
             const dateStr = item.date.toISOString().split('T')[0];
@@ -423,36 +437,36 @@ export class SeoService {
             });
         });
 
-        const historyData = organicData.map(item => {
-            const dateStr = item.date.toISOString().split('T')[0];
+        // Use a set of all dates from GSC and GA4
+        const allDates = new Set<string>();
+        organicData.forEach(d => allDates.add(d.date.toISOString().split('T')[0]));
+        gscData.forEach(d => allDates.add(d.date.toISOString().split('T')[0]));
+        
+        const historyData = Array.from(allDates).sort().map(dateStr => {
+            const organic = organicData.find(d => d.date.toISOString().split('T')[0] === dateStr);
+            const gsc = gscMap.get(dateStr) || { clicks: 0, impressions: 0, position: 0 };
             const ads = adsMap.get(dateStr) || { clicks: 0, spend: 0, impressions: 0 };
-
-            // Get SEO metrics for this date from offpage data if available
-            const offpageMetricsForDate = offpageMap.get(dateStr);
-            const avgPositionForDate = avgPositionMap.get(dateStr) || 0;
+            const offpage = offpageMap.get(dateStr);
 
             return {
                 date: dateStr,
-                organicTraffic: item.sessions,
+                organicTraffic: organic?.sessions || gsc.clicks,
                 paidTraffic: ads.clicks,
                 paidTrafficCost: ads.spend,
-                impressions: ads.impressions,
-                // Daily maximum values (not cumulative)
-                backlinks: offpageMetricsForDate?.backlinks || 0,
-                referringDomains: offpageMetricsForDate?.referringDomains || 0,
-                keywords: offpageMetricsForDate?.keywords || 0,
-                trafficCost: offpageMetricsForDate?.trafficCost || 0,
-                // Additional SEO metrics from offpage data
-                avgPosition: avgPositionForDate,
-                dr: offpageMetricsForDate?.dr || 0,
-                ur: offpageMetricsForDate?.ur || 0,
-                organicPages: offpageMetricsForDate?.organicPages || 0,
-                crawledPages: offpageMetricsForDate?.crawledPages || 0,
-                organicTrafficValue: offpageMetricsForDate?.organicTrafficValue || 0
+                impressions: gsc.impressions,
+                avgPosition: gsc.position,
+                backlinks: offpage?.backlinks || 0,
+                referringDomains: offpage?.referringDomains || 0,
+                keywords: offpage?.keywords || 0,
+                trafficCost: offpage?.trafficCost || 0,
+                dr: offpage?.dr || 0,
+                ur: offpage?.ur || 0,
+                organicPages: offpage?.organicPages || 0,
+                crawledPages: offpage?.crawledPages || 0,
+                organicTrafficValue: offpage?.organicTrafficValue || 0
             };
         });
 
-        // Return data for 30 days (oldest to newest)
         return historyData;
     }
 
@@ -555,25 +569,24 @@ export class SeoService {
                 const parts = item.location.split(',');
                 let city = parts[0].trim();
                 let country = parts.length > 1 ? parts[1].trim() : city;
-                if (parts.length === 1) {
-                    city = item.location;
-                    country = item.location;
-                }
+                
+                // If the format was "City, Country", parts[1] is the country name
+                // If it was just "Country", both are the same
 
                 const key = item.location; // Use raw location as key
 
                 if (aggregatedMap.has(key)) {
                     const existing = aggregatedMap.get(key)!;
                     existing.traffic += item.traffic;
-                    // For keywords, taking max is safer than sum if these are daily snapshots of the same ranking keywords
                     existing.keywords = Math.max(existing.keywords, item.keywords);
                 } else {
+                    const countryCode = this.getCountryCode(country);
                     aggregatedMap.set(key, {
                         country: country,
                         city: city,
                         traffic: item.traffic,
                         keywords: item.keywords,
-                        countryCode: this.getCountryCode(country)
+                        countryCode: countryCode
                     });
                 }
             });
@@ -593,14 +606,29 @@ export class SeoService {
             'Thailand': 'TH',
             'United States': 'US',
             'United Kingdom': 'GB',
-            'Singapore': 'SG',
             'Japan': 'JP',
+            'China': 'CN',
+            'Singapore': 'SG',
             'Malaysia': 'MY',
-            'Australia': 'AU'
+            'Indonesia': 'ID',
+            'Vietnam': 'VN',
+            'South Korea': 'KR',
+            'Australia': 'AU',
+            'Germany': 'DE',
+            'France': 'FR',
+            'Italy': 'IT',
+            'Spain': 'ES',
+            'Canada': 'CA',
+            'Brazil': 'BR',
+            'India': 'IN',
+            'Hong Kong': 'HK',
+            'Taiwan': 'TW',
+            'Philippines': 'PH',
+            'Laos': 'LA',
+            'Cambodia': 'KH',
+            'Myanmar': 'MM',
         };
-        // Basic heuristic for unknown countries (take first 2 letters if uppercase)
-        // Or default to 'XX'
-        return countryMap[countryName] || 'XX';
+        return countryMap[countryName] || '';
     }
 
     // ========================================================================
@@ -623,7 +651,7 @@ export class SeoService {
         });
 
         const configuredSiteUrl = this.gscService.getSiteUrl(tenant?.settings);
-        const hasCredentials = this.gscService.hasCredentials();
+        const hasCredentials = this.gscService.hasCredentials(tenant?.settings);
         let siteUrl = configuredSiteUrl;
         let gscDataCount = 0;
 
@@ -753,6 +781,33 @@ export class SeoService {
                 ctr: calculateCtr(gscClicks, gscImpressions),
                 positionAvg: gscPositionAvg,
             },
+        };
+    }
+
+    async setGscSiteUrl(tenantId: string, siteUrl: string) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { settings: true },
+        });
+
+        const currentSettings = isJsonObject(tenant?.settings) ? tenant.settings : {};
+        const currentSeoSettings = isJsonObject(currentSettings.seo) ? currentSettings.seo : {};
+        const updatedSettings = {
+            ...currentSettings,
+            seo: {
+                ...currentSeoSettings,
+                gscSiteUrl: siteUrl,
+            },
+        } satisfies Prisma.InputJsonObject;
+
+        await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: { settings: updatedSettings },
+        });
+
+        return {
+            success: true,
+            siteUrl,
         };
     }
 
@@ -903,100 +958,145 @@ export class SeoService {
     async syncGscForTenant(tenantId: string, options?: { days?: number }) {
         const days = options?.days ?? 30;
 
-        const tenant = await this.prisma.tenant.findUnique({
-            where: { id: tenantId },
-            select: { settings: true },
-        });
-
-        const siteUrl = this.gscService.getSiteUrl(tenant?.settings);
-        if (!siteUrl || !this.gscService.hasCredentials()) {
-            return { success: false, message: 'GSC not configured' };
-        }
-
-        const { startDate, endDate } = DateRangeUtil.getDateRange(days);
-        const startDateStr = toIsoDateOnly(startDate);
-        const endDateStr = toIsoDateOnly(endDate);
-
-        const rowLimit = 25000;
-        let startRow = 0;
-        const allRows: any[] = [];
-
-        while (true) {
-            const report = await this.gscService.querySearchAnalytics({
-                siteUrl,
-                startDate: startDateStr,
-                endDate: endDateStr,
-                rowLimit,
-                startRow,
+        try {
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+                select: { settings: true },
             });
 
-            const rows = (report.rows || []) as any[];
-            if (!rows.length) break;
+            const siteUrl = this.gscService.getSiteUrl(tenant?.settings);
+            const encryptedRefreshToken = this.gscService.getEncryptedRefreshToken(tenant?.settings);
+            
+            if (!siteUrl || !this.gscService.hasCredentials(tenant?.settings)) {
+                this.logger.warn(`[GSC Sync] Tenant ${tenantId}: GSC not configured (siteUrl: ${siteUrl})`);
+                return { success: false, message: 'GSC not configured' };
+            }
 
-            allRows.push(...rows);
+            const { startDate, endDate } = DateRangeUtil.getDateRange(days);
+            const startDateStr = toIsoDateOnly(startDate);
+            const endDateStr = toIsoDateOnly(endDate);
 
-            if (rows.length < rowLimit) break;
-            startRow += rowLimit;
-        }
+            this.logger.log(`[GSC Sync] Tenant ${tenantId}: Starting sync for ${siteUrl} (${startDateStr} to ${endDateStr})`);
 
-        const data = allRows
-            .map((row) => {
-                const keys = row.keys || [];
-                const dateStr = keys[0];
-                const page = keys[1] || null;
-                const query = keys[2] || null;
-                const device = keys[3] || null;
-                const country = keys[4] || null;
+            const rowLimit = 25000;
+            let startRow = 0;
+            const allRows: any[] = [];
 
-                if (!dateStr) return null;
-
-                const date = utcDateOnlyFromIso(dateStr);
-                const externalKey = [dateStr, page || '', query || '', device || '', country || ''].join('|');
-
-                return {
-                    tenantId,
+            while (true) {
+                const report = await this.gscService.querySearchAnalytics({
                     siteUrl,
-                    date,
-                    page,
-                    query,
-                    device,
-                    country,
-                    clicks: Math.trunc(Number(row.clicks || 0)),
-                    impressions: Math.trunc(Number(row.impressions || 0)),
-                    ctr: Number(row.ctr || 0),
-                    position: Number(row.position || 0),
-                    externalKey,
-                };
-            })
-            .filter(Boolean) as any[];
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    rowLimit,
+                    startRow,
+                    encryptedRefreshToken,
+                });
 
-        await this.prisma.searchConsolePerformance.deleteMany({
-            where: {
-                tenantId,
-                siteUrl,
-                date: { gte: startDate, lte: endDate },
-            },
-        });
+                const rows = (report.rows || []) as any[];
+                if (!rows.length) break;
 
-        const chunkSize = 1000;
-        for (let i = 0; i < data.length; i += chunkSize) {
-            const chunk = data.slice(i, i + chunkSize);
-            await this.prisma.searchConsolePerformance.createMany({
-                data: chunk,
-                skipDuplicates: true,
+                allRows.push(...rows);
+
+                if (rows.length < rowLimit) break;
+                startRow += rowLimit;
+            }
+
+            this.logger.log(`[GSC Sync] Tenant ${tenantId}: Fetched ${allRows.length} total rows from GSC API`);
+
+            const data = allRows
+                .map((row) => {
+                    const keys = row.keys || [];
+                    const dateStr = keys[0];
+                    const page = keys[1] || null;
+                    const query = keys[2] || null;
+                    const device = keys[3] || null;
+                    const country = keys[4] || null;
+
+                    if (!dateStr) return null;
+
+                    const date = utcDateOnlyFromIso(dateStr);
+                    const externalKey = [dateStr, page || '', query || '', device || '', country || ''].join('|');
+
+                    return {
+                        tenantId,
+                        siteUrl,
+                        date,
+                        page,
+                        query,
+                        device,
+                        country,
+                        clicks: Math.trunc(Number(row.clicks || 0)),
+                        impressions: Math.trunc(Number(row.impressions || 0)),
+                        ctr: Number(row.ctr || 0),
+                        position: Number(row.position || 0),
+                        externalKey,
+                    };
+                })
+                .filter(Boolean) as any[];
+
+            if (data.length > 0) {
+                // Delete existing data for this range to avoid duplicates before re-inserting
+                await this.prisma.searchConsolePerformance.deleteMany({
+                    where: {
+                        tenantId,
+                        siteUrl,
+                        date: { gte: startDate, lte: endDate },
+                    },
+                });
+
+                const chunkSize = 1000;
+                let insertedCount = 0;
+                for (let i = 0; i < data.length; i += chunkSize) {
+                    const chunk = data.slice(i, i + chunkSize);
+                    const result = await this.prisma.searchConsolePerformance.createMany({
+                        data: chunk,
+                        skipDuplicates: true,
+                    });
+                    insertedCount += result.count;
+                }
+                this.logger.log(`[GSC Sync] Tenant ${tenantId}: Inserted ${insertedCount} rows into search_console_performance`);
+            } else {
+                this.logger.log(`[GSC Sync] Tenant ${tenantId}: No performance data found for the period`);
+            }
+
+            // Update last sync time in tenant settings
+            const currentSettings = isJsonObject(tenant?.settings) ? tenant.settings : {};
+            const currentSeoSettings = isJsonObject(currentSettings.seo) ? currentSettings.seo : {};
+            const updatedSettings = {
+                ...currentSettings,
+                seo: {
+                    ...currentSeoSettings,
+                    gscLastSyncedAt: new Date().toISOString(),
+                },
+            } satisfies Prisma.InputJsonObject;
+
+            await this.prisma.tenant.update({
+                where: { id: tenantId },
+                data: { settings: updatedSettings },
             });
+
+            // Trigger aggregation in background to populate SEO tables (keywords, intent, etc.)
+            this.logger.log(`[GSC Sync] Tenant ${tenantId}: Triggering SEO aggregation for last ${days} days`);
+            this.seoAggregationService.backfillAggregationForLastNDays(tenantId, days).catch(err => {
+                this.logger.error(`[SEO Aggregation] Post-sync aggregation failed for tenant ${tenantId}: ${err.message}`);
+            });
+
+            return {
+                success: true,
+                fetched: allRows.length,
+                inserted: data.length,
+                dateRange: { from: startDateStr, to: endDateStr },
+                siteUrl,
+            };
+        } catch (error: any) {
+            this.logger.error(`[GSC Sync] Failed for tenant ${tenantId}: ${error.message}`, error.stack);
+            return {
+                success: false,
+                message: `Sync failed: ${error.message}`,
+            };
         }
-
-        this.logger.log(`[GSC Sync] Tenant ${tenantId}: inserted ${data.length} rows (${startDateStr}..${endDateStr})`);
-
-        return {
-            success: true,
-            fetched: allRows.length,
-            inserted: data.length,
-            dateRange: { from: startDateStr, to: endDateStr },
-            siteUrl,
-        };
     }
+
     async getTopKeywords(tenantId: string) {
         try {
             // Fetch top keywords from SeoTopKeywords table
@@ -1142,4 +1242,3 @@ export class SeoService {
     }
 
 }
-
