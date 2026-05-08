@@ -85,6 +85,27 @@ function IndeterminateProgress({ className }: { className?: string }) {
     return <Progress value={progress} className={className} />;
 }
 
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="More information"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    <p>{content}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -169,6 +190,11 @@ export function CampaignsPage() {
             setCustomRange(null);
         }
     }, [period]);
+
+    const handlePeriodChange = (nextPeriod: PeriodEnum) => {
+        setPeriod(nextPeriod);
+        setPage(1);
+    };
 
     // ==========================================================================
     // Data Fetching with All Filters

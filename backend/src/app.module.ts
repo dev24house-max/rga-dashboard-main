@@ -47,7 +47,7 @@ import { AiModule } from './modules/ai/ai.module';
     ServeStaticModule.forRoot({
       // ชี้ไปที่โฟลเดอร์ public ภายใน client ที่เก็บไฟล์ index.html จริงๆ
       rootPath: join(__dirname, '..', 'client', 'public'),
-      exclude: ['/api/(.*)'],
+      exclude: ['/api/{*path}'],
       serveStaticOptions: {
         index: 'index.html',
       },
