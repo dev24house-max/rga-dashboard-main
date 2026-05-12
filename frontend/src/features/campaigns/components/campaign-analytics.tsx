@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Campaign } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useFormatter } from '@/hooks/use-formatter';
 
 interface CampaignAnalyticsProps {
     campaigns: Campaign[];
@@ -16,6 +17,7 @@ interface CampaignAnalyticsProps {
 
 export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
     const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+    const { formatCurrency } = useFormatter();
 
     // Initial Selection Effect
     if (!selectedCampaignId && campaigns.length > 0) {
@@ -145,7 +147,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                     type: 'opportunity',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is highly efficient (CPA {(pCpa).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}).
+                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is highly efficient (CPA {formatCurrency(pCpa)}).
                             Increase daily budget by 15-20% to scale up these cheap conversions.
                         </>
                     )
@@ -160,7 +162,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                     type: 'warning',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is expensive (CPA {(pCpa).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}).
+                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is expensive (CPA {formatCurrency(pCpa)}).
                             Refine targeting or refresh creatives to bring costs down closer to the average.
                         </>
                     )
@@ -230,7 +232,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mt-6">
             {/* LEFT COLUMN: Conversion Rate Insights (2/3 width) */}
-            <div className="lg:col-span-1 xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm h-full flex flex-col">
+            <div className="lg:col-span-1 xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm h-full flex flex-col dark:bg-[#18191b] dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                         <p className="text-2xl font-bold tracking-tight">Conversion Rate</p>
@@ -269,11 +271,11 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                         >
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div>
-                                    <p className="text-xs uppercase text-gray-500 font-medium tracking-wider">Active Channel</p>
-                                    <p className="text-lg font-semibold text-gray-900 mt-1">{selectedCampaign.name}</p>
+                                    <p className="text-xs uppercase text-gray-200 font-medium tracking-wider dark:text-white">Active Channel</p>
+                                    <p className="text-lg font-semibold text-gray-900 mt-1 dark:text-white">{selectedCampaign.name}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs uppercase text-gray-500 font-medium tracking-wider">Conversion Rate</p>
+                                    <p className="text-xs uppercase text-gray-500 font-medium tracking-wider dark:text-white">Conversion Rate</p>
                                     <div className="flex items-center justify-end gap-2 mt-1">
                                         {insights.performanceTier === 'high' ? (
                                             <span className="text-emerald-500 text-2xl">↗</span>
@@ -286,7 +288,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                             initial={{ opacity: 0, scale: 0.8 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                            className="text-4xl font-bold text-gray-900 tracking-tight"
+                                            className="text-4xl font-bold text-gray-900 tracking-tight dark:text-white"
                                         >
                                             {insights.currentRate.toFixed(2)}%
                                         </motion.p>
@@ -303,9 +305,9 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                     transition={{ delay: 0.05, duration: 0.25 }}
                                     className={cn(
                                         "rounded-2xl p-5 border hover:shadow-sm transition-shadow",
-                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60" :
-                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60" :
-                                                "bg-orange-50/50 border-orange-200/60"
+                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60" :
+                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60" :
+                                                "bg-orange-50/50 border-orange-200/60 dark:bg-orange-900/40 dark:border-orange-700/60"
                                     )}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
@@ -320,9 +322,9 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                                     "text-orange-600"
                                         )}>Insight</p>
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                    <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
                                         {selectedCampaign.name} is performing
-                                        <span className="font-semibold text-gray-900"> {insights.performanceTier === 'medium' ? 'steadily' : (Math.abs(insights.diffFromAvg).toFixed(2) + '% ' + (insights.isAboveAvg ? 'higher' : 'lower'))}</span>
+                                        <span className="font-semibold text-gray-900 dark:text-white"> {insights.performanceTier === 'medium' ? 'steadily' : (Math.abs(insights.diffFromAvg).toFixed(2) + '% ' + (insights.isAboveAvg ? 'higher' : 'lower'))}</span>
                                         {insights.performanceTier === 'medium' ? ' around the average.' : ' than average.'}
                                         {insights.performanceTier === 'high'
                                             ? ' This campaign is performing exceptionally well driven by optimized targeting.'
@@ -337,24 +339,24 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.1, duration: 0.25 }}
-                                    className="bg-white rounded-2xl p-5 border border-gray-200 hover:shadow-sm transition-shadow"
+                                    className="bg-white rounded-2xl p-5 border border-gray-200 hover:shadow-sm transition-shadow dark:bg-[#232426] dark:border-gray-600"
                                 >
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Target className="h-4 w-4 text-gray-500" />
-                                        <p className="text-xs uppercase text-gray-500 font-bold tracking-wide">Benchmark</p>
+                                        <Target className="h-4 w-4 text-gray-500 dark:text-white" />
+                                        <p className="text-xs uppercase text-gray-500 font-bold tracking-wide dark:text-white">Benchmark</p>
                                     </div>
-                                    <div className="space-y-2 text-sm text-gray-600">
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-100">
                                         <div className="flex justify-between">
                                             <span>Top:</span>
-                                            <span className="font-medium text-gray-900 truncate max-w-[100px]" title={insights.bestCampaign?.name}>{insights.bestCampaign?.name}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.bestCampaign?.name}>{insights.bestCampaign?.name}</span>
                                             <span className="font-bold text-emerald-600">({insights.maxRate.toFixed(1)}%)</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Lowest:</span>
-                                            <span className="font-medium text-gray-900 truncate max-w-[100px]" title={insights.worstCampaign?.name}>{insights.worstCampaign?.name}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.worstCampaign?.name}>{insights.worstCampaign?.name}</span>
                                             <span className="font-bold text-rose-500">({insights.minRate.toFixed(1)}%)</span>
                                         </div>
-                                        <div className="pt-1 border-t border-gray-100 text-xs text-gray-500 mt-2">
+                                        <div className="pt-1 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-300 mt-2">
                                             Keep {selectedCampaign.name} above {(insights.avgRate).toFixed(2)}% to stay competitive.
                                         </div>
                                     </div>
@@ -367,9 +369,9 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                     transition={{ delay: 0.15, duration: 0.25 }}
                                     className={cn(
                                         "rounded-2xl p-5 border hover:shadow-sm transition-shadow",
-                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60" :
-                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60" :
-                                                "bg-rose-50/50 border-rose-200/60"
+                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60" :
+                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60" :
+                                                "bg-rose-50/50 border-rose-200/60 dark:bg-rose-900/40 dark:border-rose-700/60"
                                     )}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
@@ -381,10 +383,11 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                         <p className={cn("text-xs uppercase font-bold tracking-wide",
                                             insights.performanceTier === 'high' ? "text-emerald-600" :
                                                 insights.performanceTier === 'medium' ? "text-blue-600" :
-                                                    "text-rose-600"
+                                                    "text-rose-600",
+                                            "dark:text-white"
                                         )}>Action</p>
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                    <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
                                         {insights.performanceTier === 'high'
                                             ? `Double down on creatives performing in ${selectedCampaign.name}. Scale budget by 10-15% to maximize ROI while maintaining efficiency.`
                                             : insights.performanceTier === 'medium'
@@ -429,7 +432,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-sm font-bold text-gray-900">
-                                                    {new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(platform.spend)}
+                                                    {formatCurrency(platform.spend, { maximumFractionDigits: 0 })}
                                                 </div>
                                             </div>
                                         </div>
@@ -461,7 +464,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-500 px-1">
                                             <span>Share: {percentage.toFixed(1)}%</span>
-                                            <span>CPA: {(platform.cpa).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}</span>
+                                            <span>CPA: {formatCurrency(platform.cpa, { maximumFractionDigits: 0 })}</span>
                                         </div>
                                     </motion.div>
                                 )

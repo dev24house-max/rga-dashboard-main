@@ -668,14 +668,14 @@ export function AiAssistant() {
 
             {/* Mobile Overlay Backdrop (Left) */}
             <AnimatePresence>
-                {isSidebarOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/40 z-[60] md:hidden backdrop-blur-sm"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
+                {isSidebarOpen && ( 
+<motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="fixed inset-0 bg-black/40 dark:bg-black/60 z-[60] md:hidden backdrop-blur-sm"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                    />
                 )}
             </AnimatePresence>
 
@@ -683,7 +683,7 @@ export function AiAssistant() {
 
             {/* Left Sidebar (GPT Style) - Collapsible */}
             <div className={cn(
-                "flex flex-col gap-2 shrink-0 transition-all duration-300 bg-white md:bg-transparent border-r md:border-r-0 border-slate-100",
+                "flex flex-col gap-2 shrink-0 transition-all duration-300 bg-white md:bg-transparent dark:bg-zinc-800 md:dark:bg-zinc-800 border-r md:border-r-0 border-slate-100 dark:border-zinc-700",
                 // Mobile: Fixed drawer
                 "fixed inset-y-0 left-0 z-[70] h-full shadow-2xl md:shadow-none",
                 // Desktop: Relative sidebar
@@ -695,14 +695,14 @@ export function AiAssistant() {
                 <div className="flex items-center justify-between mb-2 px-1">
                     <button
                         onClick={handleNewChat}
-                        className="flex-1 flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-200 shadow-sm"
+                        className="flex-1 flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100 rounded-lg text-sm font-medium transition-colors border border-slate-200 dark:border-zinc-600 shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         New Chat
                     </button>
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                     >
                         <PanelLeftClose className="w-5 h-5" />
                     </button>
@@ -710,7 +710,7 @@ export function AiAssistant() {
 
                 {/* History List */}
                 <div className="flex-1 overflow-y-auto px-1 space-y-2 custom-scrollbar">
-                    <div className="px-2 pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <div className="px-2 pb-2 text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                         Recent Chats
                     </div>
                     {isLoadingMessages && activeSessionId ? (
@@ -718,10 +718,10 @@ export function AiAssistant() {
                             <Sparkles className="w-5 h-5 text-orange-400 animate-spin" />
                         </div>
                     ) : sessions.length === 0 ? (
-                        <div className="text-center py-6 text-slate-400 text-sm">
-                            <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                            No history yet
-                        </div>
+<div className="text-center py-6 text-slate-400 dark:text-zinc-500 text-sm">
+                                <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                No history yet
+                            </div>
                     ) : (
                         <AnimatePresence initial={false}>
                             {sessions.map(session => (
@@ -738,13 +738,13 @@ export function AiAssistant() {
                                         className={cn(
                                             "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all group text-left border relative",
                                             activeSessionId === session.id
-                                                ? "bg-white text-orange-600 font-medium shadow-sm border-orange-100"
-                                                : "text-slate-600 hover:bg-slate-50 border-transparent hover:border-slate-100"
+                                                ? "bg-white dark:bg-zinc-700 text-orange-600 dark:text-orange-400 font-medium shadow-sm border-orange-100 dark:border-zinc-600"
+                                                : "text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 border-transparent hover:border-slate-100 dark:hover:border-zinc-600"
                                         )}
                                     >
                                         <MessageSquare className={cn(
                                             "w-4 h-4 shrink-0 transition-colors",
-                                            activeSessionId === session.id ? "text-orange-500" : "text-slate-400 group-hover:text-slate-500"
+                                            activeSessionId === session.id ? "text-orange-400 dark:text-orange-400" : "text-slate-500 dark:text-zinc-500 group-hover:text-slate-500 dark:group-hover:text-zinc-400"
                                         )} />
                                         {editingSessionId === session.id ? (
                                             <input
@@ -757,7 +757,7 @@ export function AiAssistant() {
                                                     if (e.key === 'Escape') setEditingSessionId(null);
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
-                                                className="flex-1 bg-white border border-orange-300 rounded px-1 py-0.5 text-sm outline-none focus:ring-1 focus:ring-orange-400 min-w-0"
+                                                className="flex-1 bg-white border border-slate-200 dark:border-zinc-600 rounded px-1 py-0.5 text-sm text-slate-900 dark:text-zinc-100 outline-none focus:ring-1 focus:ring-orange-400 min-w-0"
                                             />
                                         ) : (
                                             <span className="truncate flex-1 pr-12">{session.title}</span>
@@ -767,14 +767,14 @@ export function AiAssistant() {
                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                                         <button
                                             onClick={(e) => handleStartRename(session, e)}
-                                            className="p-1 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded"
+                                            className="p-1 text-zinc-500 hover:text-blue-400 hover:bg-zinc-700 rounded"
                                             title="Rename chat"
                                         >
                                             <Pencil className="w-3.5 h-3.5" />
                                         </button>
                                         <button
                                             onClick={(e) => handleDeleteSession(session.id, e)}
-                                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded"
+                                            className="p-1 text-zinc-500 hover:text-red-400 hover:bg-zinc-700 rounded"
                                             title="Delete chat"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -788,16 +788,16 @@ export function AiAssistant() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-white/50 backdrop-blur-xl rounded-2xl border border-slate-200/60 shadow-xl overflow-hidden relative">
+            <div className="flex-1 flex flex-col bg-white dark:bg-zinc-800 rounded-2xl border border-slate-200 dark:border-zinc-700 shadow-xl overflow-hidden relative">
 
                 {viewMode === 'summary' ? (
                     isSummaryLoading ? (
                         <div className="flex-1 flex items-center justify-center p-8">
                             <div className="text-center space-y-4">
-                                <div className="mx-auto h-16 w-16 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
+                                <div className="mx-auto h-16 w-16 rounded-full border-4 border-orange-500/20 border-t-orange-500 animate-spin" />
                                 <div>
-                                    <h2 className="text-xl font-semibold text-slate-900">Loading AI Summary</h2>
-                                    <p className="text-sm text-slate-500 mt-2">Generating your daily strategic summary. This happens once per day. Please wait...</p>
+                                    <h2 className="text-xl font-semibold text-zinc-100">Loading AI Summary</h2>
+                                    <p className="text-sm text-zinc-500 mt-2">Generating your daily strategic summary. This happens once per day. Please wait...</p>
                                 </div>
                             </div>
                         </div>
@@ -821,49 +821,49 @@ export function AiAssistant() {
                     // Chat Interface
                     <>
                         {/* Chat Header */}
-                        <div className="border-b border-slate-100 bg-white/80 backdrop-blur px-6 sticky top-0 z-10 shrink-0" data-tutorial="ai-insights-header">
+                        <div className="border-b border-slate-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6 sticky top-0 z-10 shrink-0">
                             <div className="h-14 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     {/* Mobile/Desktop Toggle */}
                                     {!isSidebarOpen && (
                                         <button
                                             onClick={() => setIsSidebarOpen(true)}
-                                            className="p-2 mr-2 bg-white/50 hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition-colors block"
+                                            className="p-2 mr-2 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-600 border border-slate-200 dark:border-zinc-600 rounded-lg shadow-sm transition-colors block"
                                             title="View Chat History"
                                         >
-                                            <PanelLeft className="w-5 h-5 text-slate-600" />
+                                            <PanelLeft className="w-5 h-5 text-slate-600 dark:text-zinc-300" />
                                         </button>
                                     )}
-                                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden shrink-0">
+                                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-700 shadow-sm border border-slate-200 dark:border-zinc-600 p-1.5 overflow-hidden shrink-0">
                                         <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
                                     </div>
-                                    <span className="font-semibold text-slate-800">AI Assistant</span>
-                                    <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wide uppercase border border-orange-200">
+                                    <span className="font-semibold text-slate-800 dark:text-zinc-100">AI Assistant</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-[10px] font-bold tracking-wide uppercase border border-orange-200 dark:border-orange-500/30">
                                         Beta
                                     </span>
                                 </div>
                             </div>
                             <div className="pb-3">
-                                <div className="flex flex-wrap items-center gap-2" data-tutorial="ai-insights-roles">
-                                    {ROLE_OPTIONS.map((role) => (
-                                        <button
-                                            key={role.id}
-                                            type="button"
-                                            onClick={() => setActiveRole(role.id)}
-                                            className={cn(
-                                                "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
-                                                activeRole === role.id
-                                                    ? "bg-orange-500 text-white border-orange-500"
-                                                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                            )}
-                                            aria-pressed={activeRole === role.id}
-                                        >
-                                            {role.label}
-                                        </button>
-                                    ))}
+                                <div className="flex flex-wrap items-center gap-2">
+{ROLE_OPTIONS.map((role) => (
+                                            <button
+                                                key={role.id}
+                                                type="button"
+                                                onClick={() => setActiveRole(role.id)}
+                                                className={cn(
+                                                    "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors",
+                                                    activeRole === role.id
+                                                        ? "bg-orange-500 text-white border-orange-500"
+                                                        : "bg-white dark:bg-zinc-700 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-600"
+                                                )}
+                                                aria-pressed={activeRole === role.id}
+                                            >
+                                                {role.label}
+                                            </button>
+                                        ))}
                                 </div>
                                 {!webhookUrl && (
-                                    <div className="mt-2 text-[11px] text-slate-400">
+                                    <div className="mt-2 text-[11px] text-slate-400 dark:text-zinc-500">
                                         Webhook URL not configured. Using mock responses.
                                     </div>
                                 )}
@@ -885,17 +885,17 @@ export function AiAssistant() {
                                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                                             transition={{ duration: 0.3, ease: "easeOut" }}
                                             className="flex flex-col items-center justify-center py-4 space-y-6 mt-2"
-                                        >
+>
                                             <div className="space-y-4 text-center">
                                                 <motion.div
-                                                    className="flex items-center justify-center gap-2 mb-4"
-                                                >
-                                                    <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                                        <Sparkles className="w-8 h-8 text-orange-500 animate-pulse" />
-                                                    </div>
-                                                </motion.div>
+                                                        className="flex items-center justify-center gap-2 mb-4"
+                                                    >
+                                                        <div className="p-3 bg-slate-100 dark:bg-zinc-700 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-600">
+                                                            <Sparkles className="w-8 h-8 text-orange-500 animate-pulse" />
+                                                        </div>
+                                                    </motion.div>
                                                 <motion.h1
-                                                    className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight"
+                                                    className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-zinc-100 tracking-tight"
                                                 >
                                                     How can I help you?
                                                 </motion.h1>
@@ -904,7 +904,6 @@ export function AiAssistant() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-8">
                                                 {/* AI Detail Summary Button (Primary) */}
                                                 <motion.button
-                                                    data-tutorial="ai-insights-summary"
                                                     whileHover={{ scale: 1.02 }}
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => setViewMode('summary')}
@@ -936,21 +935,20 @@ export function AiAssistant() {
 
                                                 {/* Campaign Tools Button (Secondary) */}
                                                 <motion.button
-                                                    data-tutorial="ai-insights-tools"
                                                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(248, 250, 252, 1)' }}
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => setViewMode('tools')}
-                                                    className="relative px-6 py-6 rounded-2xl text-left border border-slate-200 shadow-sm bg-white hover:border-slate-300 hover:shadow-md transition-all group h-full"
+                                                    className="relative px-6 py-6 rounded-2xl text-left border border-slate-200 dark:border-zinc-600 shadow-sm bg-white dark:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:shadow-md transition-all group h-full"
                                                 >
                                                     <div className="relative flex flex-col justify-between h-full gap-4">
-                                                        <div className="p-3 bg-orange-50 w-fit rounded-xl mb-2 group-hover:bg-orange-100 transition-colors">
-                                                            <Calculator className="w-6 h-6 text-orange-600" />
+                                                        <div className="p-3 bg-orange-50 dark:bg-orange-500/20 w-fit rounded-xl mb-2 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/30 transition-colors">
+                                                            <Calculator className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-lg font-bold text-slate-800">Marketing Calculators</span>
+<span className="text-lg font-bold text-slate-800 dark:text-zinc-100">Marketing Calculators</span>
                                                             </div>
-                                                            <span className="text-slate-500 text-sm font-medium">Quick actions for ads & content</span>
+                                                            <span className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Quick actions for ads & content</span>
                                                         </div>
                                                     </div>
                                                 </motion.button>
@@ -973,7 +971,7 @@ export function AiAssistant() {
                                             )}
                                         >
                                             {msg.role === 'assistant' && (
-                                                <div className="w-9 h-9 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 mt-1 shadow-sm p-1.5 overflow-hidden">
+                                                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 flex items-center justify-center shrink-0 mt-1 shadow-sm p-1.5 overflow-hidden">
                                                     <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
                                                 </div>
                                             )}
@@ -982,14 +980,14 @@ export function AiAssistant() {
                                                 "max-w-[85%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm",
                                                 msg.role === 'user'
                                                     ? "bg-orange-500 text-white rounded-tr-md"
-                                                    : "bg-white border border-slate-100 text-slate-700 rounded-tl-md"
+                                                    : "bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 text-slate-700 dark:text-zinc-100 rounded-tl-md"
                                             )}>
                                                 <div className="whitespace-pre-wrap font-normal">{msg.content}</div>
                                             </div>
 
                                             {msg.role === 'user' && (
-                                                <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 mt-1 shadow-sm">
-                                                    <User className="w-4 h-4 text-slate-500" />
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-600 border border-slate-200 dark:border-zinc-500 flex items-center justify-center shrink-0 mt-1 shadow-sm">
+                                                    <User className="w-4 h-4 text-slate-500 dark:text-zinc-300" />
                                                 </div>
                                             )}
                                         </motion.div>
@@ -1005,25 +1003,25 @@ export function AiAssistant() {
                                             exit={{ opacity: 0, scale: 0.9 }}
                                             className="flex w-full items-start gap-4"
                                         >
-                                            <div className="w-9 h-9 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 mt-1 shadow-sm p-1.5 overflow-hidden">
+                                            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 flex items-center justify-center shrink-0 mt-1 shadow-sm p-1.5 overflow-hidden">
                                                 <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
                                             </div>
-                                            <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
+                                            <div className="bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-2xl rounded-tl-md px-5 py-4 shadow-sm">
                                                 <div className="flex gap-1.5">
                                                     <motion.div
                                                         animate={{ y: [0, -5, 0] }}
                                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                                        className="w-1.5 h-1.5 bg-slate-400 dark:bg-zinc-400 rounded-full"
                                                     />
                                                     <motion.div
                                                         animate={{ y: [0, -5, 0] }}
                                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                                        className="w-1.5 h-1.5 bg-slate-400 dark:bg-zinc-400 rounded-full"
                                                     />
                                                     <motion.div
                                                         animate={{ y: [0, -5, 0] }}
                                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                                        className="w-1.5 h-1.5 bg-slate-400 dark:bg-zinc-400 rounded-full"
                                                     />
                                                 </div>
                                             </div>
@@ -1034,16 +1032,15 @@ export function AiAssistant() {
                         </div>
 
                         {/* Input Fixed at Bottom */}
-                        <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-slate-100 sticky bottom-0 z-10 transition-all">
-                            <div className="relative group max-w-3xl mx-auto" data-tutorial="ai-insights-input">
-                                <div className="absolute inset-0 bg-gradient-to-r from-orange-200/20 to-amber-200/20 rounded-[1.5rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="relative bg-white rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 p-1.5 flex items-center gap-2 pr-2">
+                        <div className="p-4 bg-white dark:bg-zinc-800 border-t border-slate-100 dark:border-zinc-700 sticky bottom-0 z-10 transition-all">
+                            <div className="relative group max-w-3xl mx-auto">
+                                <div className="absolute inset-0 bg-gradient-to-r from-orange-200/20 to-amber-200/20 dark:from-orange-500/10 dark:to-amber-500/10 rounded-[1.5rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                <div className="relative bg-white dark:bg-zinc-700 rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 dark:border-zinc-600 p-1.5 flex items-center gap-2 pr-2">
                                     <div className="pl-1">
                                         <button
-                                            data-tutorial="ai-insights-new-chat"
                                             type="button"
                                             onClick={handleNewChat}
-                                            className="p-2 bg-slate-50 rounded-full text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors duration-300 cursor-pointer hover:shadow-sm"
+                                            className="p-2 bg-slate-100 dark:bg-zinc-600 rounded-full text-slate-500 dark:text-zinc-400 hover:bg-orange-500 hover:text-white transition-colors duration-300 cursor-pointer hover:shadow-sm"
                                             title="New Chat"
                                         >
                                             <Plus className="w-5 h-5" />
@@ -1064,7 +1061,7 @@ export function AiAssistant() {
                                         }}
                                         onKeyDown={handleKeyDown}
                                         placeholder={isListening ? "Listening..." : "Ask me anything..."}
-                                        className="flex-1 bg-transparent border-none outline-none text-base px-2 text-slate-900 placeholder:text-slate-400 min-h-[44px] max-h-[200px] resize-none py-3 custom-scrollbar overflow-y-auto"
+                                        className="flex-1 bg-transparent border-none outline-none text-base px-2 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 min-h-[44px] max-h-[200px] resize-none py-3 custom-scrollbar overflow-y-auto"
                                         disabled={isThinking}
                                         rows={1}
                                     />
@@ -1084,8 +1081,8 @@ export function AiAssistant() {
                                             className={cn(
                                                 "p-2 rounded-full transition-all duration-200",
                                                 isListening
-                                                    ? "bg-red-100 text-red-500 animate-pulse hover:bg-red-200"
-                                                    : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                                                    ? "bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400 animate-pulse hover:bg-red-200 dark:hover:bg-red-500/30"
+                                                    : "bg-slate-100 dark:bg-zinc-600 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-500 hover:text-slate-600 dark:hover:text-zinc-200"
                                             )}
                                             title={isListening ? "Stop Listening" : "Start Voice Input"}
                                         >
@@ -1093,7 +1090,7 @@ export function AiAssistant() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="text-center mt-2 text-[10px] text-slate-400/80 font-medium tracking-wide">
+                                <div className="text-center mt-2 text-[10px] text-slate-400 dark:text-zinc-500/80 font-medium tracking-wide">
                                     AI can make mistakes. Consider checking important information.
                                 </div>
                             </div>

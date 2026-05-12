@@ -19,6 +19,7 @@ import {
 import { Download, Wallet, TrendingUp, Trophy, Activity } from 'lucide-react';
 import type { Campaign } from '../types';
 import type { CampaignSummaryMetrics } from '../api/campaign-service';
+import { useFormatter } from '@/hooks/use-formatter';
 
 interface CampaignVisualizationProps {
     campaigns: Campaign[];
@@ -26,20 +27,9 @@ interface CampaignVisualizationProps {
     onDownload?: () => void;
 }
 
-// Format currency for chart
-const formatMoney = (val?: number) => {
-    if (val == null || Number.isNaN(val)) return '-';
-    if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-    if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
-    return val.toString();
-};
-
-const formatCurrencyFull = (val?: number) => {
-    if (val == null || Number.isNaN(val)) return '-';
-    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(val);
-};
-
 export function CampaignVisualization({ campaigns, summary, onDownload }: CampaignVisualizationProps) {
+    const { formatCurrency, formatCurrencyShort } = useFormatter();
+
     if (!summary || campaigns.length === 0) return null;
 
     // 1. Prepare Chart Data (Top 5 Campaigns by Spend)
@@ -52,6 +42,12 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
             Spend: c.spent ?? 0,
             Revenue: c.revenue ?? 0,
         }));
+
+    // Format for chart axis and tooltip
+    const formatMoney = (val?: number) => {
+        if (val == null || Number.isNaN(val)) return '-';
+        return formatCurrency(val);
+    };
 
     // 2. Calculate Snapshot Metrics
     const activeCount = campaigns.filter(c => c.status === 'active').length;
@@ -103,6 +99,7 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
                                 />
                                 <Tooltip
                                     cursor={{ fill: 'transparent' }}
+                                    formatter={(value: number) => formatMoney(value)}
                                     contentStyle={{ borderRadius: '12px', borderColor: '#E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                 />
                                 <Legend
@@ -153,7 +150,7 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
                             </div>
                             <p className="text-xs uppercase text-gray-500 font-medium">Total Spend</p>
                             <p className="mt-2 text-lg font-bold text-gray-900 group-hover:text-violet-600 transition-colors">{formatMoney(summary.spend)}</p>
-                            <p className="text-[10px] text-gray-400 mt-1 cursor-help" title="Exact amount">{formatCurrencyFull(summary.spend)}</p>
+                            <p className="text-[10px] text-gray-400 mt-1 cursor-help" title="Exact amount">{formatCurrency(summary.spend, { maximumFractionDigits: 0 })}</p>
                         </div>
 
                         {/* Top ROI */}

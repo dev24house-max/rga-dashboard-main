@@ -1,5 +1,5 @@
 import { DollarSign, Eye, MousePointer, Zap } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import { MetricGrid, MetricItem } from './MetricGrid';
 
 const getSourceBadge = (source?: string) => {
@@ -15,6 +15,7 @@ interface DashboardKPIsProps {
 }
 
 export const DashboardKPIs = ({ overview, isLoading }: DashboardKPIsProps) => {
+    const { formatCurrency, formatNumber } = useFormatter();
     const current = overview?.current || {};
     const trends = overview?.trends || {};
 

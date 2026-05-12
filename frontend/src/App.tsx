@@ -5,6 +5,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { RegionalSettingsProvider } from "./contexts/RegionalSettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -21,7 +22,6 @@ import { DataSourcesPage } from "@/features/data-sources";
 import { SeoPage } from "@/features/seo";
 import { AiInsightsPage } from "@/features/ai-insights";
 import { EcommerceLandingPage } from '@/features/ecommerce-landing';
-import { TutorialFlow } from '@/features/tutorial/TutorialFlow';
 import Users from "./pages/Users";
 import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
@@ -120,14 +120,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient} key={tenantKey}>
       <ErrorBoundary>
-        <ThemeProvider defaultTheme="light" switchable>
-          {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-            <TutorialFlow />
-          </TooltipProvider>
-        </ThemeProvider>
+        <RegionalSettingsProvider>
+          <ThemeProvider defaultTheme="light" switchable>
+            {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </ThemeProvider>
+        </RegionalSettingsProvider>
       </ErrorBoundary>
     </QueryClientProvider>
   );

@@ -343,6 +343,8 @@ export class UnifiedSyncService {
             name: data.name,
             status: data.status,
             budget: data.budget,
+            // Persist budget mode (e.g., TikTok's BUDGET_MODE_INFINITE) into budgetType column
+            budgetType: data.budgetMode || data.budget_mode || data.budgetType || null,
             startDate: data.startDate,
             endDate: data.endDate,
             [fkField]: accountId,
@@ -426,11 +428,25 @@ export class UnifiedSyncService {
      * These are calculated fields in the service layer
      */
     private async saveCampaignMetrics(tenantId: string, platform: AdPlatform, campaignId: string, metrics: any[]) {
+        // Batch upserts to reduce roundtrips for large date ranges
+        if (!metrics || metrics.length === 0) {
+            // Still mark campaign as synced but no metric rows to process
+            await this.prisma.campaign.update({
+                where: { id: campaignId },
+                data: {
+                    syncStatus: SyncStatus.SUCCESS,
+                    lastSyncedAt: new Date(),
+                },
+            });
+            return;
+        }
+
+        const ops: any[] = [];
+        const hour = 0;
+        const source = 'sync';
+
         for (const m of metrics) {
             const date = toUTCDateOnly(new Date(m.date));
-
-            const hour = 0;
-            const source = 'sync';
 
             const spendNum = toNumber(m.spend ?? m.cost);
             const revenueNum = toNumber(m.revenue ?? m.conversionValue);
@@ -440,7 +456,7 @@ export class UnifiedSyncService {
             const clicks = m.clicks ?? 0;
             const conversions = m.conversions ?? 0;
 
-            await this.prisma.metric.upsert({
+            ops.push(this.prisma.metric.upsert({
                 where: {
                     metrics_unique_key: {
                         tenantId,
@@ -473,9 +489,29 @@ export class UnifiedSyncService {
                     revenue: revenueNum,
                     roas: roasNum,
                 },
-            });
+            }));
         }
 
+        // Execute in chunks to avoid too-large transactions
+        const chunkSize = 50;
+        for (let i = 0; i < ops.length; i += chunkSize) {
+            const chunk = ops.slice(i, i + chunkSize);
+            try {
+                await this.prisma.$transaction(chunk as any);
+            } catch (err: any) {
+                this.logger.error(`[SYNC] Failed to upsert metric chunk: ${err?.message || err}`);
+                // Fall back to single upserts for the chunk to attempt partial progress
+                for (const op of chunk) {
+                    try {
+                        await op;
+                    } catch (singleErr: any) {
+                        this.logger.error(`[SYNC] Single upsert failed: ${singleErr?.message || singleErr}`);
+                    }
+                }
+            }
+        }
+
+        // Update campaign sync status
         await this.prisma.campaign.update({
             where: { id: campaignId },
             data: {

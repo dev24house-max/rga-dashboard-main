@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useFormatter } from '@/hooks/use-formatter';
 import { Calculator, TrendingUp, Users, DollarSign, Target, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -76,6 +77,8 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const result = revenue - cost;
         setProfit(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
     };
+
+    const { currencyCode, formatCurrency } = useFormatter();
 
     const tabs = [
         { id: 'conversion', label: 'Conversion Rate', icon: Target },
@@ -271,7 +274,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Revenue (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Revenue ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -281,7 +284,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Investment Cost (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Investment Cost ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -313,7 +316,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Revenue (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Revenue ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -323,7 +326,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -336,7 +339,6 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                     <span className="text-slate-700 font-medium text-sm">Net Profit</span>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-sm sm:text-lg font-medium text-slate-500">฿</span>
                                                         <motion.span
                                                             key={profit.result}
                                                             initial={{ opacity: 0, y: -10 }}
@@ -346,7 +348,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                                 profit.result >= 0 ? "text-slate-900" : "text-red-600"
                                                             )}
                                                         >
-                                                            {profit.result.toLocaleString()}
+                                                            {formatCurrency(profit.result)}
                                                         </motion.span>
                                                     </div>
                                                 </div>
@@ -358,7 +360,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Spend (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Spend ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -381,14 +383,13 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                     <span className="text-slate-700 font-medium text-sm">Cost Per Lead</span>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-sm sm:text-lg font-medium text-slate-500">฿</span>
                                                         <motion.span
                                                             key={cpl.result}
                                                             initial={{ opacity: 0, y: -10 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
-                                                            {cpl.result.toLocaleString()}
+                                                            {formatCurrency(cpl.result, { maximumFractionDigits: 0 })}
                                                         </motion.span>
                                                     </div>
                                                 </div>
@@ -442,7 +443,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost Used (THB)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost Used ({currencyCode})</Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
@@ -465,14 +466,13 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                     <span className="text-slate-700 font-medium text-sm">Cost Per Customer</span>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-sm sm:text-lg font-medium text-slate-500">฿</span>
                                                         <motion.span
                                                             key={cpa.result}
                                                             initial={{ opacity: 0, y: -10 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
-                                                            {cpa.result.toLocaleString()}
+                                                            {formatCurrency(cpa.result, { maximumFractionDigits: 0 })}
                                                         </motion.span>
                                                     </div>
                                                 </div>

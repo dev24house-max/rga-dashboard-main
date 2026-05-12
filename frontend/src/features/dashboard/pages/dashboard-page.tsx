@@ -348,7 +348,6 @@ export function DashboardPage() {
                                 roi={data?.summary.averageRoas ?? 0}
                                 roiDelta={data?.growth.roasGrowth ?? 0}
                                 total={totalCost}
-                                currency="THB"
                                 breakdown={financialBreakdown}
                                 summary={[
                                     {
