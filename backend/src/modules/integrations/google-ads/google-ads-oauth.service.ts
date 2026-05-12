@@ -30,9 +30,15 @@ export class GoogleAdsOAuthService {
    * Prevents Singleton State Pollution / Race Conditions
    */
   private createOAuthClient() {
+    const clientId = this.configService.get('GOOGLE_ADS_CLIENT_ID') || this.configService.get('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get('GOOGLE_ADS_CLIENT_SECRET') || this.configService.get('GOOGLE_CLIENT_SECRET');
+    if (!clientId || !clientSecret) {
+      throw new Error('Missing Google Ads OAuth client credentials');
+    }
+
     return new google.auth.OAuth2(
-      this.configService.get('GOOGLE_CLIENT_ID'),
-      this.configService.get('GOOGLE_CLIENT_SECRET'),
+      clientId,
+      clientSecret,
       this.configService.get('GOOGLE_REDIRECT_URI_ADS'),
     );
   }
@@ -101,10 +107,21 @@ export class GoogleAdsOAuthService {
       }[] = [];
 
       try {
+        const devToken = this.configService.get('GOOGLE_ADS_DEVELOPER_TOKEN');
+        if (!devToken || devToken === 'YOUR_GOOGLE_ADS_DEVELOPER_TOKEN') {
+          throw new BadRequestException(
+            'กรุณาระบุ Developer Token ในไฟล์ .env (ค่าปัจจุบันยังเป็นตัวอย่าง "YOUR_GOOGLE_ADS_DEVELOPER_TOKEN")'
+          );
+        }
+
         selectableAccounts = await this.googleAdsClientService.getAllSelectableAccounts(tokens.refresh_token);
         this.logger.log(`✅ Selectable Google Ads Accounts: ${JSON.stringify(selectableAccounts.map(a => ({ id: a.id, name: a.name })))}`);
       } catch (error: any) {
         this.logger.error(`❌ Failed to list Google Ads accounts`);
+        
+        // If it's already a BadRequestException from our placeholder check, just rethrow it
+        if (error instanceof BadRequestException) throw error;
+
         this.logger.error(`Error message: ${error.message}`);
         this.logger.error(`Error response status: ${error.response?.status}`);
         this.logger.error(`Error response data: ${JSON.stringify(error.response?.data)}`);
@@ -116,11 +133,11 @@ export class GoogleAdsOAuthService {
         } else if (error.response?.status === 401) {
           contextualMessage = `401 Unauthorized - Token may have expired or been revoked`;
         } else if (error.response?.status === 403) {
-          contextualMessage = `403 Forbidden - Your account may not have permission to access Google Ads API`;
+          contextualMessage = `403 Forbidden - Your account may not have permission to access Google Ads API. Make sure your Developer Token is approved or in Test mode.`;
         }
 
         throw new BadRequestException(
-          `ไม่สามารถดึง Google Ads Accounts ได้: ${contextualMessage}. กรุณาตรวจสอบว่า Developer Token ถูกต้องและ Google Ads API เปิดใช้งานแล้ว`
+          `ไม่สามารถดึง Google Ads Accounts ได้: ${contextualMessage}`
         );
       }
 
@@ -145,17 +162,25 @@ export class GoogleAdsOAuthService {
         accounts: selectableAccounts,
         tempToken: tempToken,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error in handleCallback:', error);
 
       // DEBUG: Write error to a file so we can see what exactly failed for the user
       try {
-        require('fs').appendFileSync('oauth_error.log', new Date().toISOString() + ' | OAuth Error: ' + error.stack + '\n');
+        let errorDetail = '';
+        if (error.response && error.response.data) {
+          errorDetail = JSON.stringify(error.response.data);
+        } else if (error.response) {
+          errorDetail = JSON.stringify(error.response);
+        } else {
+          errorDetail = error.stack || error.message || String(error);
+        }
+        require('fs').appendFileSync('oauth_error.log', new Date().toISOString() + ' | OAuth Detailed Error: ' + errorDetail + '\n');
       } catch (e) { }
 
       // Re-throw BadRequestException as-is, wrap others
       if (error instanceof BadRequestException) {
-        throw new BadRequestException(`[NEW_DEBUG] ${error.message}`);
+        throw error;
       }
       throw new BadRequestException(
         `[NEW_DEBUG] OAuth callback failed: ${error.message}`,

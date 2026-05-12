@@ -97,17 +97,17 @@ export function SeoOffPageMetrics() {
                         },
                         {
                             title: "Network & Ratings",
-                            totalCount: 528, // Crawled pages
+                            totalCount: 0, // Crawled pages
                             items: [
-                                { label: "Referring pages", count: 440, percentage: 0 },
-                                { label: "Referring Ips", count: 57, percentage: 0 },
-                                { label: "Referring subnets", count: 53, percentage: 0 },
+                                { label: "Referring pages", count: 0, percentage: 0 },
+                                { label: "Referring Ips", count: 0, percentage: 0 },
+                                { label: "Referring subnets", count: 0, percentage: 0 },
                                 // URL Rating Distribution
-                                { label: "UR 81-100", count: 1, percentage: 1 },
-                                { label: "UR 61-80", count: 2, percentage: 2 },
+                                { label: "UR 81-100", count: 0, percentage: 0 },
+                                { label: "UR 61-80", count: 0, percentage: 0 },
                                 { label: "UR 41-60", count: 0, percentage: 0 },
-                                { label: "UR 21-40", count: 1, percentage: 0 },
-                                { label: "UR 1-20", count: 91, percentage: 92 },
+                                { label: "UR 21-40", count: 0, percentage: 0 },
+                                { label: "UR 1-20", count: 0, percentage: 0 },
                             ]
                         }
                     ];
@@ -148,16 +148,16 @@ export function SeoOffPageMetrics() {
                         },
                         {
                             title: "Network & Ratings",
-                            totalCount: 528,
+                            totalCount: 0,
                             items: [
-                                { label: "Referring pages", count: 440, percentage: 0 },
-                                { label: "Referring Ips", count: 57, percentage: 0 },
-                                { label: "Referring subnets", count: 53, percentage: 0 },
-                                { label: "UR 81-100", count: 1, percentage: 1 },
-                                { label: "UR 61-80", count: 2, percentage: 2 },
+                                { label: "Referring pages", count: 0, percentage: 0 },
+                                { label: "Referring Ips", count: 0, percentage: 0 },
+                                { label: "Referring subnets", count: 0, percentage: 0 },
+                                { label: "UR 81-100", count: 0, percentage: 0 },
+                                { label: "UR 61-80", count: 0, percentage: 0 },
                                 { label: "UR 41-60", count: 0, percentage: 0 },
-                                { label: "UR 21-40", count: 1, percentage: 0 },
-                                { label: "UR 1-20", count: 91, percentage: 92 },
+                                { label: "UR 21-40", count: 0, percentage: 0 },
+                                { label: "UR 1-20", count: 0, percentage: 0 },
                             ]
                         }
                     ]);
@@ -203,16 +203,16 @@ export function SeoOffPageMetrics() {
                     },
                     {
                         title: "Network & Ratings",
-                        totalCount: 528,
+                        totalCount: 0,
                         items: [
-                            { label: "Referring pages", count: 440, percentage: 0 },
-                            { label: "Referring Ips", count: 57, percentage: 0 },
-                            { label: "Referring subnets", count: 53, percentage: 0 },
-                            { label: "UR 81-100", count: 1, percentage: 1 },
-                            { label: "UR 61-80", count: 2, percentage: 2 },
+                            { label: "Referring pages", count: 0, percentage: 0 },
+                            { label: "Referring Ips", count: 0, percentage: 0 },
+                            { label: "Referring subnets", count: 0, percentage: 0 },
+                            { label: "UR 81-100", count: 0, percentage: 0 },
+                            { label: "UR 61-80", count: 0, percentage: 0 },
                             { label: "UR 41-60", count: 0, percentage: 0 },
-                            { label: "UR 21-40", count: 1, percentage: 0 },
-                            { label: "UR 1-20", count: 91, percentage: 92 },
+                            { label: "UR 21-40", count: 0, percentage: 0 },
+                            { label: "UR 1-20", count: 0, percentage: 0 },
                         ]
                     }
                 ];

@@ -16,6 +16,16 @@ export function useSeoSummary(days?: number) {
     });
 }
 
+export function useSeoOverview(period?: string) {
+    return useQuery({
+        queryKey: [...SEO_KEYS.all, 'overview', period],
+        queryFn: async () => {
+            const response = await apiClient.get(`/seo/overview${period ? `?period=${encodeURIComponent(period)}` : ''}`);
+            return response.data;
+        },
+    });
+}
+
 export function useAdsConnections() {
     return useQuery({
         queryKey: SEO_KEYS.adsConnections(),
@@ -43,6 +53,24 @@ export function useSyncGsc() {
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Error connecting to GSC API');
+        }
+    });
+}
+
+export function useConnectGsc() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (siteUrl: string) => SeoService.connectGsc(siteUrl),
+        onSuccess: (data) => {
+            if (data.success) {
+                toast.success(`Google Search Console connected for ${data.siteUrl}`);
+                queryClient.invalidateQueries({ queryKey: SEO_KEYS.all });
+            } else {
+                toast.error('Failed to configure Search Console');
+            }
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Error connecting Search Console');
         }
     });
 }

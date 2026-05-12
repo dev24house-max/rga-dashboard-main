@@ -65,7 +65,7 @@ export function AccountSelectionDialog({
                 <DialogHeader>
                     <DialogTitle>Select {platformName} Account</DialogTitle>
                     <DialogDescription>
-                        Choose an ad account to connect. You can change this later in settings.
+                        Choose the account or property to connect. You can change this later in settings.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -123,7 +123,7 @@ export function AccountSelectionDialog({
                                 Connecting...
                             </>
                         ) : (
-                            'Connect Account'
+                            'Connect'
                         )}
                     </Button>
                 </DialogFooter>

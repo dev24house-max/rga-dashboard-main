@@ -19,6 +19,7 @@ export const PeriodEnumSchema = z.enum([
     '14d',
     '30d',
     '90d',
+    '365d',
     'this_month',
     'last_month',
     'last_3_months',

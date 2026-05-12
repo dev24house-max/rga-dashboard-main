@@ -44,8 +44,9 @@ export function SeoSummaryCards({ data, isLoading }: SeoSummaryCardsProps) {
             value: formatDuration(data.avgTimeOnPage),
             icon: Timer,
             trend: `${data.avgTimeOnPageTrend && data.avgTimeOnPageTrend > 0 ? '+' : ''}${data.avgTimeOnPageTrend ?? 0}%`,
+            trendLabel: `${data.avgTimeOnPageTrend && data.avgTimeOnPageTrend > 0 ? '+' : ''}${data.avgTimeOnPageTrend ?? 0}% vs prev`,
             trendUp: (data.avgTimeOnPageTrend ?? 0) >= 0,
-            description: "Average session duration",
+            description: "Average session duration compared to the previous period",
             color: "text-purple-500",
             bg: "bg-purple-50"
         },
@@ -118,7 +119,7 @@ export function SeoSummaryCards({ data, isLoading }: SeoSummaryCardsProps) {
                             <div className="text-2xl font-bold">{metric.value}</div>
                             <div className={`flex items-center text-xs ${metric.trendUp ? 'text-green-600' : 'text-red-600'} bg-opacity-10 px-2 py-1 rounded-full ${metric.trendUp ? 'bg-green-50' : 'bg-red-50'}`}>
                                 {metric.trendUp ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
-                                {metric.trend}
+                                {metric.trendLabel ?? metric.trend}
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">

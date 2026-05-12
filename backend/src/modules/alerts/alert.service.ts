@@ -32,6 +32,24 @@ const PRESET_RULES: Array<{
             description: 'ROAS ต่ำกว่า 0.5 - ขาดทุนหนัก',
         },
         {
+            name: 'Budget Running Low',
+            type: AlertRuleType.PRESET,
+            metric: 'spend',
+            operator: 'gte',
+            threshold: 0.8,
+            severity: AlertSeverity.WARNING,
+            description: 'ใช้งบไปแล้ว 80% ของ budget',
+        },
+        {
+            name: 'Budget Nearly Exhausted',
+            type: AlertRuleType.PRESET,
+            metric: 'spend',
+            operator: 'gte',
+            threshold: 0.9,
+            severity: AlertSeverity.CRITICAL,
+            description: 'ใช้งบไปแล้ว 90% ของ budget',
+        },
+        {
             name: 'Overspend',
             type: AlertRuleType.PRESET,
             metric: 'spend',
@@ -331,6 +349,23 @@ export class AlertService {
 
                         // 🔔 Trigger notifications for all tenant users
                         await this.notificationService.triggerFromAlert(alert);
+
+                        // 📧 Send email notifications for budget alerts
+                        if (rule.name.includes('Budget')) {
+                            const users = await this.prisma.user.findMany({
+                                where: { tenantId, isActive: true },
+                                select: { email: true },
+                            });
+                            const userEmails = users.map(u => u.email);
+                            if (userEmails.length > 0) {
+                                await this.notificationService.sendBudgetAlertEmail(
+                                    { ...alert, campaign: { name: campaign.name } },
+                                    userEmails,
+                                ).catch(err => {
+                                    this.logger.error(`Failed to send budget alert emails: ${err.message}`);
+                                });
+                            }
+                        }
 
                         newAlerts.push(alert);
                     }

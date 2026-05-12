@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
+import GoogleLoginCallback from "./pages/GoogleLoginCallback";
 // ✅ NEW: Import from feature module (replaces legacy pages/Dashboard)
 import { DashboardPage } from "@/features/dashboard";
 // ✅ NEW: Import from feature module (replaces legacy pages/Campaigns)
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/google-login-callback" component={GoogleLoginCallback} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/landing/ecommerce" component={EcommerceLandingPage} />

@@ -16,7 +16,7 @@ import {
     RefreshCw,
     ExternalLink,
 } from 'lucide-react';
-import type { PlatformId, IntegrationStatusResponse, PlatformConfig } from '../types';
+import type { PlatformId, IntegrationStatusResponse } from '../types';
 import { PLATFORM_CONFIGS } from '../types';
 
 // Platform-specific icons (inline SVGs for better control)
@@ -32,6 +32,13 @@ const PlatformIcons: Record<PlatformId, React.ReactNode> = {
     'google-analytics': (
         <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2.25c-5.38 0-9.75 4.37-9.75 9.75S6.62 21.75 12 21.75 21.75 17.38 21.75 12 17.38 2.25 12 2.25zm0 2.25a7.5 7.5 0 0 1 7.5 7.5h-3.75a3.75 3.75 0 0 0-7.5 0H4.5a7.5 7.5 0 0 1 7.5-7.5zm0 15a7.5 7.5 0 0 1-7.5-7.5h3.75a3.75 3.75 0 0 0 7.5 0h3.75a7.5 7.5 0 0 1-7.5 7.5z" fill="#F9AB00" />
+        </svg>
+    ),
+    'search-console': (
+        <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v13A2.5 2.5 0 0 1 16.5 21h-9A2.5 2.5 0 0 1 5 18.5v-13Z" fill="#E8F5E9" />
+            <path d="M8 15.5 10.6 13l2 1.8L16.5 10" stroke="#34A853" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 7.5h8M8 10h4" stroke="#4285F4" strokeWidth="1.6" strokeLinecap="round" />
         </svg>
     ),
     facebook: (
@@ -194,12 +201,12 @@ export function DataSourceCard({
                                         ? 'https://business.facebook.com'
                                         : platform === 'tiktok'
                                         ? 'https://ads.tiktok.com'
-                                        : platform === 'google-analytics'
+                                        : (platform === 'google-analytics' || platform === 'search-console')
                                         ? '/seo-web-analytics'
                                         : 'https://manager.line.biz'
                                 }
-                                target={platform === 'google-analytics' ? '_self' : '_blank'}
-                                rel={platform === 'google-analytics' ? undefined : 'noopener noreferrer'}
+                                target={(platform === 'google-analytics' || platform === 'search-console') ? '_self' : '_blank'}
+                                rel={(platform === 'google-analytics' || platform === 'search-console') ? undefined : 'noopener noreferrer'}
                             >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open Dashboard

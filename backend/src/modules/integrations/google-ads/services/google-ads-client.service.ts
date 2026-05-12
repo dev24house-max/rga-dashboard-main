@@ -91,11 +91,16 @@ export class GoogleAdsClientService {
       // ⚠️ IMPORTANT: No login-customer-id header for this call to get ALL root accounts
       const data = await this.executeRestCall('GET', 'customers:listAccessibleCustomers', refreshToken);
       const resourceNames = data?.resourceNames || [];
-      this.logger.log(`[GoogleAdsAPI] Found ${resourceNames.length} root accounts`);
+      this.logger.log(`[GoogleAdsAPI] Found ${resourceNames.length} root accounts: ${JSON.stringify(resourceNames)}`);
+      try { require('fs').appendFileSync('oauth_error.log', new Date().toISOString() + ' | [DEBUG] listAccessibleCustomers: ' + JSON.stringify(resourceNames) + '\n'); } catch (e) {}
       return resourceNames;
     } catch (error: any) {
-      this.logger.error(`[GoogleAdsAPI] Failed listing: ${error.message}`);
+      this.logger.error(`[GoogleAdsAPI] listAccessibleCustomers Failed: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`[GoogleAdsAPI] Error Response: ${JSON.stringify(error.response.data)}`);
+      }
       const loginCustomerId = this.configService.get('GOOGLE_ADS_LOGIN_CUSTOMER_ID')?.replace(/-/g, '');
+      this.logger.log(`[GoogleAdsAPI] Falling back to GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${loginCustomerId}`);
       return loginCustomerId ? [`customers/${loginCustomerId}`] : [];
     }
   }
@@ -107,6 +112,8 @@ export class GoogleAdsClientService {
     this.logger.log(`[GET-ALL-ACCOUNTS] Starting full hierarchy scan...`);
     try {
       const accessibleCustomers = await this.listAccessibleCustomers(refreshToken);
+      this.logger.log(`[GET-ALL-ACCOUNTS] Accessible customers list: ${JSON.stringify(accessibleCustomers)}`);
+      try { require('fs').appendFileSync('oauth_error.log', new Date().toISOString() + ' | [DEBUG] getAllSelectableAccounts list: ' + JSON.stringify(accessibleCustomers) + '\n'); } catch (e) {}
       const allAccounts: any[] = [];
 
       for (const resourceName of accessibleCustomers) {
@@ -158,6 +165,9 @@ export class GoogleAdsClientService {
         }
       }
       this.logger.log(`[GET-ALL-ACCOUNTS] Scan complete. Found ${allAccounts.length} selectable accounts.`);
+      if (allAccounts.length === 0) {
+        this.logger.warn(`[GET-ALL-ACCOUNTS] Hierarchy scan returned zero accounts. Check if the user has access to the provided customers.`);
+      }
       return allAccounts;
     } catch (error: any) {
       this.logger.error(`Fatal error in getAllSelectableAccounts: ${error.message}`);

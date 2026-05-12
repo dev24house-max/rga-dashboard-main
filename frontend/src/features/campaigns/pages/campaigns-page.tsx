@@ -117,6 +117,26 @@ function IndeterminateProgress({ className }: { className?: string }) {
     return <Progress value={progress} className={className} />;
 }
 
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -442,6 +462,10 @@ export function CampaignsPage() {
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
         // Persist selection on page change (do not clear)
+    };
+
+    const handlePeriodChange = (newPeriod: PeriodEnum) => {
+        setPeriod(newPeriod);
     };
 
     // ==========================================================================

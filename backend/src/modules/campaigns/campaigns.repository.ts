@@ -17,24 +17,6 @@ export abstract class CampaignsRepository {
 export class PrismaCampaignsRepository implements CampaignsRepository {
   constructor(private readonly prisma: PrismaService) { }
 
-  private csvValues(value?: string | string[]): string[] {
-    if (!value) return [];
-    const values = Array.isArray(value) ? value : value.split(',');
-    return values.map((v) => String(v).trim()).filter(Boolean);
-  }
-
-  private emptyMetricSum() {
-    return {
-      _sum: {
-        spend: 0,
-        impressions: 0,
-        clicks: 0,
-        revenue: 0,
-        conversions: 0,
-      },
-    };
-  }
-
   async create(tenantId: string, dto: CreateCampaignDto): Promise<Campaign & { metrics: Metric[] }> {
     return this.prisma.campaign.create({
       data: {
@@ -60,7 +42,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     // Handle multi-select Status
     let statusFilter: Prisma.EnumCampaignStatusFilter | undefined;
     if (query.status && query.status !== 'ALL') {
-      const statuses = this.csvValues(query.status).filter(s => s !== 'ALL') as CampaignStatus[];
+      const statuses = query.status.split(',').filter(s => s !== 'ALL') as CampaignStatus[];
       if (statuses.length > 0) {
         statusFilter = statuses.length === 1 ? { equals: statuses[0] } : { in: statuses };
       }
@@ -69,9 +51,15 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     // Handle multi-select Platform
     let platformFilter: Prisma.EnumAdPlatformFilter | undefined;
 
+    // DEBUG LOG
+    if (query.platform) {
+      console.log('DEBUG: buildWhereClause platform input:', query.platform);
+      console.log('DEBUG: AdPlatform Enum Keys/Values:', JSON.stringify(AdPlatform));
+    }
+
     if (query.platform && query.platform !== 'ALL') {
-      const platforms = this.csvValues(query.platform).filter(p => p !== 'ALL').map(p => {
-        const key = p.trim().toUpperCase().replace('-', '_');
+      const platforms = query.platform.split(',').filter(p => p !== 'ALL').map(p => {
+        const key = p.trim().toUpperCase().replace(/[-\s]/g, '_');
 
         // Explicit mapping for known variations
         if (key === 'GOOGLE') return AdPlatform.GOOGLE_ADS;
@@ -91,13 +79,13 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       }
     }
 
-    const ids = this.csvValues(query.ids);
+    const ids = query.ids ? query.ids.split(',').filter(id => id.trim().length > 0) : undefined;
 
     const where: Prisma.CampaignWhereInput = {
       tenantId,
     };
 
-    if (ids.length > 0) {
+    if (ids && ids.length > 0) {
       where.id = { in: ids };
     }
 
@@ -112,7 +100,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     if (statusFilter) {
       // User selected specific statuses - use those but exclude DELETED
       const selectedStatuses = Array.isArray(statusFilter.in) ? statusFilter.in : [statusFilter.equals];
-      const filteredStatuses = selectedStatuses.filter((s): s is CampaignStatus => !!s && s !== 'DELETED');
+      const filteredStatuses = selectedStatuses.filter(s => s !== 'DELETED');
       if (filteredStatuses.length > 0) {
         where.status = filteredStatuses.length === 1 ? { equals: filteredStatuses[0] } : { in: filteredStatuses };
       }
@@ -160,7 +148,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     // 1. Fetch campaigns with date-filtered metrics
     const metricsWhere: Prisma.MetricWhereInput = {
-      source: { not: 'lifetime_summary' },
+      // Include all metrics (don't filter by source to get Google Ads data)
       ...(startDate || endDate ? {
         date: {
           ...(startDate && { gte: startDate }),
@@ -184,13 +172,10 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       this.prisma.campaign.count({ where }),
     ]);
 
+    // 2. Fetch lifetime metrics total (no date filter) for each campaign in the result set
     // 2. Fetch lifetime metrics total for each campaign
     // We prioritize the 'lifetime_summary' source row which contains absolute totals from platforms
     const campaignIds = rawCampaigns.map(c => c.id);
-    if (campaignIds.length === 0) {
-      return [rawCampaigns as any, total];
-    }
-
     const summaryRows = await this.prisma.metric.findMany({
       where: {
         campaignId: { in: campaignIds },
@@ -204,7 +189,13 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     if (missingIds.length > 0) {
       fallbackSums = await this.prisma.metric.groupBy({
         by: ['campaignId'],
-        where: { campaignId: { in: missingIds }, source: { not: 'lifetime_summary' } },
+        where: { 
+          campaignId: { in: missingIds }, 
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ] 
+        },
         _sum: { spend: true, impressions: true, clicks: true, revenue: true, conversions: true }
       });
     }
@@ -336,39 +327,39 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     const periodAgg = await this.prisma.metric.aggregate({
       where: {
         ...metricWhere,
-        source: { not: 'lifetime_summary' },
+        OR: [
+          { source: { not: 'lifetime_summary' } },
+          { source: null }
+        ],
       },
       _sum: {
         spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
       },
     });
 
-    const fallbackCampaignIds = campaignIds.filter(id => !lifetimeSummaryIds.includes(id));
-
     const [summaryTotals, fallbackTotals, budgetAgg] = await Promise.all([
       // B. Absolute Totals (from special lifetime rows)
-      lifetimeSummaryIds.length > 0
-        ? this.prisma.metric.aggregate({
-          where: { campaignId: { in: lifetimeSummaryIds }, source: 'lifetime_summary' },
-          _sum: {
-            spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
-          },
-        })
-        : Promise.resolve(this.emptyMetricSum()),
+      this.prisma.metric.aggregate({
+        where: { campaignId: { in: lifetimeSummaryIds }, source: 'lifetime_summary' },
+        _sum: {
+          spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
+        },
+      }),
       // C. Fallback Totals (for campaigns that don't have a lifetime row yet)
-      fallbackCampaignIds.length > 0
-        ? this.prisma.metric.aggregate({
-          where: {
-            campaignId: {
-              in: fallbackCampaignIds
-            },
-            source: { not: 'lifetime_summary' },
+      this.prisma.metric.aggregate({
+        where: {
+          campaignId: {
+            in: campaignIds.filter(id => !lifetimeSummaryIds.includes(id))
           },
-          _sum: {
-            spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
-          },
-        })
-        : Promise.resolve(this.emptyMetricSum()),
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ],
+        },
+        _sum: {
+          spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
+        },
+      }),
       // D. Budgets (Campaign level)
       this.prisma.campaign.aggregate({
         where,

@@ -189,6 +189,7 @@ export function useIntegrationAuth() {
 
             // Refresh dashboard data (demo -> live switch)
             queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            queryClient.invalidateQueries({ queryKey: ['seo'] });
         },
         onError: (error: any, variables) => {
             const platformName = PLATFORM_CONFIGS[variables.platform].name;
@@ -364,6 +365,8 @@ function normalizePlatformId(platform: string): PlatformId | null {
         'ads': 'google', // Legacy: platform=ads means Google Ads
         'google-analytics': 'google-analytics',
         'ga4': 'google-analytics',
+        'search-console': 'search-console',
+        'gsc': 'search-console',
         'facebook': 'facebook',
         'tiktok': 'tiktok',
         'line': 'line',

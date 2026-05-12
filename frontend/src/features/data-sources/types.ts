@@ -12,7 +12,7 @@
 /**
  * Supported integration platforms
  */
-export type PlatformId = 'google' | 'google-analytics' | 'facebook' | 'tiktok' | 'line';
+export type PlatformId = 'google' | 'google-analytics' | 'search-console' | 'facebook' | 'tiktok' | 'line';
 
 /**
  * Platform display configuration
@@ -42,6 +42,13 @@ export const PLATFORM_CONFIGS: Record<PlatformId, PlatformConfig> = {
         icon: 'google-analytics',
         description: 'Connect your GA4 property to sync web analytics data',
         color: '#F9AB00',
+    },
+    'search-console': {
+        id: 'search-console',
+        name: 'Google Search Console',
+        icon: 'google',
+        description: 'Connect Search Console to sync organic search performance',
+        color: '#34A853',
     },
     facebook: {
         id: 'facebook',
