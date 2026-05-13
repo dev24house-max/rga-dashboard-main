@@ -4,8 +4,14 @@
 // =============================================================================
 
 import { useState, useMemo, useEffect } from 'react';
-import { Lightbulb, Target, CheckCircle2 } from 'lucide-react';
+import { Lightbulb, Target, CheckCircle2, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { Campaign } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -232,9 +238,50 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
             {/* LEFT COLUMN: Conversion Rate Insights (2/3 width) */}
             <div className="lg:col-span-1 xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm h-full flex flex-col">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                        <p className="text-2xl font-bold tracking-tight">Conversion Rate</p>
-                        <p className="text-sm text-muted-foreground">Channel-by-channel AI insights</p>
+                    <div className="flex items-start gap-3 flex-1">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <p className="text-2xl font-bold tracking-tight">Conversion Rate</p>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <HelpCircle className="h-5 w-5 text-muted-foreground hover:text-primary cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="right"
+                                            className="max-w-[280px] p-0 border-0 shadow-2xl overflow-hidden rounded-[10px]"
+                                            style={{ background: '#111827' }}
+                                        >
+                                            <div>
+                                                <div className="px-3.5 pt-2.5 pb-2">
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <div
+                                                            className="w-0.5 h-3.5 rounded-full shrink-0"
+                                                            style={{ background: '#F97316' }}
+                                                        />
+                                                        <span
+                                                            className="text-[10px] font-medium uppercase tracking-wider"
+                                                            style={{ color: '#FB923C' }}
+                                                        >
+                                                            Conversion Rate
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[12.5px] text-slate-100 leading-relaxed m-0 mb-2.5">
+                                                        Percentage of users who completed a desired action (purchase, signup, etc.) after clicking your ad.
+                                                    </p>
+                                                    <div className="space-y-1.5 text-[11px] text-slate-300">
+                                                        <p><span className="text-amber-400 font-semibold">Formula:</span> (Conversions / Clicks) × 100</p>
+                                                        <p><span className="font-semibold text-emerald-400">Good Range:</span> 2-5% for most industries</p>
+                                                        <p><span className="font-semibold text-blue-400">Insight:</span> Higher conversion rates mean better ad relevance and landing page optimization.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Channel-by-channel AI insights</p>
+                        </div>
                     </div>
                 </div>
 
@@ -401,7 +448,46 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
             {/* RIGHT COLUMN: Platform Breakdown (1/3 width) */}
             <div className="lg:col-span-1 xl:col-span-1 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm flex flex-col h-full">
                 <div>
-                    <p className="text-2xl font-bold tracking-tight">Platform Breakdown</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <p className="text-2xl font-bold tracking-tight">Platform Breakdown</p>
+                        <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                    <HelpCircle className="h-5 w-5 text-muted-foreground hover:text-primary cursor-help transition-colors" />
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="left"
+                                    className="max-w-[280px] p-0 border-0 shadow-2xl overflow-hidden rounded-[10px]"
+                                    style={{ background: '#111827' }}
+                                >
+                                    <div>
+                                        <div className="px-3.5 pt-2.5 pb-2">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <div
+                                                    className="w-0.5 h-3.5 rounded-full shrink-0"
+                                                    style={{ background: '#F97316' }}
+                                                />
+                                                <span
+                                                    className="text-[10px] font-medium uppercase tracking-wider"
+                                                    style={{ color: '#FB923C' }}
+                                                >
+                                                    Platform Breakdown
+                                                </span>
+                                            </div>
+                                            <p className="text-[12.5px] text-slate-100 leading-relaxed m-0 mb-2.5">
+                                                Compare ad spend, conversions, and cost-per-acquisition across Facebook, Google, TikTok, and Line platforms.
+                                            </p>
+                                            <div className="space-y-1.5 text-[11px] text-slate-300">
+                                                <p><span className="text-amber-400 font-semibold">Share:</span> Percentage of total budget spent on each platform</p>
+                                                <p><span className="font-semibold text-emerald-400">CPA:</span> Cost Per Acquisition - lower is better</p>
+                                                <p><span className="font-semibold text-blue-400">Tip:</span> Focus budget on platforms with the best CPA while testing underperforming channels.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                     <p className="text-sm text-muted-foreground">Key metrics and budget utilization</p>
                 </div>
 
