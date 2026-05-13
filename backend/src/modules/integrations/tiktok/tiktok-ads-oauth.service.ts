@@ -159,7 +159,15 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
                 this.logger.log(`[TikTok OAuth] Created Sandbox account: ${accountId}`);
             }
 
-            return { success: true, accountId, accountName };
+            const syncResult = await this.triggerInitialSync(accountId, tenantId);
+
+            return {
+                success: true,
+                accountId,
+                accountName,
+                initialSyncSucceeded: syncResult.success,
+                initialSyncError: syncResult.error,
+            };
         } catch (error) {
             this.logger.error(`[TikTok OAuth] Sandbox connection error: ${error.message}`);
             throw new BadRequestException(`Failed to connect Sandbox account: ${error.message}`);
@@ -218,10 +226,14 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
             // 2. Exchange code for tokens
             // IMPORTANT: TikTok uses JSON body, not form-urlencoded
             // IMPORTANT: TikTok uses `auth_code`, not `code`
+            // IMPORTANT: TikTok API returns gzip-compressed responses - must decompress
             const tokenResponse = await axios.post(this.tokenUrl, {
                 app_id: this.appId,
                 secret: this.appSecret,
                 auth_code: code,  // TikTok-specific parameter name
+            }, {
+                decompress: true,
+                timeout: 10000,
             });
 
             // TikTok response structure: { code: 0, message: "OK", data: { ... } }
@@ -300,6 +312,8 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
                 params: {
                     advertiser_ids: JSON.stringify(advertiserIds.map(id => String(id))),
                 },
+                decompress: true,
+                timeout: 10000,
             });
 
             if (response.data?.code !== 0) {
@@ -420,13 +434,15 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
             await this.cacheManager.del(`tiktok_temp_tokens:${tempToken}`);
             await this.cacheManager.del(`tiktok_temp_accounts:${tempToken}`);
 
-            // Trigger initial sync in background so newly connected TikTok data starts populating
-            this.triggerInitialSync(dbAccountId, tenantId);
+            // Trigger initial sync so newly connected TikTok data starts populating immediately
+            const syncResult = await this.triggerInitialSync(dbAccountId, tenantId);
 
             return {
                 success: true,
                 accountId: dbAccountId,
                 accountName,
+                initialSyncSucceeded: syncResult.success,
+                initialSyncError: syncResult.error,
             };
         } catch (error) {
             this.logger.error(`[TikTok OAuth] Complete connection error: ${error.message}`);
@@ -434,13 +450,17 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
         }
     }
 
-    private async triggerInitialSync(accountId: string, tenantId: string) {
+    private async triggerInitialSync(accountId: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
         try {
             this.logger.log(`[TikTok OAuth] Triggering initial TikTok initial sync for account: ${accountId}`);
-            await this.unifiedSyncService.syncAccount(AdPlatform.TIKTOK, accountId, tenantId);
+            // Limit initial sync to 30 days to avoid long-running requests for large accounts
+            await this.unifiedSyncService.syncAccount(AdPlatform.TIKTOK, accountId, tenantId, undefined, 30);
             this.logger.log(`[TikTok OAuth] Initial sync completed for account: ${accountId}`);
+            return { success: true };
         } catch (syncError: any) {
-            this.logger.error(`[TikTok OAuth] Initial sync failed for account ${accountId}: ${syncError?.message || syncError}`);
+            const errorMessage = syncError?.message || String(syncError);
+            this.logger.error(`[TikTok OAuth] Initial sync failed for account ${accountId}: ${errorMessage}`);
+            return { success: false, error: errorMessage };
         }
     }
 
@@ -480,6 +500,9 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
                 app_id: this.appId,
                 secret: this.appSecret,
                 refresh_token: decryptedRefreshToken,
+            }, {
+                decompress: true,
+                timeout: 10000,
             });
 
             if (response.data?.code !== 0) {
@@ -550,6 +573,19 @@ export class TikTokAdsOAuthService implements OAuthProvider, SandboxSupport {
     async disconnect(tenantId: string): Promise<boolean> {
         this.logger.log(`[TikTok OAuth] Disconnecting all accounts for tenant: ${tenantId}`);
 
+        // First, soft delete all campaigns for this tenant and platform TIKTOK
+        await this.prisma.campaign.updateMany({
+            where: {
+                tenantId,
+                platform: 'TIKTOK',
+                status: { not: 'DELETED' },
+            },
+            data: {
+                status: 'DELETED',
+            },
+        });
+
+        // Then, delete all accounts for this tenant
         await this.prisma.tikTokAdsAccount.deleteMany({
             where: { tenantId },
         });

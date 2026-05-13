@@ -5,12 +5,14 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { RegionalSettingsProvider } from "./contexts/RegionalSettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
+import GoogleLoginCallback from "./pages/GoogleLoginCallback";
 // ✅ NEW: Import from feature module (replaces legacy pages/Dashboard)
 import { DashboardPage } from "@/features/dashboard";
 // ✅ NEW: Import from feature module (replaces legacy pages/Campaigns)
@@ -21,7 +23,6 @@ import { DataSourcesPage } from "@/features/data-sources";
 import { SeoPage } from "@/features/seo";
 import { AiInsightsPage } from "@/features/ai-insights";
 import { EcommerceLandingPage } from '@/features/ecommerce-landing';
-import { TutorialFlow } from '@/features/tutorial/TutorialFlow';
 import Users from "./pages/Users";
 import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/google-login-callback" component={GoogleLoginCallback} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/landing/ecommerce" component={EcommerceLandingPage} />
@@ -120,14 +122,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient} key={tenantKey}>
       <ErrorBoundary>
-        <ThemeProvider defaultTheme="light">
-          {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-            <TutorialFlow />
-          </TooltipProvider>
-        </ThemeProvider>
+        <RegionalSettingsProvider>
+          <ThemeProvider defaultTheme="light" switchable>
+            {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </ThemeProvider>
+        </RegionalSettingsProvider>
       </ErrorBoundary>
     </QueryClientProvider>
   );

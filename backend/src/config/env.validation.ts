@@ -58,8 +58,11 @@ export const envValidationSchema = Joi.object({
         }),
         otherwise: Joi.optional(),
     }),
+    GOOGLE_REDIRECT_URI_LOGIN: Joi.string().uri().optional(),
     GOOGLE_REDIRECT_URI_ADS: Joi.string().uri().optional(),
     GOOGLE_REDIRECT_URI_ANALYTICS: Joi.string().uri().optional(),
+    GOOGLE_REDIRECT_URI_GA4: Joi.string().uri().optional(),
+    GOOGLE_REDIRECT_URI_GSC: Joi.string().uri().optional(),
     GOOGLE_ADS_DEVELOPER_TOKEN: Joi.string().optional(),
 
     // ============================================

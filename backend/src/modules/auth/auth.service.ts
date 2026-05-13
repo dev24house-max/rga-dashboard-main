@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
@@ -7,6 +7,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
 import * as bcrypt from 'bcryptjs';
+import { google } from 'googleapis';
 import { User, Tenant } from '@prisma/client';
 import { Request } from 'express';
 import * as crypto from 'crypto';
@@ -293,7 +294,148 @@ export class AuthService {
   /**
    * Refresh token with rotation (ลบ token เก่าก่อนสร้างใหม่)
    */
-  async refreshToken(token: string, request?: Request) {
+async getGoogleAuthUrl() {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
+    const redirectUri =
+      this.config.get<string>('GOOGLE_REDIRECT_URI_LOGIN') ||
+      'http://localhost:3000/auth/google/callback';
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Google OAuth is not configured on the server');
+    }
+
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    return oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: ['openid', 'email', 'profile'],
+    });
+  }
+
+  async handleGoogleLoginCallback(code: string, request?: Request) {
+    if (!code) {
+      throw new BadRequestException('Google authorization code is required');
+    }
+
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
+    const redirectUri =
+      this.config.get<string>('GOOGLE_REDIRECT_URI_LOGIN') ||
+      'http://localhost:3000/auth/google/callback';
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Google OAuth is not configured on the server');
+    }
+
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    const { tokens } = await oauth2Client.getToken(code);
+
+    const idToken = tokens.id_token;
+    if (!idToken) {
+      throw new BadRequestException('Google did not return an ID token');
+    }
+
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken,
+      audience: clientId,
+    });
+
+    const payload = ticket.getPayload();
+    const email = (payload?.email || '').trim().toLowerCase();
+
+    if (!email) {
+      throw new BadRequestException('Google account does not have an email address');
+    }
+
+    const firstName = (payload?.given_name || '').trim();
+    const lastName = (payload?.family_name || '').trim();
+    const usernamePrefix = email.split('@')[0].replace(/[^a-zA-Z0-9._-]/g, '').toLowerCase() || 'googleuser';
+    const username = `${usernamePrefix}-${Math.floor(Math.random() * 10000)}`.slice(0, 30);
+    const companyName = payload?.email?.split('@')[1] || 'Google Login Tenant';
+
+    let user = await this.prisma.user.findFirst({
+      where: { email },
+      include: { tenant: true },
+    }) as UserWithTenant | null;
+
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+
+      user = await this.authRepository.createTenantAndUser(
+        {
+          email,
+          username,
+          firstName,
+          lastName,
+          companyName,
+          password: crypto.randomBytes(32).toString('hex'),
+          termsAccepted: true,
+        } as RegisterDto,
+        hashedPassword,
+      ) as UserWithTenant;
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: true,
+          emailVerificationTokenHash: null,
+          emailVerificationTokenExpiresAt: null,
+        },
+      });
+    } else {
+      if (!user.isActive) {
+        throw new InvalidCredentialsException();
+      }
+
+      if (!user.emailVerified) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            emailVerified: true,
+            emailVerificationTokenHash: null,
+            emailVerificationTokenExpiresAt: null,
+          },
+        });
+      }
+    }
+
+    const tokensPair = await this.generateTokens(user.id, user.email);
+    const clientIp = request?.ip || request?.socket?.remoteAddress || null;
+    const userAgent = request?.headers?.['user-agent'] || null;
+
+    await this.authRepository.saveRefreshToken(
+      user.id,
+      tokensPair.refreshToken,
+      clientIp,
+      userAgent,
+    );
+
+    await this.auditLogsService.createLog({
+      userId: user.id,
+      action: 'LOGIN',
+      resource: 'Auth',
+      details: {
+        email: user.email,
+        provider: 'google',
+        ip: clientIp,
+      },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        tenant: { id: user.tenant.id, name: user.tenant.name },
+      },
+      ...tokensPair,
+    };
+  }
+
+    async refreshToken(token: string, request?: Request) {
     try {
       // 1. Verify token
       const payload = await this.jwt.verifyAsync(token, {

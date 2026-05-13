@@ -140,8 +140,14 @@ export class ExportController {
     @ApiQuery({
         name: 'period',
         required: false,
-        enum: ['7d', '30d'],
+        enum: ['1d', '7d', '14d', '30d', '90d', '365d', 'this_month', 'last_month'],
         description: 'Report period (default: 7d)',
+    })
+    @ApiQuery({
+        name: 'platform',
+        required: false,
+        enum: ['GOOGLE_ADS', 'FACEBOOK', 'TIKTOK', 'LINE_ADS', 'INSTAGRAM'],
+        description: 'Optional platform filter for PDF metrics',
     })
     @ApiResponse({
         status: 200,
@@ -159,9 +165,24 @@ export class ExportController {
     @Header('Content-Type', 'application/pdf')
     async exportMetricsPDF(
         @CurrentUser('tenantId') tenantId: string,
-        @Query('period') period: '7d' | '30d' = '7d',
+        @Query('period') period: string = '7d',
+        @Query('platform') platform?: string,
     ) {
-        const pdf = await this.exportService.exportMetricsToPDF(tenantId, period);
+        // Basic validation: allow day-based periods (e.g. 7d, 14d, 30d, 90d, 365d) and month presets.
+        const isValid =
+            /^(?:\d+d|this_month|last_month)$/.test(period);
+        if (!isValid) {
+            throw new BadRequestException(
+                "Invalid period. Use '<Nd>' (e.g. 7d, 30d, 90d, 365d) or 'this_month'/'last_month'."
+            );
+        }
+        const allowedPlatforms = new Set(['GOOGLE_ADS', 'FACEBOOK', 'TIKTOK', 'LINE_ADS', 'INSTAGRAM']);
+        if (platform && !allowedPlatforms.has(platform)) {
+            throw new BadRequestException(
+                "Invalid platform. Use GOOGLE_ADS, FACEBOOK, TIKTOK, LINE_ADS, or INSTAGRAM."
+            );
+        }
+        const pdf = await this.exportService.exportMetricsToPDF(tenantId, period, platform as any);
 
         // Note: Returning Buffer directly works with NestJS
         // The response handling is done via @Res() in dashboard.controller.ts

@@ -9,9 +9,42 @@ import { dashboardService } from '@/services/dashboard-service';
 import { toast } from 'sonner';
 import { Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 
-type ExportPeriod = '7d' | '14d' | '30d' | '90d';
+type ExportPeriod = '1d' | '7d' | '14d' | '30d' | '90d' | '365d';
 type PlatformFilter = 'ALL' | 'GOOGLE_ADS' | 'FACEBOOK' | 'TIKTOK' | 'LINE_ADS';
 type StatusFilter = 'ALL' | 'ACTIVE' | 'PAUSED' | 'ENDED' | 'DRAFT';
+
+function getDateRangeFromPeriod(period: ExportPeriod): { startDate: string; endDate: string } {
+    const today = new Date();
+    const endDate = today.toISOString().split('T')[0];
+
+    const start = new Date(today);
+    switch (period) {
+        case '1d':
+            break;
+        case '7d':
+            start.setDate(start.getDate() - 6);
+            break;
+        case '14d':
+            start.setDate(start.getDate() - 13);
+            break;
+        case '30d':
+            start.setDate(start.getDate() - 29);
+            break;
+        case '90d':
+            start.setDate(start.getDate() - 89);
+            break;
+        case '365d':
+            start.setDate(start.getDate() - 364);
+            break;
+        default:
+            break;
+    }
+
+    return {
+        startDate: start.toISOString().split('T')[0],
+        endDate,
+    };
+}
 
 export default function Reports() {
     // Filter states
@@ -30,24 +63,32 @@ export default function Reports() {
     const handleExportCSV = async () => {
         setIsExportingCSV(true);
         try {
+            const { startDate, endDate } = getDateRangeFromPeriod(period);
             const response = await dashboardService.exportCampaignsCSV(
+                startDate,
+                endDate,
                 platform === 'ALL' ? undefined : platform,
                 status === 'ALL' ? undefined : status
             );
 
             // Create blob and trigger download
-            const blob = new Blob([response.data], { type: 'text/csv' });
+            const blob = response.data instanceof Blob
+                ? response.data
+                : new Blob([response.data], { type: 'text/csv;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `campaigns-${platform.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute(
+                'download',
+                `campaigns-${period}-${platform.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`
+            );
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
 
             toast.success('CSV exported successfully', {
-                description: `Downloaded campaigns report with ${platform === 'ALL' ? 'all platforms' : platform} filter.`
+                description: `Downloaded ${period} campaigns report with ${platform === 'ALL' ? 'all platforms' : platform} filter.`
             });
         } catch (error) {
             console.error('Export CSV error:', error);
@@ -66,23 +107,23 @@ export default function Reports() {
     const handleExportPDF = async () => {
         setIsExportingPDF(true);
         try {
-            // PDF endpoint only supports 7d or 30d
-            const pdfPeriod = period === '7d' || period === '14d' ? '7d' : '30d';
-            const response = await dashboardService.exportMetricsPDF(pdfPeriod);
+            const selectedPlatform = platform === 'ALL' ? undefined : platform;
+            const response = await dashboardService.exportMetricsPDF(period, selectedPlatform);
 
             // Create blob and trigger download
             const blob = new Blob([response.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `metrics-report-${pdfPeriod}-${new Date().toISOString().split('T')[0]}.pdf`);
+            const platformSlug = (selectedPlatform || 'ALL').toLowerCase();
+            link.setAttribute('download', `metrics-report-${period}-${platformSlug}-${new Date().toISOString().split('T')[0]}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
 
             toast.success('PDF report exported successfully', {
-                description: `Downloaded ${pdfPeriod === '7d' ? 'Last 7 Days' : 'Last 30 Days'} metrics report.`
+                description: `Downloaded ${period} metrics report${selectedPlatform ? ` for ${selectedPlatform}` : ''}.`
             });
         } catch (error) {
             console.error('Export PDF error:', error);
@@ -122,10 +163,12 @@ export default function Reports() {
                                             <SelectValue placeholder="Select period" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            <SelectItem value="1d">Today</SelectItem>
                                             <SelectItem value="7d">Last 7 Days</SelectItem>
                                             <SelectItem value="14d">Last 14 Days</SelectItem>
                                             <SelectItem value="30d">Last 30 Days</SelectItem>
                                             <SelectItem value="90d">Last 90 Days</SelectItem>
+                                            <SelectItem value="365d">Last 1 Year</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -257,7 +300,7 @@ export default function Reports() {
                                         )}
                                     </Button>
                                     <p className="text-xs text-slate-400 text-center">
-                                        PDF uses {period === '7d' || period === '14d' ? '7 day' : '30 day'} period
+                                        PDF uses {period} period
                                     </p>
                                 </div>
                             </CardContent>

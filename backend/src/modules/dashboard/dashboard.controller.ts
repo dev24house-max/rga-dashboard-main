@@ -1,4 +1,4 @@
-﻿import { Controller, Get, Post, Delete, Query, UseGuards, Request, Res, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, UseGuards, Request, Res, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -6,7 +6,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DashboardService } from './dashboard.service';
 import { MetricsService } from './metrics.service';
 import { ExportService } from './export.service';
-import { GetDashboardOverviewDto, DashboardOverviewResponseDto, PeriodEnum } from './dto/dashboard-overview.dto';
+import { GetDashboardOverviewDto, DashboardOverviewResponseDto, PeriodEnum, WeekStartsOnEnum } from './dto/dashboard-overview.dto';
 import { TenantCacheInterceptor } from '../../common/interceptors/tenant-cache.interceptor';
 import { IntegrationSwitchService } from '../data-sources/integration-switch.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
@@ -32,6 +32,7 @@ export class DashboardController {
   @Get('overview')
   @ApiOperation({ summary: 'Get dashboard overview data (Smart Switch: Demo vs Live)' })
   @ApiQuery({ name: 'period', enum: PeriodEnum, required: false })
+  @ApiQuery({ name: 'weekStartsOn', enum: WeekStartsOnEnum, required: false })
   @ApiQuery({ name: 'tenantId', required: false, description: 'Tenant override (SUPER_ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Dashboard overview data', type: DashboardOverviewResponseDto })
   async getOverview(
@@ -190,6 +191,7 @@ export class DashboardController {
   @Get('export/campaigns/csv')
   async exportCampaignsCSV(
     @CurrentUser() user: any,
+    @Res() res: Response,
     @Query('platform') platform?: string,
     @Query('status') status?: string,
   ) {
@@ -197,21 +199,29 @@ export class DashboardController {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    return this.exportService.streamCampaignsCSV(user.tenantId, {
+    const file = await this.exportService.streamCampaignsCSV(user.tenantId, {
       startDate,
       endDate,
       platform,
       status,
     });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="campaigns-${startDate.toISOString().split('T')[0]}-to-${endDate.toISOString().split('T')[0]}.csv"`,
+    );
+    file.getStream().pipe(res);
   }
 
   @Get('export/metrics/pdf')
   async exportMetricsPDF(
     @CurrentUser() user: any,
-    @Query('period') period: '7d' | '30d' = '7d',
+    @Query('period') period: string = '7d',
+    @Query('platform') platform?: string,
     @Res() res?: Response,
   ) {
-    const pdf = await this.exportService.exportMetricsToPDF(user.tenantId, period);
+    const pdf = await this.exportService.exportMetricsToPDF(user.tenantId, period, platform as any);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(

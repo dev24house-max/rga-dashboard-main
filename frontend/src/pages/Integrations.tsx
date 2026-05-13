@@ -9,6 +9,7 @@ import { FacebookAccountSelectModal } from '@/components/integrations/facebook/F
 import { TikTokAdsCard } from '@/components/integrations/tiktok/TikTokAdsCard';
 import { TikTokAccountSelectModal } from '@/components/integrations/tiktok/TikTokAccountSelectModal';
 import { LineAdsCard } from '@/components/integrations/line/LineAdsCard';
+import { GoogleSearchConsoleCard } from '@/components/integrations/google-search-console/GoogleSearchConsoleCard';
 import { useIntegrationCallback } from '@/hooks/useIntegrationCallback';
 import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
 
@@ -107,6 +108,11 @@ export default function Integrations() {
               // LINE Ads
               if (platform.id === 'line-ads') {
                 return <LineAdsCard key={platform.id} platform={platform} />;
+              }
+
+              // Google Search Console
+              if (platform.id === 'google-search-console') {
+                return <GoogleSearchConsoleCard key={platform.id} platform={platform} />;
               }
 
               // Placeholder for other platforms (Coming Soon)

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { LayoutDashboard, Globe, Smartphone, MessageCircle, Target, Calendar as CalendarLucide, X, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useFormatter } from '@/hooks/use-formatter';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,7 @@ export function CampaignSheet({
     const [resetKey, setResetKey] = useState(0);
     const originalFormDataRef = useRef<Partial<CreateCampaignFormData>>(defaultCampaignValues);
     const hasInitialized = useRef(false);
+    const { currencyCode, formatDate } = useFormatter();
 
     const form = useForm<CreateCampaignFormData>({
         resolver: zodResolver(createCampaignSchema),
@@ -296,10 +298,10 @@ export function CampaignSheet({
                                         name="budget"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-slate-700 font-semibold">Budget Limit (THB)</FormLabel>
+                                                <FormLabel className="text-slate-700 font-semibold">Budget Limit ({currencyCode})</FormLabel>
                                                 <div className="relative group">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors z-10">
-                                                        ฿
+                                                        {currencyCode === 'THB' ? '฿' : '$'}
                                                     </span>
                                                     <FormControl>
                                                         <Input
@@ -321,33 +323,33 @@ export function CampaignSheet({
                                 </motion.div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    {/* Start Date */}
-                                    <motion.div variants={itemVariants}>
-                                        <FormField
-                                            control={form.control}
-                                            name="startDate"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel className="text-slate-700 font-semibold">Start Date</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className={cn(
-                                                                        'w-full pl-3 text-left font-normal border-slate-200 focus:ring-orange-500 shadow-sm',
-                                                                        !field.value && 'text-muted-foreground'
-                                                                    )}
-                                                                >
-                                                                    {field.value ? (
-                                                                        format(field.value, 'PPP')
-                                                                    ) : (
-                                                                        <span>Pick date</span>
-                                                                    )}
-                                                                    <CalendarLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
+                                {/* Start Date */}
+                                     <motion.div variants={itemVariants}>
+                                         <FormField
+                                             control={form.control}
+                                             name="startDate"
+                                             render={({ field }) => (
+                                                 <FormItem className="flex flex-col">
+                                                     <FormLabel className="text-slate-700 font-semibold">Start Date</FormLabel>
+                                                     <Popover>
+                                                         <PopoverTrigger asChild>
+                                                             <FormControl>
+                                                                 <Button
+                                                                     variant="outline"
+                                                                     className={cn(
+                                                                         'w-full pl-3 text-left font-normal border-slate-200 focus:ring-orange-500 shadow-sm',
+                                                                         !field.value && 'text-muted-foreground'
+                                                                     )}
+                                                                 >
+                                                                     {field.value ? (
+                                                                         formatDate(field.value)
+                                                                     ) : (
+                                                                         <span>Pick date</span>
+                                                                     )}
+                                                                     <CalendarLucide className="ml-auto h-4 w-4 opacity-50" />
+                                                                 </Button>
+                                                             </FormControl>
+                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar
                                                                 mode="single"
@@ -365,33 +367,33 @@ export function CampaignSheet({
                                         />
                                     </motion.div>
 
-                                    {/* End Date */}
-                                    <motion.div variants={itemVariants}>
-                                        <FormField
-                                            control={form.control}
-                                            name="endDate"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel className="text-slate-700 font-semibold">End Date <span className="text-slate-400 font-normal text-xs">(Optional)</span></FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className={cn(
-                                                                        'w-full pl-3 text-left font-normal border-slate-200 focus:ring-orange-500 shadow-sm',
-                                                                        !field.value && 'text-muted-foreground'
-                                                                    )}
-                                                                >
-                                                                    {field.value ? (
-                                                                        format(field.value, 'PPP')
-                                                                    ) : (
-                                                                        <span>Pick date</span>
-                                                                    )}
-                                                                    <CalendarLucide className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
+                                {/* End Date */}
+                                     <motion.div variants={itemVariants}>
+                                         <FormField
+                                             control={form.control}
+                                             name="endDate"
+                                             render={({ field }) => (
+                                                 <FormItem className="flex flex-col">
+                                                     <FormLabel className="text-slate-700 font-semibold">End Date <span className="text-slate-400 font-normal text-xs">(Optional)</span></FormLabel>
+                                                     <Popover>
+                                                         <PopoverTrigger asChild>
+                                                             <FormControl>
+                                                                 <Button
+                                                                     variant="outline"
+                                                                     className={cn(
+                                                                         'w-full pl-3 text-left font-normal border-slate-200 focus:ring-orange-500 shadow-sm',
+                                                                         !field.value && 'text-muted-foreground'
+                                                                     )}
+                                                                 >
+                                                                     {field.value ? (
+                                                                         formatDate(field.value)
+                                                                     ) : (
+                                                                         <span>Pick date</span>
+                                                                     )}
+                                                                     <CalendarLucide className="ml-auto h-4 w-4 opacity-50" />
+                                                                 </Button>
+                                                             </FormControl>
+                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar
                                                                 mode="single"

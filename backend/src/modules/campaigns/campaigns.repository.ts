@@ -59,7 +59,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     if (query.platform && query.platform !== 'ALL') {
       const platforms = query.platform.split(',').filter(p => p !== 'ALL').map(p => {
-        const key = p.trim().toUpperCase().replace('-', '_');
+        const key = p.trim().toUpperCase().replace(/[-\s]/g, '_');
 
         // Explicit mapping for known variations
         if (key === 'GOOGLE') return AdPlatform.GOOGLE_ADS;
@@ -81,7 +81,9 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     const ids = query.ids ? query.ids.split(',').filter(id => id.trim().length > 0) : undefined;
 
-    const where: Prisma.CampaignWhereInput = { tenantId };
+    const where: Prisma.CampaignWhereInput = {
+      tenantId,
+    };
 
     if (ids && ids.length > 0) {
       where.id = { in: ids };
@@ -94,8 +96,17 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       ];
     }
 
+    // Build status filter: exclude DELETED by default, OR apply user-selected status
     if (statusFilter) {
-      where.status = statusFilter;
+      // User selected specific statuses - use those but exclude DELETED
+      const selectedStatuses = Array.isArray(statusFilter.in) ? statusFilter.in : [statusFilter.equals];
+      const filteredStatuses = selectedStatuses.filter(s => s !== 'DELETED');
+      if (filteredStatuses.length > 0) {
+        where.status = filteredStatuses.length === 1 ? { equals: filteredStatuses[0] } : { in: filteredStatuses };
+      }
+    } else {
+      // No user filter - exclude DELETED by default
+      where.status = { not: 'DELETED' };
     }
 
     if (platformFilter) {
@@ -122,37 +133,101 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
 
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder || 'desc';
+
+    // Whitelist of valid database fields for sorting
+    const validSortFields = ['name', 'status', 'platform', 'budget', 'startDate', 'endDate', 'createdAt', 'updatedAt'];
     const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
 
-    // Construct metrics include logic explicitly
-    let metricsInclude: any = true;
-
-    if (startDate || endDate) {
-      const dateFilter: any = {};
-      if (startDate) dateFilter.gte = startDate;
-      if (endDate) dateFilter.lte = endDate;
-
-      metricsInclude = {
-        where: { date: dateFilter }
-      };
+    if (validSortFields.includes(sortBy)) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      // If it's a calculated field (spend, revenue, roi, etc.), default to createdAt for DB query
+      // and let the frontend or service layer handle it if needed
+      orderBy['createdAt'] = 'desc';
     }
 
-    // DEBUG: Log the final query object
-    console.log('DEBUG: findAll execution');
-    console.log('DEBUG: where clause:', JSON.stringify(where, null, 2));
-    console.log('DEBUG: metricsInclude:', JSON.stringify(metricsInclude, null, 2));
+    // 1. Fetch campaigns with date-filtered metrics
+    const metricsWhere: Prisma.MetricWhereInput = {
+      // Include all metrics (don't filter by source to get Google Ads data)
+      ...(startDate || endDate ? {
+        date: {
+          ...(startDate && { gte: startDate }),
+          ...(endDate && { lte: endDate }),
+        },
+      } : {}),
+    };
 
-    return Promise.all([
+    const [rawCampaigns, total] = await Promise.all([
       this.prisma.campaign.findMany({
         where,
         take,
         skip,
-        include: { metrics: metricsInclude },
+        include: {
+          metrics: {
+            where: metricsWhere,
+          },
+        },
         orderBy,
       }),
       this.prisma.campaign.count({ where }),
     ]);
+
+    // 2. Fetch lifetime metrics total (no date filter) for each campaign in the result set
+    // 2. Fetch lifetime metrics total for each campaign
+    // We prioritize the 'lifetime_summary' source row which contains absolute totals from platforms
+    const campaignIds = rawCampaigns.map(c => c.id);
+    const summaryRows = await this.prisma.metric.findMany({
+      where: {
+        campaignId: { in: campaignIds },
+        source: 'lifetime_summary'
+      }
+    });
+
+    // If summary rows are missing for some campaigns, we fall back to summing the available daily metrics
+    const missingIds = campaignIds.filter(id => !summaryRows.find(s => s.campaignId === id));
+    let fallbackSums: any = [];
+    if (missingIds.length > 0) {
+      fallbackSums = await this.prisma.metric.groupBy({
+        by: ['campaignId'],
+        where: { 
+          campaignId: { in: missingIds }, 
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ] 
+        },
+        _sum: { spend: true, impressions: true, clicks: true, revenue: true, conversions: true }
+      });
+    }
+
+    const lifetimeMap = new Map();
+    // 1. Fill from summary rows (Precise totals from API)
+    summaryRows.forEach(s => {
+      lifetimeMap.set(s.campaignId, {
+        spend: s.spend, impressions: s.impressions, clicks: s.clicks, revenue: s.revenue, conversions: s.conversions
+      });
+    });
+    // 2. Fill from fallback sums (Aggregated from DB)
+    fallbackSums.forEach(s => {
+      if (!lifetimeMap.has(s.campaignId)) {
+        lifetimeMap.set(s.campaignId, s._sum);
+      }
+    });
+
+    // 3. Attach lifetime metrics to the campaigns
+    const campaignsWithLifetime = rawCampaigns.map(c => {
+      const lifetime = lifetimeMap.get(c.id);
+      return {
+        ...c,
+        lifetimeSpend: lifetime?.spend || new Prisma.Decimal(0),
+        lifetimeImpressions: lifetime?.impressions || 0,
+        lifetimeClicks: lifetime?.clicks || 0,
+        lifetimeRevenue: lifetime?.revenue || new Prisma.Decimal(0),
+        lifetimeConversions: lifetime?.conversions || 0,
+      };
+    });
+
+    return [campaignsWithLifetime as any, total];
   }
 
   async findOne(tenantId: string, id: string): Promise<(Campaign & { metrics: Metric[] }) | null> {
@@ -220,6 +295,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
     if (campaignIds.length === 0) {
       return {
         _sum: {
+          spent: 0,
           spend: 0,
           impressions: 0,
           clicks: 0,
@@ -230,7 +306,7 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       };
     }
 
-    // 2. Aggregate metrics for these campaigns, respecting date filters
+    // 2. Aggregate metrics for these campaigns
     const metricWhere: Prisma.MetricWhereInput = {
       campaignId: { in: campaignIds },
       ...(startDate || endDate ? {
@@ -241,31 +317,88 @@ export class PrismaCampaignsRepository implements CampaignsRepository {
       } : {}),
     };
 
-    // Parallel: Aggregate Metrics AND Sum Budget
-    // Note: Budget is a campaign-level field, while others are metric-level
-    const [metricsAgg, budgetAgg] = await Promise.all([
+    // 2. Identify campaigns that already have a 'lifetime_summary' row
+    const lifetimeSummaryRows = await this.prisma.metric.findMany({
+      where: { campaignId: { in: campaignIds }, source: 'lifetime_summary' },
+      select: { campaignId: true }
+    });
+    const lifetimeSummaryIds = lifetimeSummaryRows.map(s => s.campaignId);
+
+    const periodAgg = await this.prisma.metric.aggregate({
+      where: {
+        ...metricWhere,
+        OR: [
+          { source: { not: 'lifetime_summary' } },
+          { source: null }
+        ],
+      },
+      _sum: {
+        spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
+      },
+    });
+
+    const [summaryTotals, fallbackTotals, budgetAgg] = await Promise.all([
+      // B. Absolute Totals (from special lifetime rows)
       this.prisma.metric.aggregate({
-        where: metricWhere,
+        where: { campaignId: { in: lifetimeSummaryIds }, source: 'lifetime_summary' },
         _sum: {
-          spend: true,
-          impressions: true,
-          clicks: true,
-          revenue: true,
-          conversions: true,
+          spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
         },
       }),
+      // C. Fallback Totals (for campaigns that don't have a lifetime row yet)
+      this.prisma.metric.aggregate({
+        where: {
+          campaignId: {
+            in: campaignIds.filter(id => !lifetimeSummaryIds.includes(id))
+          },
+          OR: [
+            { source: { not: 'lifetime_summary' } },
+            { source: null }
+          ],
+        },
+        _sum: {
+          spend: true, impressions: true, clicks: true, revenue: true, conversions: true,
+        },
+      }),
+      // D. Budgets (Campaign level)
       this.prisma.campaign.aggregate({
         where,
-        _sum: {
-          budget: true,
-        },
+        _sum: { budget: true },
       }),
     ]);
 
+    const combine = (agg1: any, agg2: any, field: string) => {
+      const val1 = agg1?._sum?.[field] || 0;
+      const val2 = agg2?._sum?.[field] || 0;
+      return Number(val1) + Number(val2);
+    };
+
+    const isDateRange = !!(startDate || endDate);
+    if (isDateRange) {
+      return {
+        _sum: {
+          spent: Number(periodAgg._sum.spend || 0),
+          spend: Number(periodAgg._sum.spend || 0),
+          revenue: Number(periodAgg._sum.revenue || 0),
+          impressions: Number(periodAgg._sum.impressions || 0),
+          clicks: Number(periodAgg._sum.clicks || 0),
+          conversions: Number(periodAgg._sum.conversions || 0),
+          budget: Number(budgetAgg._sum.budget || 0),
+          periodSpent: Number(periodAgg._sum.spend || 0),
+        },
+      };
+    }
+
     return {
       _sum: {
-        ...metricsAgg._sum,
-        budget: budgetAgg._sum.budget,
+        spent: combine(summaryTotals, fallbackTotals, 'spend'),
+        spend: combine(summaryTotals, fallbackTotals, 'spend'),
+        revenue: combine(summaryTotals, fallbackTotals, 'revenue'),
+        impressions: combine(summaryTotals, fallbackTotals, 'impressions'),
+        clicks: combine(summaryTotals, fallbackTotals, 'clicks'),
+        conversions: combine(summaryTotals, fallbackTotals, 'conversions'),
+        budget: Number(budgetAgg._sum.budget || 0),
+        periodSpent: Number(periodAgg._sum.spend || 0),
       },
     };
   }

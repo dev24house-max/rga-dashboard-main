@@ -26,7 +26,8 @@ import { RecentCampaigns } from '../components/widgets/recent-campaigns';
 import { ConversionFunnel } from '../components/widgets/conversion-funnel';
 import { FinancialOverview } from '../components/widgets/financial-overview';
 import { useDashboardOverview } from '../hooks/use-dashboard';
-import type { AdPlatform, PeriodEnum, RecentCampaign } from '../schemas';
+import { DEFAULT_WEEK_STARTS_ON, isWeekPeriod } from '@/lib/date-range-utils';
+import type { AdPlatform, PeriodEnum, RecentCampaign, WeekStartsOn } from '../schemas';
 
 // =============================================================================
 // Info Tooltip Components
@@ -183,14 +184,19 @@ function buildPlatformFunnelStages(platformDataArray: any[] | undefined) {
 
 export function DashboardPage() {
     // Period state for date filtering
-    const [period, setPeriod] = useState<PeriodEnum>('30d');
+    const [period, setPeriod] = useState<PeriodEnum>('1d');
     const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
 
     // Fetch dashboard data with selected period or custom range
+    const isCustomRange = period === 'custom' && customRange?.from && customRange?.to;
+    const currentWeekStartsOn = isWeekPeriod(period) ? weekStartsOn : undefined;
+
     const { data, isLoading, error, refetch } = useDashboardOverview({
-        period,
-        startDate: customRange?.from ? format(customRange.from, 'yyyy-MM-dd') : undefined,
-        endDate: customRange?.to ? format(customRange.to, 'yyyy-MM-dd') : undefined,
+        period: isCustomRange ? undefined : period,
+        weekStartsOn: isCustomRange ? undefined : currentWeekStartsOn,
+        startDate: isCustomRange ? format(customRange.from, 'yyyy-MM-dd') : undefined,
+        endDate: isCustomRange ? format(customRange.to, 'yyyy-MM-dd') : undefined,
     });
 
     const financialBreakdown = useMemo(
@@ -203,6 +209,14 @@ export function DashboardPage() {
         () => buildPlatformFunnelStages(data?.platformBreakdown ?? data?.recentCampaigns),
         [data?.platformBreakdown, data?.recentCampaigns]
     );
+
+    const handlePeriodChange = (nextPeriod: PeriodEnum) => {
+        setPeriod(nextPeriod);
+
+        if (nextPeriod !== 'custom') {
+            setCustomRange(undefined);
+        }
+    };
 
     // Calculate funnel stages from data
     const funnelStages = useMemo(() => {
@@ -288,13 +302,10 @@ export function DashboardPage() {
 
                 {/* Charts & Campaigns Grid - Responsive Layout */}
                 <section id="performance-trends" className="w-full">
-                    <div className="flex items-center gap-2 mb-4">
-                        <h3 className="text-base font-semibold sm:text-lg">Performance Trends & Recent Campaigns</h3>
-                        <InfoTooltip content="View your advertising performance trends over time with detailed charts, and see your most recent campaigns with their status, platform, and spending information." />
-                    </div>
-                    <div className="grid gap-4 grid-cols-1 lg:grid-cols-7 xl:gap-6 items-stretch">
+                    <h3 className="sr-only">Performance Trends & Recent Campaigns</h3>
+                    <div className="grid gap-4 grid-cols-1 2xl:grid-cols-7 xl:gap-6 2xl:gap-6 items-stretch">
                         {/* Trend Chart - 4/7 on desktop */}
-                        <div className="col-span-1 lg:col-span-4 xl:col-span-4 flex h-full flex-col">
+                        <div className="col-span-1 2xl:col-span-4 flex h-full flex-col">
                             {isLoading ? (
                                 <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                             ) : (
@@ -302,15 +313,17 @@ export function DashboardPage() {
                                     className="h-full trend-chart"
                                     data={data?.trends ?? []}
                                     period={period}
-                                    onPeriodChange={setPeriod}
+                                    onPeriodChange={handlePeriodChange}
                                     customRange={customRange}
                                     onCustomRangeChange={setCustomRange}
+                                    weekStartsOn={weekStartsOn}
+                                    onWeekStartsOnChange={setWeekStartsOn}
                                 />
                             )}
                         </div>
 
                         {/* Recent Campaigns - wider on wide desktop */}
-                        <div className="col-span-1 lg:col-span-3 xl:col-span-3 flex h-full flex-col">
+                        <div className="col-span-1 2xl:col-span-3 flex h-full flex-col">
                             {isLoading ? (
                                 <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                             ) : (
@@ -335,7 +348,6 @@ export function DashboardPage() {
                                 roi={data?.summary.averageRoas ?? 0}
                                 roiDelta={data?.growth.roasGrowth ?? 0}
                                 total={totalCost}
-                                currency="THB"
                                 breakdown={financialBreakdown}
                                 summary={[
                                     {

@@ -1,4 +1,4 @@
-import { LucideIcon, BarChart3, Facebook, Instagram, MessageCircle, Share2 } from 'lucide-react';
+import { LucideIcon, BarChart3, Facebook, Instagram, MessageCircle, Share2, Search } from 'lucide-react';
 
 export interface PlatformConfig {
     id: string;
@@ -54,5 +54,12 @@ export const PLATFORMS: PlatformConfig[] = [
         icon: Share2,
         color: 'text-black',
         description: 'Monitor video views and ad spend on TikTok.',
+    },
+    {
+        id: 'google-search-console',
+        name: 'Google Search Console',
+        icon: Search,
+        color: 'text-slate-700',
+        description: 'Connect Search Console to track organic search performance and keyword rankings.',
     },
 ];

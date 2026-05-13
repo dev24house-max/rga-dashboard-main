@@ -19,6 +19,7 @@ import {
     Columns,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatter } from '@/hooks/use-formatter';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -75,19 +76,6 @@ export interface CampaignsTableProps {
 // =============================================================================
 // Formatters
 // =============================================================================
-
-const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('th-TH', {
-        style: 'currency',
-        currency: 'THB',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
-
-const formatNumber = (num: number): string => {
-    return new Intl.NumberFormat('th-TH').format(num);
-};
 
 const COLUMN_LABELS: Record<string, string> = {
     platform: 'Platform',
@@ -172,6 +160,7 @@ export function CampaignsTable({
     pageSize = 10,
     onPageChange,
 }: CampaignsTableProps) {
+    const { formatCurrency, formatNumber, formatDate } = useFormatter();
     // Check if all items on this page are selected
     const allSelected = campaigns.length > 0 && campaigns.every((c) => selectedIds.has(c.id));
     // Data check for empty state
@@ -273,11 +262,14 @@ export function CampaignsTable({
                 const pColor = pName.includes('facebook') ? 'text-blue-600' :
                     pName.includes('google') ? 'text-red-600' :
                         pName.includes('line') ? 'text-emerald-600' :
-                            pName.includes('tiktok') ? 'text-gray-900' : 'text-gray-600';
+                            pName.includes('tiktok') ? 'text-foreground' : 'text-muted-foreground';
 
                 return <span className={cn("font-semibold", pColor)}>{PLATFORM_LABELS[campaign.platform]}</span>;
             case 'budget':
-                return <span className="font-medium tabular-nums">{formatCurrency(campaign.budget)}</span>;
+                // Show 'ALL' for TikTok campaigns with infinite budget mode and 0 budget
+                const platformName = String(campaign.platform || '').toLowerCase();
+                const isTikTokInfinite = platformName.includes('tiktok') && (campaign.budgetType === 'BUDGET_MODE_INFINITE' || campaign.budgetType === 'INFINITE') && Number(campaign.budget) === 0;
+                return <span className="font-medium tabular-nums">{isTikTokInfinite ? 'ALL' : formatCurrency(campaign.budget)}</span>;
             case 'spend':
                 return <span className="font-medium tabular-nums">{formatCurrency(campaign.spent)}</span>;
             case 'revenue':
@@ -309,8 +301,8 @@ export function CampaignsTable({
             case 'date':
                 return (
                     <div className="flex flex-col text-xs text-muted-foreground whitespace-nowrap">
-                        <span>{campaign.startDate ? format(new Date(campaign.startDate), 'MMM d, yyyy') : '-'}</span>
-                        <span>{campaign.endDate ? format(new Date(campaign.endDate), 'MMM d, yyyy') : '-'}</span>
+                        <span>{campaign.startDate ? formatDate(new Date(campaign.startDate)) : '-'}</span>
+                        <span>{campaign.endDate ? formatDate(new Date(campaign.endDate)) : '-'}</span>
                     </div>
                 );
             default:
@@ -390,10 +382,10 @@ export function CampaignsTable({
                 </div>
             </div>
 
-            <div className="rounded-xl border shadow-sm bg-white overflow-hidden overflow-x-auto">
+            <div className="rounded-xl border shadow-sm bg-white dark:bg-[#18191b] overflow-hidden overflow-x-auto">
                 <div className="min-w-[800px]">
                     <Table>
-                        <TableHeader className="bg-gray-50/50">
+                        <TableHeader className="bg-gray-50/50 dark:bg-[#232426]">
                             <TableRow>
                                 {/* 1. SELECTION (Fixed) */}
                                 <TableHead className="w-[50px]">
@@ -402,14 +394,14 @@ export function CampaignsTable({
 
                                 {/* 2. CAMPAIGN NAME (Fixed) */}
                                 <TableHead className="w-[250px]">
-                                    <span className="uppercase text-[11px] font-bold tracking-wider text-gray-500">
+                                    <span className="uppercase text-[11px] font-bold tracking-wider text-muted-foreground dark:text-white">
                                         <SortableHeader column="name" label="Campaign" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={onSort} />
                                     </span>
                                 </TableHead>
 
                                 {/* 3. STATUS (Fixed) */}
                                 <TableHead className="text-center">
-                                    <span className="uppercase text-[11px] font-bold tracking-wider text-gray-500">
+                                    <span className="uppercase text-[11px] font-bold tracking-wider text-muted-foreground dark:text-white">
                                         <SortableHeader column="status" label="Status" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={onSort} align="center" />
                                     </span>
                                 </TableHead>
@@ -425,7 +417,7 @@ export function CampaignsTable({
                                         onDrop={(e) => handleDrop(e, col)}
                                         title="Drag to reorder"
                                     >
-                                        <span className="uppercase text-[11px] font-bold tracking-wider text-gray-500">
+                                        <span className="uppercase text-[11px] font-bold tracking-wider text-gray-500 dark:text-white">
                                             <SortableHeader
                                                 column={col}
                                                 label={COLUMN_LABELS[col] || col}
@@ -448,8 +440,8 @@ export function CampaignsTable({
                                     <TableRow
                                         key={campaign.id}
                                         className={cn(
-                                            "transition-colors hover:bg-gray-50/80",
-                                            isSelected && "bg-blue-50/50 hover:bg-blue-50/70"
+                                            "transition-colors hover:bg-gray-50/80 dark:hover:bg-[#232426] dark:hover:text-white",
+                                            isSelected && "bg-blue-50/50 hover:bg-blue-50/70 dark:bg-[#232426] dark:text-white"
                                         )}
                                     >
                                         {/* 1. SELECTION */}

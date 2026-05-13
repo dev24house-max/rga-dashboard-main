@@ -4,12 +4,19 @@ import { apiClient } from '@/services/api-client';
 import { SeoMetricSummary } from '../types';
 
 export const SeoService = {
-    getSummary: async (): Promise<SeoMetricSummary> => {
-        const response = await apiClient.get('/seo/summary');
+    getSummary: async (days?: number): Promise<SeoMetricSummary> => {
+        const url = days ? `/seo/summary?days=${days}` : '/seo/summary';
+        const response = await apiClient.get(url);
         return response.data;
     },
-    getHistory: async (days: number = 30): Promise<any[]> => {
-        const response = await apiClient.get(`/seo/history?days=${days}`);
+    getHistory: async (
+        range: number | { startDate: string; endDate: string } = 30
+    ): Promise<any[]> => {
+        const params = typeof range === 'number'
+            ? { days: range }
+            : { startDate: range.startDate, endDate: range.endDate };
+
+        const response = await apiClient.get('/seo/history', { params });
         return response.data;
     },
     getKeywordIntent: async (): Promise<{ type: string, keywords: number, traffic: number }[]> => {
@@ -35,6 +42,14 @@ export const SeoService = {
     getAiInsights: async (): Promise<{ id: string, type: string, source: string, title: string, message: string, payload: any, status: string, occurredAt: string, createdAt: string, updatedAt: string }[]> => {
         const response = await apiClient.get('/seo/ai-insights');
         return response.data;
-    }
+    },
+    syncGsc: async (days: number = 30): Promise<{ success: boolean, fetched: number, message?: string }> => {
+        const response = await apiClient.post(`/seo/sync/gsc?days=${days}`);
+        return response.data;
+    },
+    connectGsc: async (siteUrl: string): Promise<{ success: boolean, siteUrl: string }> => {
+        const response = await apiClient.post('/seo/gsc/connect', { siteUrl });
+        return response.data;
+    },
 };
 

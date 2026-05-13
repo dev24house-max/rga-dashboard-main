@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardOverview } from '../services/dashboard.service';
-import type { DashboardOverviewData, PeriodEnum } from '../schemas';
+import type { DashboardOverviewData, PeriodEnum, WeekStartsOn } from '../schemas';
 import { useAuthStore, selectUser } from '@/stores/auth-store';
 
 // =============================================================================
@@ -26,6 +26,8 @@ export const dashboardKeys = {
 interface UseDashboardOverviewOptions {
     /** Time period for aggregation */
     period?: PeriodEnum;
+    /** Week start for this_week/last_week periods */
+    weekStartsOn?: WeekStartsOn;
     /** Custom start date (YYYY-MM-DD) */
     startDate?: string;
     /** Custom end date (YYYY-MM-DD) */
@@ -73,20 +75,40 @@ export function useDashboardOverview(options: UseDashboardOverviewOptions = {}) 
     const authTenantId = user?.tenantId ?? user?.tenant?.id;
 
     const {
-        period = '7d',
+        period,
+        weekStartsOn,
         startDate,
         endDate,
         tenantId,
         enabled = true,
         refetchInterval = 0,
-        staleTime = 5 * 60 * 1000, // 5 minutes default
+        staleTime = 5 * 60 * 1000,
     } = options;
+
+    const isCustomRange = Boolean(startDate && endDate);
+    const effectivePeriod = isCustomRange ? undefined : (period ?? 'this_month');
 
     const tenantIdForCacheKey = tenantId ?? authTenantId;
 
     return useQuery<DashboardOverviewData, Error>({
-        queryKey: dashboardKeys.overviewByPeriod(period, tenantIdForCacheKey),
-        queryFn: () => getDashboardOverview({ period, startDate, endDate, tenantId }),
+        queryKey: [
+            ...dashboardKeys.overview(),
+            {
+                period: effectivePeriod,
+                weekStartsOn,
+                startDate,
+                endDate,
+                tenantId: tenantIdForCacheKey,
+            },
+        ],
+        queryFn: () =>
+            getDashboardOverview({
+                period: effectivePeriod,
+                weekStartsOn,
+                startDate,
+                endDate,
+                tenantId,
+            }),
         enabled,
         staleTime,
         refetchInterval: refetchInterval > 0 ? refetchInterval : undefined,

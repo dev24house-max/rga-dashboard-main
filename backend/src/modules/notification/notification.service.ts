@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../../common/services/mail.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationChannel, Notification, Alert } from '@prisma/client';
 
 @Injectable()
 export class NotificationService {
-    constructor(private readonly prisma: PrismaService) { }
+    private readonly logger = new Logger(NotificationService.name);
+
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly mailService: MailService,
+    ) { }
 
     /**
      * Create a new notification
@@ -110,6 +116,69 @@ export class NotificationService {
                 },
             },
         });
+    }
+
+    /**
+     * Send email alert when budget is running low
+     * Triggers for Budget Running Low (80%) and Budget Nearly Exhausted (90%)
+     */
+    async sendBudgetAlertEmail(
+        alert: Alert & { campaign?: { name: string } | null },
+        userEmails: string[],
+    ): Promise<void> {
+        const campaignName = alert.campaign?.name || 'Unknown Campaign';
+        const isCritical = alert.severity === 'CRITICAL';
+        const alertType = isCritical ? 'Budget Nearly Exhausted (90%)' : 'Budget Running Low (80%)';
+        const backgroundColor = isCritical ? '#dc2626' : '#f59e0b';
+        const buttonColor = isCritical ? '#991b1b' : '#b45309';
+
+        for (const email of userEmails) {
+            try {
+                const htmlContent = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background-color: ${backgroundColor}; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h2 style="margin: 0; font-size: 24px;">${alertType}</h2>
+                            <p style="margin: 10px 0 0 0; font-size: 16px;">Campaign: <strong>${campaignName}</strong></p>
+                        </div>
+
+                        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0 0 15px 0; color: #1f2937;">
+                                ${alert.message}
+                            </p>
+                            <p style="margin: 0; color: #4b5563; font-size: 14px;">
+                                <strong>Alert Type:</strong> ${alert.type}<br/>
+                                <strong>Severity:</strong> ${alert.severity}<br/>
+                                <strong>Time:</strong> ${new Date().toLocaleString()}
+                            </p>
+                        </div>
+
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard/alerts/${alert.id}" 
+                               style="background-color: ${buttonColor}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                                View Alert Details
+                            </a>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+
+                        <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                            This is an automated alert from RGA Dashboard. Please do not reply to this email.
+                        </p>
+                    </div>
+                `;
+
+                await this.mailService.sendMail({
+                    to: email,
+                    subject: `[${alert.severity}] ${alertType} - ${campaignName}`,
+                    html: htmlContent,
+                });
+
+                this.logger.log(`Budget alert email sent to ${email} for campaign ${campaignName}`);
+            } catch (error) {
+                this.logger.error(`Failed to send budget alert email to ${email}:`, error);
+                // Don't throw - continue sending to other users
+            }
+        }
     }
 
     /**

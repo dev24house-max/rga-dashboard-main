@@ -1,22 +1,24 @@
+require('dotenv').config();
+
 const nodemailer = require('nodemailer');
 
 async function test(fromValue) {
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === 'true',
     auth: {
-      user: 'rga2025.dev@gmail.com',
-      pass: 'bfvwachshcvcrzed'
-    }
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
   });
 
   try {
     const info = await transporter.sendMail({
       from: fromValue,
-      to: 'rga2025.dev@gmail.com',
+      to: 'phirawit.main@gmail.com',
       subject: 'Debug: Test ' + fromValue,
-      html: '<h1>Debug</h1>'
+      html: '<h1>Debug</h1>',
     });
     console.log('Success with "' + fromValue + '":', info.messageId);
   } catch (err) {
@@ -26,7 +28,7 @@ async function test(fromValue) {
 
 async function runTests() {
   await test('RGA Verification');
-  await test('RGA Verification <rga2025.dev@gmail.com>');
+  await test('RGA Verification <phirawit.main@gmail.com>');
 }
 
 runTests();

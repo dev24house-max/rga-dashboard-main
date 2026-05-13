@@ -127,25 +127,12 @@ async function bootstrap() {
       'health/readiness',
 
       'auth/google/ads/callback',
-      'debug-ads*',
+      'debug-ads/',
       'auth/google/analytics/callback',
-
+      'auth/google/search-console/callback',
       'auth/facebook/ads/callback',
-
       'auth/line/callback',
-
       'auth/tiktok/callback',
-
-      'api/ai/webhook/general',
-
-      'api/ai/webhook/ads',
-
-      'api/ai/webhook/seo',
-
-      'api/ai/webhook/summary',
-
-      'api/ai/webhook/*',
-
     ],
   });
 

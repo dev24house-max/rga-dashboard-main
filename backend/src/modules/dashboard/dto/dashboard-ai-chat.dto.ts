@@ -1,4 +1,4 @@
-﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { PeriodEnum } from './dashboard-overview.dto';
 
@@ -34,7 +34,7 @@ export class DashboardAiChatRequestDto {
   })
   @IsOptional()
   @IsEnum(PeriodEnum, {
-    message: 'period must be one of: 7d, 30d, this_month, last_month',
+    message: 'period must be one of: 1d, 7d, 30d, 90d, 365d, this_month, last_month',
   })
   period?: PeriodEnum = PeriodEnum.SEVEN_DAYS;
 

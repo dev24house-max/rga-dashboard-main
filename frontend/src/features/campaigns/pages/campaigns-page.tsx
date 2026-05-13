@@ -1,14 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Loader2, Download, Info } from 'lucide-react';
+import { Plus, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -49,30 +43,6 @@ const MAX_SELECTION_LIMIT = 20;
 const GLOBAL_QUERY_LIMIT = 1000;
 
 // =============================================================================
-// Info Tooltip Component
-// =============================================================================
-
-function InfoTooltip({ content }: { content: string }) {
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Info className="h-4 w-4" />
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
-                    {content}
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-}
-
-// =============================================================================
 // Period to Date Range Converter
 // =============================================================================
 
@@ -98,6 +68,7 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
             return { startDate: start.toISOString().split('T')[0], endDate };
         }
+        case '30d':
         case 'last_month': {
             const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
             const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -144,6 +115,26 @@ function IndeterminateProgress({ className }: { className?: string }) {
     }, []);
 
     return <Progress value={progress} className={className} />;
+}
+
+function InfoTooltip({ content }: { content: string }) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                    {content}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
 }
 
 // =============================================================================
@@ -473,6 +464,10 @@ export function CampaignsPage() {
         // Persist selection on page change (do not clear)
     };
 
+    const handlePeriodChange = (newPeriod: PeriodEnum) => {
+        setPeriod(newPeriod);
+    };
+
     // ==========================================================================
     // Loading State
     // ==========================================================================
@@ -533,7 +528,7 @@ export function CampaignsPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-8 relative z-10">
                 {/* Page Header */}
-                <div data-tutorial="campaigns-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
                         <p className="text-muted-foreground">
@@ -563,24 +558,22 @@ export function CampaignsPage() {
                 </div>
 
                 {/* Search and Filter Toolbar */}
-                <div data-tutorial="campaigns-toolbar">
-                    <CampaignToolbar
-                        search={search}
-                        onSearchChange={setSearch}
-                        status={status}
-                        onStatusChange={setStatus}
-                        platform={platform}
-                        onPlatformChange={setPlatform}
-                        isLoading={isFetching}
-                        period={period}
-                        onPeriodChange={setPeriod}
-                        customRange={customRange ?? undefined}
-                        onCustomRangeChange={setCustomRange}
-                        showSelectedOnly={showSelectedOnly}
-                        onShowSelectedOnlyChange={setShowSelectedOnly}
-                        selectedCount={selectedIds.size}
-                    />
-                </div>
+                <CampaignToolbar
+                    search={search}
+                    onSearchChange={setSearch}
+                    status={status}
+                    onStatusChange={setStatus}
+                    platform={platform}
+                    onPlatformChange={setPlatform}
+                    isLoading={isFetching}
+                    period={period}
+                    onPeriodChange={setPeriod}
+                    customRange={customRange ?? undefined}
+                    onCustomRangeChange={setCustomRange}
+                    showSelectedOnly={showSelectedOnly}
+                    onShowSelectedOnlyChange={setShowSelectedOnly}
+                    selectedCount={selectedIds.size}
+                />
 
 
 
@@ -598,61 +591,41 @@ export function CampaignsPage() {
                 {/* Pagination Header (Removed - Moved to Table) */}
 
                 {/* Campaigns Table with Sorting and Selection */}
-                <div data-tutorial="campaigns-table">
-                    <CampaignsTable
-                        campaigns={displayedCampaigns}
-                        isLoading={isFetching}
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                        onSort={handleSort}
-                        selectedIds={selectedIds}
-                        onToggleSelect={handleToggleSelect}
-                        onToggleAll={handleToggleAll}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteClick}
+                <CampaignsTable
+                    campaigns={displayedCampaigns}
+                    isLoading={isFetching}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    selectedIds={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                    onToggleAll={handleToggleAll}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
 
-                        page={showSelectedOnly ? 1 : page}
-                        totalPages={totalPages}
-                        totalItems={totalItems}
-                        pageSize={DEFAULT_PAGE_SIZE}
-                        onPageChange={handlePageChange}
-                    />
-                </div>
+                    page={showSelectedOnly ? 1 : page}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={DEFAULT_PAGE_SIZE}
+                    onPageChange={handlePageChange}
+                />
 
 
 
                 {/* Campaign Summary Dashboard (Middle Section) */}
-                <div data-tutorial="campaigns-summary" className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <h3 className="text-base font-semibold sm:text-lg">Campaign Summary</h3>
-                        <InfoTooltip content="View aggregated metrics for all campaigns in your selection, including total spend, impressions, clicks, and conversion rates." />
-                    </div>
-                    <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
-                </div>
+                <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
 
                 {/* Visualization Panel (Bottom) */}
                 {!isLoading && campaignsResponse?.summary && (
                     <>
-                        <div data-tutorial="campaigns-visualization" className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-semibold sm:text-lg">Campaign Performance</h3>
-                                <InfoTooltip content="Visual breakdown of campaign performance by status and platform, including spend distribution and platform-specific metrics." />
-                            </div>
-                            <CampaignVisualization
-                                campaigns={displayedGlobalCampaigns}
-                                summary={campaignsResponse.summary}
-                                onDownload={handleExport}
-                            />
-                        </div>
+                        <CampaignVisualization
+                            campaigns={displayedGlobalCampaigns}
+                            summary={campaignsResponse.summary}
+                            onDownload={handleExport}
+                        />
 
                         {/* Campaign Analytics (Conversion Rate) */}
-                        <div data-tutorial="campaigns-analytics" className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-semibold sm:text-lg">Analytics</h3>
-                                <InfoTooltip content="Analyze conversion rates, cost per conversion, and ROI metrics across your campaigns." />
-                            </div>
-                            <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
-                        </div>
+                        <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
                     </>
                 )}
             </div>

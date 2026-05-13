@@ -5,7 +5,7 @@
 
 import { CreditCard, Eye, MousePointerClick, Target } from 'lucide-react';
 import { SummaryCard } from './ui/summary-card';
-import { formatCurrencyTHB, formatNumber } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import type { SummaryMetrics, GrowthMetrics } from '../schemas';
 
 // =============================================================================
@@ -33,36 +33,11 @@ interface MetricConfig {
     accentColor: 'indigo' | 'violet' | 'cyan' | 'amber';
 }
 
-const metricsConfig: MetricConfig[] = [
-    {
-        title: 'Total Spend',
-        icon: CreditCard,
-        getValue: (s) => formatCurrencyTHB(s.totalCost),
-        getTrend: (g) => g.costGrowth,
-        accentColor: 'indigo',
-    },
-    {
-        title: 'Impressions',
-        icon: Eye,
-        getValue: (s) => formatNumber(s.totalImpressions),
-        getTrend: (g) => g.impressionsGrowth,
-        accentColor: 'violet',
-    },
-    {
-        title: 'Clicks',
-        icon: MousePointerClick,
-        getValue: (s) => formatNumber(s.totalClicks),
-        getTrend: (g) => g.clicksGrowth,
-        accentColor: 'cyan',
-    },
-    {
-        title: 'Conversions',
-        icon: Target,
-        getValue: (s) => formatNumber(s.totalConversions),
-        getTrend: (g) => g.conversionsGrowth,
-        accentColor: 'amber',
-    },
-];
+// Helper: ensure numeric values are finite, fallback to 0
+const safeNumber = (v: any, fallback = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+};
 
 // =============================================================================
 // Main Component
@@ -73,6 +48,39 @@ export function DashboardMetrics({
     growth,
     loading = false,
 }: DashboardMetricsProps) {
+    const { formatCurrency, formatNumber } = useFormatter();
+
+    const metricsConfig: MetricConfig[] = [
+        {
+            title: 'Total Spend',
+            icon: CreditCard,
+            getValue: (s) => formatCurrency(safeNumber(s.totalCost)),
+            getTrend: (g) => g.costGrowth,
+            accentColor: 'indigo',
+        },
+        {
+            title: 'Impressions',
+            icon: Eye,
+            getValue: (s) => formatNumber(safeNumber(s.totalImpressions)),
+            getTrend: (g) => g.impressionsGrowth,
+            accentColor: 'violet',
+        },
+        {
+            title: 'Clicks',
+            icon: MousePointerClick,
+            getValue: (s) => formatNumber(safeNumber(s.totalClicks)),
+            getTrend: (g) => g.clicksGrowth,
+            accentColor: 'cyan',
+        },
+        {
+            title: 'Conversions',
+            icon: Target,
+            getValue: (s) => formatNumber(safeNumber(s.totalConversions)),
+            getTrend: (g) => g.conversionsGrowth,
+            accentColor: 'amber',
+        },
+    ];
+
     return (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {metricsConfig.map((metric) => (

@@ -1,3 +1,4 @@
+import { apiClient } from '@/services/api-client';
 import { AiDetailSummaryData } from '../components/ai-detail-summary';
 
 export interface AiSummaryCard {
@@ -11,11 +12,14 @@ export interface AiSummaryCard {
 
 interface AiSummaryResponse extends AiDetailSummaryData { }
 
-const BACKEND_WEBHOOK_URL = '/api/ai/webhook/summary';
+// Path relative to apiClient baseURL
+const BACKEND_WEBHOOK_PATH = (import.meta.env.VITE_API_URL || '/api/v1') + '/ai/webhook/summary';
 
 const normalizeSummaryResponse = (responseData: any) => {
     let payload = responseData;
 
+    // Standard apiClient unwrap might have already done this, 
+    // but AiWebhookController returns a custom structure.
     if (responseData?.success && responseData?.data) {
         payload = responseData.data;
     }
@@ -45,23 +49,15 @@ const normalizeSummaryResponse = (responseData: any) => {
 };
 
 export const aiSummaryService = {
-    getFullSummary: async (tenantId: string, message: string): Promise<AiSummaryResponse> => {
-        const response = await fetch(BACKEND_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tenantId,
-                message,
-                timestamp: new Date().toISOString(),
-            }),
+    getFullSummary: async (tenantId: string, userId: string, message: string): Promise<AiSummaryResponse> => {
+        const response = await apiClient.post(BACKEND_WEBHOOK_PATH, {
+            userId,
+            tenantId,
+            message,
+            timestamp: new Date().toISOString(),
         });
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch summary: ${response.statusText}`);
-        }
-
-        const responseData: any = await response.json();
-        const normalized = normalizeSummaryResponse(responseData);
+        const normalized = normalizeSummaryResponse(response.data);
 
         return {
             summaryCards: normalized.summaryCards,
@@ -70,23 +66,15 @@ export const aiSummaryService = {
         };
     },
 
-    getSummaryCards: async (tenantId: string, message: string): Promise<AiSummaryCard[]> => {
-        const response = await fetch(BACKEND_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tenantId,
-                message,
-                timestamp: new Date().toISOString(),
-            }),
+    getSummaryCards: async (tenantId: string, userId: string, message: string): Promise<AiSummaryCard[]> => {
+        const response = await apiClient.post(BACKEND_WEBHOOK_PATH, {
+            userId,
+            tenantId,
+            message,
+            timestamp: new Date().toISOString(),
         });
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch summary cards: ${response.statusText}`);
-        }
-
-        const responseData: any = await response.json();
-        const normalized = normalizeSummaryResponse(responseData);
+        const normalized = normalizeSummaryResponse(response.data);
         return normalized.summaryCards;
     },
 };

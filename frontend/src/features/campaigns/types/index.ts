@@ -14,6 +14,7 @@ export interface Campaign {
     startDate: string; // ISO date string
     endDate: string;   // ISO date string
     platform: CampaignPlatform;
+    budgetType?: string;
     // Metrics for Summary
     revenue?: number;
     conversions?: number;

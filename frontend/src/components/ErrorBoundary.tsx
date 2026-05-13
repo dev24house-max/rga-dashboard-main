@@ -32,6 +32,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const loadedBundle =
+        typeof document !== 'undefined'
+          ? Array.from(document.scripts)
+              .map((script) => script.getAttribute('src'))
+              .find((src) => src?.includes('/assets/index-')) ?? 'unknown bundle'
+          : 'unknown bundle';
+
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <Card className="w-full max-w-md border-destructive/50">
@@ -47,9 +54,16 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-muted-foreground">
                 We encountered an unexpected error. Please try reloading the page.
               </p>
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="bg-muted p-2 rounded text-xs text-left overflow-auto max-h-32">
-                  <code>{this.state.error.message}</code>
+              {this.state.error && (
+                <div className="bg-muted p-3 rounded text-xs text-left overflow-auto max-h-40 space-y-2">
+                  <div>
+                    <span className="font-semibold">Error:</span>{' '}
+                    <code>{this.state.error.message}</code>
+                  </div>
+                  <div className="text-muted-foreground">
+                    <span className="font-semibold">Bundle:</span>{' '}
+                    <code>{loadedBundle}</code>
+                  </div>
                 </div>
               )}
               <Button onClick={this.handleReload} className="w-full">

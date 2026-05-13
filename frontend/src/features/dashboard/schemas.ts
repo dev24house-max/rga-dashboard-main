@@ -10,8 +10,25 @@ import { z } from 'zod';
 // Enums
 // =============================================================================
 
-export const PeriodEnumSchema = z.enum(['1d', '7d', '30d', '90d', 'this_month', 'last_month', 'custom']);
+export const PeriodEnumSchema = z.enum([
+    '1d',
+    'yesterday',
+    'this_week',
+    'last_week',
+    '7d',
+    '14d',
+    '30d',
+    '90d',
+    '365d',
+    'this_month',
+    'last_month',
+    'last_3_months',
+    'custom',
+]);
 export type PeriodEnum = z.infer<typeof PeriodEnumSchema>;
+
+export const WeekStartsOnSchema = z.enum(['sunday', 'monday']);
+export type WeekStartsOn = z.infer<typeof WeekStartsOnSchema>;
 
 export const CampaignStatusSchema = z.enum([
     'ACTIVE',
@@ -233,6 +250,7 @@ export type DashboardOverviewResponse = z.infer<typeof DashboardOverviewResponse
 
 export const DashboardOverviewQuerySchema = z.object({
     period: PeriodEnumSchema.optional(),
+    weekStartsOn: WeekStartsOnSchema.optional(),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     tenantId: z.string().uuid().optional(),

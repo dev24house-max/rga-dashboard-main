@@ -2,6 +2,7 @@ import { Injectable, Logger, UnauthorizedException, BadRequestException } from '
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptionService } from '../../../common/services/encryption.service';
 
 @Injectable()
 export class GoogleAnalyticsApiService {
@@ -11,6 +12,7 @@ export class GoogleAnalyticsApiService {
     constructor(
         private readonly configService: ConfigService,
         private readonly prisma: PrismaService,
+        private readonly encryptionService: EncryptionService,
     ) {
         this.oauth2Client = new google.auth.OAuth2(
             this.configService.get('GOOGLE_CLIENT_ID'),
@@ -46,6 +48,29 @@ export class GoogleAnalyticsApiService {
     }
 
     /**
+     * Run a GA4 realtime report. Realtime data is separate from historical reports.
+     */
+    async runRealtimeReport(account: any, requestBody: any) {
+        try {
+            const auth = await this.getAuthenticatedClient(account);
+
+            const analyticsData = google.analyticsdata({
+                version: 'v1beta',
+                auth: auth
+            });
+
+            const response = await analyticsData.properties.runRealtimeReport({
+                property: `properties/${account.propertyId}`,
+                requestBody: requestBody
+            });
+
+            return response.data;
+        } catch (error) {
+            this.handleApiError(error, account.propertyId);
+        }
+    }
+
+    /**
      * Get authenticated OAuth2 client, refreshing token if needed
      */
     private async getAuthenticatedClient(account: any) {
@@ -57,9 +82,20 @@ export class GoogleAnalyticsApiService {
             this.configService.get('GOOGLE_CLIENT_SECRET')
         );
 
+        let accessToken = account.accessToken;
+        let refreshToken = account.refreshToken;
+
+        // Try decrypt if it looks encrypted (contains a colon)
+        if (accessToken && accessToken.includes(':')) {
+            try { accessToken = this.encryptionService.decrypt(accessToken); } catch(e) {}
+        }
+        if (refreshToken && refreshToken.includes(':')) {
+            try { refreshToken = this.encryptionService.decrypt(refreshToken); } catch(e) {}
+        }
+
         auth.setCredentials({
-            access_token: account.accessToken,
-            refresh_token: account.refreshToken
+            access_token: accessToken,
+            refresh_token: refreshToken
         });
 
         return auth;
@@ -70,29 +106,46 @@ export class GoogleAnalyticsApiService {
      */
     private async refreshTokenIfNeeded(account: any) {
         const now = new Date();
-        // Refresh if expired or about to expire (within 5 mins)
-        if (account.tokenExpiresAt && account.tokenExpiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
+        // Refresh if no expiry date, or expired, or about to expire (within 5 mins), or if accessToken is placeholder
+        if (!account.tokenExpiresAt || account.accessToken === 'placeholder' || (account.tokenExpiresAt.getTime() - now.getTime() < 5 * 60 * 1000)) {
             try {
                 this.logger.log(`Refreshing GA4 token for account ${account.id}`);
 
+                let refreshToken = account.refreshToken;
+                if (refreshToken && refreshToken.includes(':')) {
+                    try { refreshToken = this.encryptionService.decrypt(refreshToken); } catch(e) {}
+                }
+
+                if (!refreshToken) {
+                    throw new Error('No refresh token available');
+                }
+
                 // Set refresh token on the main client instance to refresh
                 this.oauth2Client.setCredentials({
-                    refresh_token: account.refreshToken
+                    refresh_token: refreshToken
                 });
 
                 const { credentials } = await this.oauth2Client.refreshAccessToken();
+
+                if (!account.id) {
+                    // In case account ID is missing (e.g. passed from Adapter using credentials object)
+                    // we cannot save it to DB, but we can return it for this session.
+                    account.accessToken = credentials.access_token;
+                    if (credentials.expiry_date) account.tokenExpiresAt = new Date(credentials.expiry_date);
+                    return;
+                }
 
                 // Update DB
                 await this.prisma.googleAnalyticsAccount.update({
                     where: { id: account.id },
                     data: {
-                        accessToken: credentials.access_token,
-                        tokenExpiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : undefined
+                        accessToken: this.encryptionService.encrypt(credentials.access_token),
+                        tokenExpiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : null
                     }
                 });
 
                 // Update local object reference
-                account.accessToken = credentials.access_token;
+                account.accessToken = this.encryptionService.encrypt(credentials.access_token);
                 if (credentials.expiry_date) {
                     account.tokenExpiresAt = new Date(credentials.expiry_date);
                 }

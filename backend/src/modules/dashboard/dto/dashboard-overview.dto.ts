@@ -11,11 +11,24 @@ import { CampaignStatus, AdPlatform } from '@prisma/client';
  */
 export enum PeriodEnum {
     ONE_DAY = '1d',
+    YESTERDAY = 'yesterday',
+    THIS_WEEK = 'this_week',
+    LAST_WEEK = 'last_week',
     SEVEN_DAYS = '7d',
+    FOURTEEN_DAYS = '14d',
+
     THIRTY_DAYS = '30d',
     NINETY_DAYS = '90d',
+    ONE_YEAR = '365d',
     THIS_MONTH = 'this_month',
     LAST_MONTH = 'last_month',
+    LAST_3_MONTHS = 'last_3_months',
+    CUSTOM = 'custom',
+}
+
+export enum WeekStartsOnEnum {
+    SUNDAY = 'sunday',
+    MONDAY = 'monday',
 }
 
 /**
@@ -29,9 +42,20 @@ export class GetDashboardOverviewDto {
     })
     @IsOptional()
     @IsEnum(PeriodEnum, {
-        message: 'period must be one of: 1d, 7d, 30d, 90d, this_month, last_month',
+        message: 'period must be one of: 1d, yesterday, this_week, last_week, 7d, 14d, 30d, 90d, this_month, last_month, last_3_months, custom',
     })
     period?: PeriodEnum = PeriodEnum.SEVEN_DAYS;
+
+    @ApiPropertyOptional({
+        enum: WeekStartsOnEnum,
+        default: WeekStartsOnEnum.MONDAY,
+        description: 'Week start day for this_week/last_week periods',
+    })
+    @IsOptional()
+    @IsEnum(WeekStartsOnEnum, {
+        message: 'weekStartsOn must be one of: sunday, monday',
+    })
+    weekStartsOn?: WeekStartsOnEnum = WeekStartsOnEnum.MONDAY;
 
     @ApiPropertyOptional({
         description: 'Custom start date (YYYY-MM-DD). If provided, endDate must also be provided.',

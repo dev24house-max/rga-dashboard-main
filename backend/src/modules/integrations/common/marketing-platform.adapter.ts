@@ -9,6 +9,8 @@ export interface PlatformCredentials {
     accessToken: string;
     refreshToken?: string;
     accountId: string;
+    accountRecordId?: string;
+    tokenExpiresAt?: Date | null;
 }
 
 export interface MarketingPlatformAdapter {

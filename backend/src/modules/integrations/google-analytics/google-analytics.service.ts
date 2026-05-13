@@ -117,6 +117,43 @@ export class GoogleAnalyticsService {
         return 7;
     }
 
+    /**
+     * Get sessions and active users by country and city
+     */
+    async getLocationData(tenantId: string, startDate: string = '30daysAgo', endDate: string = 'today') {
+        try {
+            const account = await this.prisma.googleAnalyticsAccount.findFirst({
+                where: { tenantId, status: 'ACTIVE' },
+            });
+
+            if (!account) return [];
+
+            const response = await this.apiService.runReport(account, {
+                dateRanges: [{ startDate, endDate }],
+                dimensions: [
+                    { name: 'country' },
+                    { name: 'city' },
+                    { name: 'countryId' }
+                ],
+                metrics: [
+                    { name: 'sessions' },
+                    { name: 'activeUsers' }
+                ],
+            });
+
+            return (response.rows || []).map((row: any) => ({
+                country: row.dimensionValues[0].value,
+                city: row.dimensionValues[1].value,
+                countryCode: row.dimensionValues[2].value,
+                sessions: Number(row.metricValues[0].value),
+                activeUsers: Number(row.metricValues[1].value)
+            }));
+        } catch (error) {
+            this.logger.error(`Failed to fetch GA4 location data: ${error.message}`);
+            return [];
+        }
+    }
+
     private transformResponse(response: any) {
         const rows = response.rows || [];
         const totals = {

@@ -55,7 +55,7 @@ function InfoTooltip({ content }: { content: string }) {
 }
 
 // Platforms to display (in order)
-const DISPLAY_PLATFORMS: PlatformId[] = ['google', 'google-analytics', 'facebook', 'line', 'tiktok'];
+const DISPLAY_PLATFORMS: PlatformId[] = ['google', 'google-analytics', 'search-console', 'facebook', 'line', 'tiktok'];
 
 export default function DataSourcesPage() {
     const {
@@ -172,6 +172,7 @@ export default function DataSourcesPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
         </DashboardLayout>
     );
 }

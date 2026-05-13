@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  AlertTriangle, 
+import { Button } from "@/components/ui/button"; import { useFormatter } from '@/hooks/use-formatter'; import {
+  TrendingUp,
+  Users,
+  DollarSign,
+  AlertTriangle,
   Brain,
   Activity,
   Target,
@@ -41,6 +40,7 @@ interface AnalyticsData {
 }
 
 export function AiAnalyticsDashboard() {
+  const { formatCurrency } = useFormatter();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
@@ -118,7 +118,7 @@ export function AiAnalyticsDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">฿{analyticsData.businessMetrics.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(analyticsData.businessMetrics.totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               +15.3% จากเดือนที่แล้ว
             </p>

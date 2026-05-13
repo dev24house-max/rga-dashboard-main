@@ -30,7 +30,7 @@ interface PlatformRoutes {
     /** Integration base URL (e.g., /integrations/google-ads) */
     integrationBaseUrl: string;
     /** Field name for externalId in complete request */
-    externalIdField: 'customerId' | 'accountId' | 'advertiserId' | 'propertyId';
+    externalIdField: 'customerId' | 'accountId' | 'advertiserId' | 'propertyId' | 'siteUrl';
     /** OAuth temp account endpoint suffix */
     tempAccountsPath?: string;
 }
@@ -50,6 +50,12 @@ const PLATFORM_ROUTES: Record<PlatformId, PlatformRoutes> = {
         integrationBaseUrl: '/integrations/google-analytics',
         externalIdField: 'propertyId',
         tempAccountsPath: '/temp-properties',
+    },
+    'search-console': {
+        authBaseUrl: '/auth/google/search-console',
+        integrationBaseUrl: '/seo/gsc',
+        externalIdField: 'siteUrl',
+        tempAccountsPath: '/temp-sites',
     },
     facebook: {
         authBaseUrl: '/auth/facebook/ads',
@@ -86,6 +92,14 @@ function normalizeTempAccounts(response: unknown): TempAccount[] {
             return items.map((item) => ({
                 id: item.propertyId,
                 name: item.displayName || item.propertyId,
+            }));
+        }
+
+        if (items.length > 0 && items[0] && 'siteUrl' in items[0]) {
+            return items.map((item) => ({
+                id: item.siteUrl,
+                name: item.siteUrl,
+                status: item.permissionLevel,
             }));
         }
 
@@ -196,10 +210,11 @@ export const integrationService = {
      * Useful for dashboard/overview
      */
     async getAllStatuses(): Promise<Record<PlatformId, IntegrationStatusResponse | null>> {
-        const platforms: PlatformId[] = ['google', 'google-analytics', 'facebook', 'tiktok', 'line'];
+        const platforms: PlatformId[] = ['google', 'google-analytics', 'search-console', 'facebook', 'tiktok', 'line'];
         const results: Record<PlatformId, IntegrationStatusResponse | null> = {
             google: null,
             'google-analytics': null,
+            'search-console': null,
             facebook: null,
             tiktok: null,
             line: null,
@@ -237,6 +252,17 @@ export const integrationService = {
     async connectTikTokSandbox(): Promise<CompleteConnectionResponse> {
         const response = await apiClient.post<CompleteConnectionResponse>(
             '/auth/tiktok/connect-sandbox'
+        );
+        return response.data;
+    },
+
+    /**
+     * Trigger manual sync for a TikTok Ads account
+     */
+    async syncTikTokAccount(accountId: string, lookbackDays = 90): Promise<{ success: boolean; message: string }> {
+        const query = lookbackDays ? `?lookbackDays=${encodeURIComponent(String(lookbackDays))}` : '';
+        const response = await apiClient.post<{ success: boolean; message: string }>(
+            `/sync/tiktok/accounts/${encodeURIComponent(accountId)}${query}`
         );
         return response.data;
     },

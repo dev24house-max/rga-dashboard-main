@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownRight, ArrowUpRight, Target, Timer, Trophy, Users, HelpCircle } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Target, Timer, Trophy, Users, HelpCircle, Eye, Activity, MousePointerClick } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
@@ -69,6 +69,42 @@ const getSeoMetricTooltip = (metric: string, data: SeoMetricSummary) => {
                     : `Excellent engagement! Visitors spend ${Math.floor(avgTimeOnPage / 60)}m ${Math.floor(avgTimeOnPage % 60)}s on average.`
             };
 
+        case 'activeUsers':
+            return {
+                explanation: 'Active Users: Number of users engaged with your site during the reporting period.',
+                contextual: data.activeUsers === undefined || data.activeUsers === null
+                    ? 'No active user data available for this period.'
+                    : `${data.activeUsers.toLocaleString()} active users engaged with your site.`
+            };
+
+        case 'screenPageViews':
+            return {
+                explanation: 'Page Views: Total number of pages or screens viewed by visitors.',
+                contextual: data.screenPageViews === undefined || data.screenPageViews === null
+                    ? 'No page view data available for this period.'
+                    : `${data.screenPageViews.toLocaleString()} pages were viewed during the reporting period.`
+            };
+
+        case 'engagementRate':
+            return {
+                explanation: 'Engagement Rate: Percentage of sessions that were considered engaged.',
+                contextual: data.engagementRate === undefined || data.engagementRate === null
+                    ? 'No engagement rate data available.'
+                    : `Your engagement rate is ${data.engagementRate}%. Higher values indicate stronger visitor interaction.`
+            };
+
+        case 'bounceRate':
+            return {
+                explanation: 'Bounce Rate: Percentage of single-page sessions without interaction.',
+                contextual: data.bounceRate === undefined || data.bounceRate === null
+                    ? 'No bounce rate data available.'
+                    : data.bounceRate <= 40
+                        ? `Low bounce rate at ${data.bounceRate}%. Great engagement.`
+                        : data.bounceRate <= 60
+                            ? `Moderate bounce rate at ${data.bounceRate}%. Review page relevance and UX.`
+                            : `High bounce rate at ${data.bounceRate}%. Improve landing pages and calls to action.`
+            };
+
         default:
             return {
                 explanation: 'SEO metric explanation not available.',
@@ -108,6 +144,9 @@ const SeoMetricTooltip = ({ metric, data, children }: { metric: string; data: Se
                             </div>
                             <p className="text-[12.5px] text-slate-100 leading-relaxed m-0">
                                 {tip.explanation}
+                            </p>
+                            <p className="text-[12.5px] text-slate-300 leading-relaxed mt-2">
+                                {tip.contextual}
                             </p>
                         </div>
                     </div>
@@ -157,17 +196,62 @@ export function SeoSummaryCards({ data, isLoading }: SeoSummaryCardsProps) {
             value: formatDuration(data.avgTimeOnPage),
             icon: Timer,
             trend: `${data.avgTimeOnPageTrend && data.avgTimeOnPageTrend > 0 ? '+' : ''}${data.avgTimeOnPageTrend ?? 0}%`,
+            trendLabel: `${data.avgTimeOnPageTrend && data.avgTimeOnPageTrend > 0 ? '+' : ''}${data.avgTimeOnPageTrend ?? 0}% vs prev`,
             trendUp: (data.avgTimeOnPageTrend ?? 0) >= 0,
-            description: "Average session duration",
+            description: "Average session duration compared to the previous period",
             color: "text-purple-500",
             bg: "bg-purple-50",
             metric: "avgTimeOnPage"
+        },
+        {
+            title: "Active Users",
+            value: data.activeUsers !== undefined ? data.activeUsers.toLocaleString() : "-",
+            icon: Users,
+            trend: `${data.activeUsersTrend && data.activeUsersTrend > 0 ? '+' : ''}${data.activeUsersTrend ?? 0}%`,
+            trendUp: (data.activeUsersTrend ?? 0) >= 0,
+            description: "Total active users",
+            color: "text-indigo-500",
+            bg: "bg-indigo-50",
+            metric: "activeUsers"
+        },
+        {
+            title: "Page Views",
+            value: data.screenPageViews !== undefined ? data.screenPageViews.toLocaleString() : "-",
+            icon: Eye,
+            trend: `${data.screenPageViewsTrend && data.screenPageViewsTrend > 0 ? '+' : ''}${data.screenPageViewsTrend ?? 0}%`,
+            trendUp: (data.screenPageViewsTrend ?? 0) >= 0,
+            description: "Total screen page views",
+            color: "text-sky-500",
+            bg: "bg-sky-50",
+            metric: "screenPageViews"
+        },
+        {
+            title: "Engagement Rate",
+            value: data.engagementRate !== undefined ? `${data.engagementRate}%` : "-",
+            icon: Activity,
+            trend: `${data.engagementRateTrend && data.engagementRateTrend > 0 ? '+' : ''}${data.engagementRateTrend ?? 0}%`,
+            trendUp: (data.engagementRateTrend ?? 0) >= 0,
+            description: "Percentage of engaged sessions",
+            color: "text-emerald-500",
+            bg: "bg-emerald-50",
+            metric: "engagementRate"
+        },
+        {
+            title: "Bounce Rate",
+            value: data.bounceRate !== undefined ? `${data.bounceRate}%` : "-",
+            icon: MousePointerClick,
+            trend: `${data.bounceRateTrend && data.bounceRateTrend > 0 ? '+' : ''}${data.bounceRateTrend ?? 0}%`,
+            trendUp: (data.bounceRateTrend ?? 0) <= 0,
+            description: "Percentage of single-page sessions",
+            color: "text-rose-500",
+            bg: "bg-rose-50",
+            metric: "bounceRate"
         }
     ];
 
     if (isLoading) {
         return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <Card key={i} className="animate-pulse">
                     <CardContent className="p-6 h-32" />
                 </Card>
@@ -197,7 +281,7 @@ export function SeoSummaryCards({ data, isLoading }: SeoSummaryCardsProps) {
                             <div className="text-2xl font-bold">{metric.value}</div>
                             <div className={`flex items-center text-xs ${metric.trendUp ? 'text-green-600' : 'text-red-600'} bg-opacity-10 px-2 py-1 rounded-full ${metric.trendUp ? 'bg-green-50' : 'bg-red-50'}`}>
                                 {metric.trendUp ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
-                                {metric.trend}
+                                {metric.trendLabel ?? metric.trend}
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">

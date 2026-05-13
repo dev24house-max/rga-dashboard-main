@@ -20,7 +20,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
-import type { PeriodEnum } from '../schemas';
+import { DEFAULT_WEEK_STARTS_ON, isWeekPeriod } from '@/lib/date-range-utils';
+import type { PeriodEnum, WeekStartsOn } from '../schemas';
 
 // =============================================================================
 // Types
@@ -35,6 +36,10 @@ export interface DashboardDateFilterProps {
     customRange?: { from: Date; to: Date };
     /** Callback when custom range changes */
     onCustomRangeChange?: (range: { from: Date; to: Date }) => void;
+    /** Which weekday starts this/last week presets */
+    weekStartsOn?: WeekStartsOn;
+    /** Callback when week start changes */
+    onWeekStartsOnChange?: (value: WeekStartsOn) => void;
     /** Optional className */
     className?: string;
 }
@@ -45,9 +50,17 @@ export interface DashboardDateFilterProps {
 
 const PERIOD_OPTIONS: { value: PeriodEnum; label: string }[] = [
     { value: '1d', label: 'Today' },
-    { value: '7d', label: 'Last 7 day' },
-    { value: '30d', label: 'last month' },
-    { value: '90d', label: '3 month' },
+    { value: 'yesterday', label: 'Yesterday' },
+    { value: 'this_week', label: 'This week' },
+    { value: 'last_week', label: 'Last week' },
+    { value: '7d', label: 'Last 7 days' },
+    { value: '14d', label: 'Last 14 days' },
+    { value: '30d', label: 'Last 30 days' },
+    { value: '90d', label: 'Last 90 days' },
+    { value: 'this_month', label: 'This month' },
+    { value: 'last_month', label: 'Last month' },
+    { value: 'last_3_months', label: 'Last 3 months' },
+    // { value: 'custom', label: 'Custom range' },
 ];
 
 function startOfDay(date: Date) {
@@ -68,7 +81,7 @@ function getPeriodFromPickedDate(pickedDate: Date, currentPeriod: PeriodEnum): P
 
     if (daysAgo === 0) return '1d';
     if (daysAgo >= 1 && daysAgo <= 6) return '7d';
-    if (daysAgo >= 7 && daysAgo <= 89) return '90d';
+    if (daysAgo >= 7 && daysAgo <= 89) return 'last_3_months';
 
     const firstDayOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const isPrevMonth =
@@ -76,8 +89,6 @@ function getPeriodFromPickedDate(pickedDate: Date, currentPeriod: PeriodEnum): P
         picked.getMonth() === firstDayOfPrevMonth.getMonth();
 
     if (isPrevMonth) return 'last_month';
-
-    return currentPeriod;
 
     return currentPeriod;
 }
@@ -91,12 +102,15 @@ export function DashboardDateFilter({
     onValueChange,
     customRange,
     onCustomRangeChange,
+    weekStartsOn = DEFAULT_WEEK_STARTS_ON,
+    onWeekStartsOnChange,
     className,
 }: DashboardDateFilterProps) {
     const [open, setOpen] = useState(false);
+    const [draftValue, setDraftValue] = useState<PeriodEnum>(value);
     const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
-        from: customRange?.from,
-        to: customRange?.to,
+        from: value === 'custom' ? customRange?.from : undefined,
+        to: value === 'custom' ? customRange?.to : undefined,
     });
 
     const selectedLabel = useMemo(() => {
@@ -107,20 +121,74 @@ export function DashboardDateFilter({
         return match?.label ?? value;
     }, [value, customRange]);
 
-    const handleRangeSelect = (range?: { from?: Date; to?: Date }) => {
-        if (!range?.from || !range?.to) {
-            setDateRange(range || {});
-            return;
+    const draftRangeLabel = useMemo(() => {
+        if (!dateRange.from) return undefined;
+
+        if (!dateRange.to || dateRange.from.getTime() === dateRange.to.getTime()) {
+            return format(dateRange.from, 'MMM d, yyyy');
         }
 
-        setDateRange(range);
+        return `${format(dateRange.from, 'MMM d, yyyy')} - ${format(dateRange.to, 'MMM d, yyyy')}`;
+    }, [dateRange.from, dateRange.to]);
+
+    const resetDraftState = () => {
+        setDraftValue(value);
+        setDateRange({
+            from: value === 'custom' ? customRange?.from : undefined,
+            to: value === 'custom' ? customRange?.to : undefined,
+        });
+    };
+
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (nextOpen) {
+            resetDraftState();
+        }
+
+        setOpen(nextOpen);
+    };
+
+    const handleRangeSelect = (range?: { from?: Date; to?: Date }) => {
+        setDraftValue('custom');
+        setDateRange(range || {});
+    };
+
+    const handleApplyCustomRange = () => {
+        if (!dateRange.from) return;
+
         onValueChange('custom');
-        onCustomRangeChange?.({ from: range.from, to: range.to });
+        onCustomRangeChange?.({
+            from: dateRange.from,
+            to: dateRange.to ?? dateRange.from,
+        });
         setOpen(false);
     };
 
+    const handleCancelCustomRange = () => {
+        resetDraftState();
+        setOpen(false);
+    };
+
+    const handlePeriodChange = (nextValue: string) => {
+        const nextPeriod = nextValue as PeriodEnum;
+        setDraftValue(nextPeriod);
+
+        if (nextPeriod === 'custom') {
+            return;
+        }
+
+        onValueChange(nextPeriod);
+
+        if (!isWeekPeriod(nextPeriod)) {
+            setOpen(false);
+        }
+    };
+
+    const handleWeekStartsOnChange = (nextValue: WeekStartsOn) => {
+        onWeekStartsOnChange?.(nextValue);
+    };
+
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -134,7 +202,7 @@ export function DashboardDateFilter({
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-[340px] p-0 rounded-xl border border-border/60 shadow-lg max-h-[calc(100vh-6rem)] overflow-auto"
+                className="max-h-[calc(100dvh-1rem)] w-[340px] overflow-auto rounded-xl border border-border/60 p-0 shadow-lg"
                 align="start"
             >
                 <div className="p-3">
@@ -142,11 +210,8 @@ export function DashboardDateFilter({
                         <div className="space-y-2">
                             <div className="text-[11px] font-medium text-muted-foreground">Period</div>
                             <Select
-                                value={value}
-                                onValueChange={(v) => {
-                                    onValueChange(v as PeriodEnum);
-                                    setOpen(false);
-                                }}
+                                value={draftValue}
+                                onValueChange={handlePeriodChange}
                             >
                                 <SelectTrigger className="h-8 w-full rounded-lg bg-background shadow-sm text-xs">
                                     <SelectValue placeholder="Select period" />
@@ -161,6 +226,35 @@ export function DashboardDateFilter({
                             </Select>
                         </div>
 
+                        {isWeekPeriod(draftValue) && (
+                            <div className="space-y-2">
+                                <div className="text-[11px] font-medium text-muted-foreground">Week starts</div>
+                                <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                                    {([
+                                        { value: 'sunday', label: 'Sunday' },
+                                        { value: 'monday', label: 'Monday' },
+                                    ] as const).map((option) => {
+                                        const isSelected = weekStartsOn === option.value;
+
+                                        return (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() => handleWeekStartsOnChange(option.value)}
+                                                className={`h-8 rounded-md px-2 text-xs font-medium transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-background text-foreground shadow-sm'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="h-px bg-border" />
 
                         <div className="space-y-2">
@@ -173,22 +267,36 @@ export function DashboardDateFilter({
                                     captionLayout="dropdown"
                                     fromYear={new Date().getFullYear() - 1}
                                     toYear={new Date().getFullYear()}
-                                    footer={
-                                        dateRange?.from ? (
-                                            <div className="px-2 pb-1 text-xs text-muted-foreground">
-                                                {dateRange.to ? (
-                                                    <>
-                                                        {format(dateRange.from, 'PPP')} - {format(dateRange.to, 'PPP')}
-                                                    </>
-                                                ) : (
-                                                    format(dateRange.from, 'PPP')
-                                                )}
-                                            </div>
-                                        ) : undefined
-                                    }
+                                    className="[--cell-size:1.95rem]"
                                     initialFocus
                                 />
                             </div>
+
+                            {(draftValue === 'custom' || dateRange.from) && (
+                                <div className="flex items-center gap-2 pt-1">
+                                    <div className="min-w-0 flex-1 truncate text-[clamp(0.6875rem,2.4vw,0.75rem)] leading-snug text-muted-foreground">
+                                        {draftRangeLabel}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 shrink-0 px-3 text-xs"
+                                        onClick={handleCancelCustomRange}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        className="h-8 shrink-0 px-3 text-xs"
+                                        disabled={!dateRange.from}
+                                        onClick={handleApplyCustomRange}
+                                    >
+                                        Apply
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

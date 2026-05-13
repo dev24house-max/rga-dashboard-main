@@ -49,6 +49,8 @@ export const integrationService = {
     getGoogleAnalyticsStatus: () => apiClient.get('/auth/google/analytics/status'),
     getLineAdsStatus: () => apiClient.get('/integrations/line-ads/status'),
     getTikTokAdsStatus: () => apiClient.get('/integrations/tiktok-ads/status'),
+    getGoogleSearchConsoleStatus: () => apiClient.get('/seo/gsc/status'),
+    getBingWebmasterStatus: () => apiClient.get('/seo/bing/status'),
 
     // ============================================
     // Google Ads
@@ -61,6 +63,19 @@ export const integrationService = {
     // ============================================
     syncGoogleAnalytics: () => apiClient.post('/sync/platform/google-analytics'),
     disconnectGoogleAnalytics: () => apiClient.delete('/integrations/google-analytics'),
+
+    // ============================================
+    // Google Search Console
+    // ============================================
+    syncGoogleSearchConsole: (days?: number) => apiClient.post(`/seo/sync/gsc${days ? `?days=${days}` : ''}`),
+    disconnectGoogleSearchConsole: () => apiClient.delete('/integrations/google-search-console'),
+
+    // ============================================
+    // Bing Webmaster
+    // ============================================
+    connectBingWebmaster: (siteUrl: string) => apiClient.post('/seo/bing/connect', { siteUrl }),
+    syncBingWebmaster: () => apiClient.post('/seo/sync/bing'),
+    disconnectBingWebmaster: () => apiClient.delete('/seo/bing'),
 
     // ============================================
     // LINE Ads

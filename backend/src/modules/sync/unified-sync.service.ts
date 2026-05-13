@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IntegrationFactory } from '../integrations/common/integration.factory';
-import { AdPlatform, Prisma } from '@prisma/client';
+import { AdPlatform, Prisma, SyncStatus } from '@prisma/client';
 import { MarketingPlatformAdapter } from '../integrations/common/marketing-platform.adapter';
 import { EncryptionService } from '../../common/services/encryption.service';
 
@@ -173,7 +173,7 @@ export class UnifiedSyncService {
     /**
      * Sync a specific account using the Adapter Pattern
      */
-    async syncAccount(platform: AdPlatform, accountId: string, tenantId: string, accountData?: any) {
+    async syncAccount(platform: AdPlatform, accountId: string, tenantId: string, accountData?: any, lookbackDays?: number) {
         this.logger.log(`[SYNC] ========== SYNC START ==========`);
         this.logger.log(`[SYNC] platform=${platform}, accountId=${accountId}, tenantId=${tenantId}`);
 
@@ -203,6 +203,8 @@ export class UnifiedSyncService {
             const credentials = {
                 accessToken: this.tryDecryptToken(accountData.accessToken),
                 refreshToken: this.tryDecryptToken(accountData.refreshToken),
+                accountRecordId: accountData.id,
+                tokenExpiresAt: accountData.tokenExpiresAt,
                 accountId: (() => {
                     switch (platform) {
                         case AdPlatform.GOOGLE_ANALYTICS:
@@ -238,8 +240,9 @@ export class UnifiedSyncService {
             // 4. Fetch & Save Metrics
             if (platform === AdPlatform.GOOGLE_ANALYTICS) {
                 // GA4 Logic: Fetch Account Level Metrics
+                const days = lookbackDays || 90;
                 const dateRange = {
-                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+                    startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
                     endDate: new Date(),
                 };
 
@@ -270,8 +273,9 @@ export class UnifiedSyncService {
                 for (const campaign of dbCampaigns) {
                     if (!campaign.externalId) continue;
 
+                    const days = lookbackDays || 365;
                     const dateRange = {
-                        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+                        startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
                         endDate: new Date(),
                     };
 
@@ -341,18 +345,27 @@ export class UnifiedSyncService {
             name: data.name,
             status: data.status,
             budget: data.budget,
+            // Persist budget mode (e.g., TikTok's BUDGET_MODE_INFINITE) into budgetType column
+            budgetType: data.budgetMode || data.budget_mode || data.budgetType || null,
             startDate: data.startDate,
             endDate: data.endDate,
             [fkField]: accountId,
+            syncStatus: SyncStatus.IN_PROGRESS,
         };
 
         if (existing) {
-            return this.prisma.campaign.update({
+            const campaign = await this.prisma.campaign.update({
                 where: { id: existing.id },
                 data: campaignData
             });
+
+            // 4. Save Lifetime Metrics (Direct from Platform API)
+            if (data.metrics) {
+                await this.saveLifetimeMetrics(tenantId, platform, campaign.id, data.metrics);
+            }
+            return campaign;
         } else {
-            return this.prisma.campaign.create({
+            const campaign = await this.prisma.campaign.create({
                 data: {
                     ...campaignData,
                     tenantId,
@@ -360,7 +373,55 @@ export class UnifiedSyncService {
                     platform,
                 }
             });
+
+            // 4. Save Lifetime Metrics (Direct from Platform API)
+            if (data.metrics) {
+                await this.saveLifetimeMetrics(tenantId, platform, campaign.id, data.metrics);
+            }
+            return campaign;
         }
+    }
+
+    /**
+     * Keep a special 'lifetime_summary' row in Metric table
+     * to preserve absolute totals from platforms (even for old campaigns)
+     */
+    private async saveLifetimeMetrics(tenantId: string, platform: AdPlatform, campaignId: string, metrics: any) {
+        const date = new Date('1970-01-01'); // Token date for lifetime entry
+        const source = 'lifetime_summary';
+
+        await this.prisma.metric.upsert({
+            where: {
+                metrics_unique_key: {
+                    tenantId,
+                    campaignId,
+                    date,
+                    hour: 0,
+                    platform,
+                    source,
+                },
+            },
+            create: {
+                tenantId,
+                campaignId,
+                platform,
+                date,
+                hour: 0,
+                source,
+                impressions: Math.trunc(metrics.impressions || 0),
+                clicks: Math.trunc(metrics.clicks || 0),
+                spend: metrics.cost || metrics.spend || 0,
+                revenue: metrics.revenue || metrics.conversionsValue || 0,
+                conversions: Math.trunc(metrics.conversions || 0),
+            },
+            update: {
+                impressions: Math.trunc(metrics.impressions || 0),
+                clicks: Math.trunc(metrics.clicks || 0),
+                spend: metrics.cost || metrics.spend || 0,
+                revenue: metrics.revenue || metrics.conversionsValue || 0,
+                conversions: Math.trunc(metrics.conversions || 0),
+            },
+        });
     }
 
     /**
@@ -369,11 +430,25 @@ export class UnifiedSyncService {
      * These are calculated fields in the service layer
      */
     private async saveCampaignMetrics(tenantId: string, platform: AdPlatform, campaignId: string, metrics: any[]) {
+        // Batch upserts to reduce roundtrips for large date ranges
+        if (!metrics || metrics.length === 0) {
+            // Still mark campaign as synced but no metric rows to process
+            await this.prisma.campaign.update({
+                where: { id: campaignId },
+                data: {
+                    syncStatus: SyncStatus.SUCCESS,
+                    lastSyncedAt: new Date(),
+                },
+            });
+            return;
+        }
+
+        const ops: any[] = [];
+        const hour = 0;
+        const source = 'sync';
+
         for (const m of metrics) {
             const date = toUTCDateOnly(new Date(m.date));
-
-            const hour = 0;
-            const source = 'sync';
 
             const spendNum = toNumber(m.spend ?? m.cost);
             const revenueNum = toNumber(m.revenue ?? m.conversionValue);
@@ -383,7 +458,7 @@ export class UnifiedSyncService {
             const clicks = m.clicks ?? 0;
             const conversions = m.conversions ?? 0;
 
-            await this.prisma.metric.upsert({
+            ops.push(this.prisma.metric.upsert({
                 where: {
                     metrics_unique_key: {
                         tenantId,
@@ -416,8 +491,36 @@ export class UnifiedSyncService {
                     revenue: revenueNum,
                     roas: roasNum,
                 },
-            });
+            }));
         }
+
+        // Execute in chunks to avoid too-large transactions
+        const chunkSize = 50;
+        for (let i = 0; i < ops.length; i += chunkSize) {
+            const chunk = ops.slice(i, i + chunkSize);
+            try {
+                await this.prisma.$transaction(chunk as any);
+            } catch (err: any) {
+                this.logger.error(`[SYNC] Failed to upsert metric chunk: ${err?.message || err}`);
+                // Fall back to single upserts for the chunk to attempt partial progress
+                for (const op of chunk) {
+                    try {
+                        await op;
+                    } catch (singleErr: any) {
+                        this.logger.error(`[SYNC] Single upsert failed: ${singleErr?.message || singleErr}`);
+                    }
+                }
+            }
+        }
+
+        // Update campaign sync status
+        await this.prisma.campaign.update({
+            where: { id: campaignId },
+            data: {
+                syncStatus: SyncStatus.SUCCESS,
+                lastSyncedAt: new Date(),
+            },
+        });
     }
 
     /**
@@ -439,17 +542,22 @@ export class UnifiedSyncService {
                     tenantId,
                     propertyId,
                     date,
-                    activeUsers: m.impressions ?? 0,
-                    sessions: m.clicks ?? 0,
-                    newUsers: 0,
-                    screenPageViews: 0,
-                    engagementRate: 0,
-                    bounceRate: 0,
-                    avgSessionDuration: 0,
+                    activeUsers: m.activeUsers ?? 0,
+                    sessions: m.sessions ?? 0,
+                    newUsers: m.newUsers ?? 0,
+                    screenPageViews: m.screenPageViews ?? 0,
+                    engagementRate: m.engagementRate ?? 0,
+                    bounceRate: m.bounceRate ?? 0,
+                    avgSessionDuration: m.averageSessionDuration ?? 0,
                 },
                 update: {
-                    activeUsers: m.impressions ?? 0,
-                    sessions: m.clicks ?? 0,
+                    activeUsers: m.activeUsers ?? 0,
+                    sessions: m.sessions ?? 0,
+                    newUsers: m.newUsers ?? 0,
+                    screenPageViews: m.screenPageViews ?? 0,
+                    engagementRate: m.engagementRate ?? 0,
+                    bounceRate: m.bounceRate ?? 0,
+                    avgSessionDuration: m.averageSessionDuration ?? 0,
                 },
             });
         }

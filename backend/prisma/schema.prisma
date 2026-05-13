@@ -913,6 +913,7 @@ model SearchConsolePerformance {
   updatedAt       DateTime @updatedAt @map("updated_at")
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, siteUrl, date, page, query, device, country], name: "idx_gsc_performance_unique")
   @@index([tenantId, date], map: "idx_gsc_tenant_date")
   @@index([siteUrl], map: "idx_gsc_site_url")
   @@index([externalKey], map: "idx_gsc_external_key")

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
-import { Prisma } from '@prisma/client';
+import { AdPlatform, Prisma } from '@prisma/client';
+import { PeriodEnum } from './dto/dashboard-overview.dto';
 
 // ============================================================
 // Helper: Safe Decimal to Number conversion
@@ -25,33 +26,42 @@ export class MetricsService {
     /**
      * Get metrics trends for a specific period
      * @param tenantId - Tenant ID
-     * @param period - Time period ('7d', '14d', '30d', '90d')
+     * @param period - Time period ('1d', 'yesterday', '7d', '14d', '30d', '90d', 'this_month', 'last_month', 'last_3_months')
      * @param compareWith - Compare with previous period (optional)
      */
     async getMetricsTrends(
         tenantId: string,
         period: string,
         compareWith?: 'previous_period',
+        platform?: AdPlatform,
     ) {
-        const days = DateRangeUtil.parsePeriodDays(period);
-        const { startDate, endDate } = DateRangeUtil.getDateRange(days);
+        const selectedPeriod = period as PeriodEnum;
+        const { startDate, endDate } = DateRangeUtil.getDateRangeByPeriod(selectedPeriod);
 
         // Current period metrics from DB
         const currentMetrics = await this.getAggregatedMetrics(
             tenantId,
             startDate,
             endDate,
+            platform,
         );
 
         // Previous period metrics (if comparison requested)
         let previousMetrics = null;
+
         if (compareWith === 'previous_period') {
-            const { startDate: prevStartDate, endDate: prevEndDate } = DateRangeUtil.getPreviousPeriodDateRange(startDate, days);
+            const { startDate: prevStartDate, endDate: prevEndDate } =
+                DateRangeUtil.getPreviousPeriodByPeriod(
+                    selectedPeriod,
+                    startDate,
+                    endDate,
+                );
 
             previousMetrics = await this.getAggregatedMetrics(
                 tenantId,
                 prevStartDate,
                 prevEndDate,
+                platform,
             );
         }
 
@@ -76,6 +86,7 @@ export class MetricsService {
         tenantId: string,
         startDate: Date,
         endDate: Date,
+        platform?: AdPlatform,
     ) {
         const hideMockData = process.env.HIDE_MOCK_DATA === 'true';
 
@@ -86,6 +97,7 @@ export class MetricsService {
                     gte: startDate,
                     lte: endDate,
                 },
+                ...(platform ? { platform } : {}),
                 ...(hideMockData ? { isMockData: false } : {}),
             },
             _sum: {
@@ -168,7 +180,7 @@ export class MetricsService {
      * @param tenantId - Tenant ID
      * @param period - Time period ('7d', '30d')
      */
-    async getDailyMetrics(tenantId: string, period: string) {
+    async getDailyMetrics(tenantId: string, period: string, platform?: AdPlatform) {
         const days = DateRangeUtil.parsePeriodDays(period);
         const { startDate, endDate } = DateRangeUtil.getDateRange(days);
 
@@ -182,6 +194,7 @@ export class MetricsService {
                     gte: startDate,
                     lte: endDate,
                 },
+                ...(platform ? { platform } : {}),
                 ...(hideMockData ? { isMockData: false } : {}),
             },
             _sum: {
@@ -213,7 +226,6 @@ export class MetricsService {
                     spend,
                     conversions: m._sum.conversions ?? 0,
                     revenue,
-                    // Calculated fields (Safe Math):
                     ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
                     roas: spend > 0 ? revenue / spend : 0,
                 };

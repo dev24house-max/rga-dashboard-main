@@ -1,4 +1,5 @@
 import { Injectable, Logger, InternalServerErrorException, StreamableFile } from '@nestjs/common';
+import { AdPlatform } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MetricsService } from './metrics.service';
 import { stringify } from 'csv-stringify';
@@ -243,7 +244,8 @@ export class ExportService {
      */
     async exportMetricsToPDF(
         tenantId: string,
-        period: '7d' | '30d',
+        period: string,
+        platform?: AdPlatform,
     ): Promise<Buffer> {
         try {
             // Get metrics data
@@ -251,11 +253,13 @@ export class ExportService {
                 tenantId,
                 period,
                 'previous_period',
+                platform,
             );
 
             const dailyMetrics = await this.metricsService.getDailyMetrics(
                 tenantId,
                 period,
+                platform,
             );
 
             // Get tenant info
@@ -280,7 +284,23 @@ export class ExportService {
                 .fontSize(12)
                 .font('Helvetica')
                 .text(`Tenant: ${tenant?.name ?? tenantId}`, { align: 'center' });
-            doc.text(`Period: ${period === '7d' ? 'Last 7 Days' : 'Last 30 Days'}`, {
+
+            const periodLabel = (() => {
+                if (period === 'this_month') return 'This Month';
+                if (period === 'last_month') return 'Last Month';
+                const match = period.match(/^(\d+)d$/);
+                if (!match) return period;
+                const days = Number(match[1]);
+                if (!Number.isFinite(days) || days <= 0) return period;
+                if (days === 1) return 'Today';
+                return `Last ${days} Days`;
+            })();
+            const platformLabel = platform ? platform.replace(/_/g, ' ') : 'All Platforms';
+
+            doc.text(`Period: ${periodLabel}`, {
+                align: 'center',
+            });
+            doc.text(`Platform: ${platformLabel}`, {
                 align: 'center',
             });
             doc.text(

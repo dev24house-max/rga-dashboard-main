@@ -1,5 +1,5 @@
 import { DollarSign, Eye, MousePointer, Zap } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { useFormatter } from '@/hooks/use-formatter';
 import { MetricGrid, MetricItem } from './MetricGrid';
 
 const getSourceBadge = (source?: string) => {
@@ -15,6 +15,7 @@ interface DashboardKPIsProps {
 }
 
 export const DashboardKPIs = ({ overview, isLoading }: DashboardKPIsProps) => {
+    const { formatCurrency, formatNumber } = useFormatter();
     const current = overview?.current || {};
     const trends = overview?.trends || {};
 
@@ -25,8 +26,8 @@ export const DashboardKPIs = ({ overview, isLoading }: DashboardKPIsProps) => {
             icon: <DollarSign className="w-5 h-5" />,
             iconClassName: 'bg-indigo-50 text-indigo-600',
             trend: {
-                value: trends.spend || 0,
-                isPositive: (trends.spend || 0) > 0,
+                value: Number(trends?.spend ?? 0),
+                isPositive: Number(trends?.spend ?? 0) > 0,
                 label: ''
             },
             badge: getSourceBadge('ads')
@@ -81,12 +82,12 @@ export const DashboardKPIs = ({ overview, isLoading }: DashboardKPIsProps) => {
         },
         {
             title: 'ROAS',
-            value: `${(current.roas || 0).toFixed(2)}x`,
+            value: `${Number(current.roas ?? 0).toFixed(2)}x`,
             icon: <Zap className="w-5 h-5" />,
             iconClassName: 'bg-purple-50 text-purple-600',
             trend: {
-                value: trends.roas || 0,
-                isPositive: (trends.roas || 0) > 0,
+                value: Number(trends?.roas ?? 0),
+                isPositive: Number(trends?.roas ?? 0) > 0,
                 label: ''
             },
             badge: getSourceBadge('calculated')
