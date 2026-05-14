@@ -65,6 +65,38 @@ function combineGrowth(a: number | null | undefined, b: number | null | undefine
     return ((1 + a / 100) * (1 + b / 100) - 1) * 100;
 }
 
+function getInclusiveDayCount(from: Date, to: Date) {
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const fromDay = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+
+    return Math.max(1, Math.floor((toDay.getTime() - fromDay.getTime()) / msPerDay) + 1);
+}
+
+function getComparisonLabel(period: PeriodEnum, customRange?: { from: Date; to: Date }) {
+    if (period === 'custom' && customRange) {
+        const days = getInclusiveDayCount(customRange.from, customRange.to);
+        return days === 1 ? 'vs previous day' : `vs previous ${days} days`;
+    }
+
+    const labels: Record<PeriodEnum, string> = {
+        '1d': 'vs yesterday',
+        yesterday: 'vs previous day',
+        this_week: 'vs last week',
+        last_week: 'vs previous week',
+        '7d': 'vs previous 7 days',
+        '14d': 'vs previous 14 days',
+        '30d': 'vs previous 30 days',
+        '90d': 'vs previous 90 days',
+        this_month: 'vs last month',
+        last_month: 'vs previous month',
+        last_3_months: 'vs previous 3 months',
+        custom: 'vs previous period',
+    };
+
+    return labels[period];
+}
+
 const PLATFORM_LABELS: Partial<Record<AdPlatform, string>> = {
     GOOGLE_ADS: 'GOOGLE ADS',
     FACEBOOK: 'FACEBOOK',
@@ -222,6 +254,7 @@ export function DashboardPage() {
     const roas = data?.summary.averageRoas ?? 0;
     const estimatedRevenue = totalCost * roas;
     const estimatedProfit = estimatedRevenue - totalCost;
+    const comparisonLabel = getComparisonLabel(period, customRange);
 
     return (
         <DashboardLayout>
@@ -308,6 +341,7 @@ export function DashboardPage() {
                                 subtitle="ROAS"
                                 roi={data?.summary.averageRoas ?? 0}
                                 roiDelta={data?.growth.roasGrowth ?? 0}
+                                roiComparisonLabel={comparisonLabel}
                                 total={totalCost}
                                 currency="THB"
                                 breakdown={financialBreakdown}

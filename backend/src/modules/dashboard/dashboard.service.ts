@@ -728,8 +728,7 @@ export class DashboardService {
         throw new Error('startDate must be before or equal to endDate');
       }
 
-      // Use the provided period or default for metadata
-      period = query.period || PeriodEnum.SEVEN_DAYS;
+      period = PeriodEnum.CUSTOM;
     } else {
       // Use period-based date range (existing logic)
       period = query.period || PeriodEnum.SEVEN_DAYS;
