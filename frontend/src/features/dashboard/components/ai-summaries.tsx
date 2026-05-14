@@ -19,8 +19,13 @@ function formatDelta(value: number | null | undefined) {
     return `${sign}${value.toFixed(1)}%`;
 }
 
-function deltaBadgeClassName(value: number | null | undefined) {
+function deltaBadgeClassName(value: number | null | undefined, lowerIsBetter = false) {
     if (value == null) return 'bg-slate-500/10 text-slate-500';
+
+    if (lowerIsBetter) {
+        return value <= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500';
+    }
+
     return value >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500';
 }
 
@@ -29,9 +34,10 @@ function deltaBadgeClassName(value: number | null | undefined) {
 export interface AiSummariesProps {
     summary?: SummaryMetrics;
     growth?: GrowthMetrics;
+    comparisonLabel?: string;
 }
 
-export function AiSummaries({ summary, growth }: AiSummariesProps) {
+export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period' }: AiSummariesProps) {
     const { data: webhookCards, isLoading, error } = useAiSummaryCards();
     const [displayedItems, setDisplayedItems] = useState<SummaryItem[]>([]);
 
@@ -130,13 +136,13 @@ export function AiSummaries({ summary, growth }: AiSummariesProps) {
                                     {item.label}
                                 </p>
                                 <span
-                                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${deltaBadgeClassName(item.delta)}`}
+                                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${deltaBadgeClassName(item.delta, item.key === 'cpm')}`}
                                 >
                                     {formatDelta(item.delta) ?? '—'}
                                 </span>
                             </div>
                             <p className="text-lg font-bold tracking-tight leading-none mb-1">{item.value}</p>
-                            <p className="text-[11px] text-muted-foreground">From last period</p>
+                            <p className="text-[11px] text-muted-foreground">{comparisonLabel}</p>
                         </div>
                     ))}
                 </div>

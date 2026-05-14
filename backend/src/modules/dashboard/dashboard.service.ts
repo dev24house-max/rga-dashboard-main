@@ -842,6 +842,7 @@ export class DashboardService {
     const totalClicks = currentMetrics._sum.clicks ?? 0;
     const totalConversions = currentMetrics._sum.conversions ?? 0;
     const totalRevenue = toNumber(currentMetrics._sum.revenue);
+    const totalProfit = Math.max(totalRevenue - totalCost, 0);
 
     const summary = {
       totalCost,
@@ -860,11 +861,17 @@ export class DashboardService {
       return ((current - previous) / previous) * 100;
     };
 
+    const calculateProfitTrend = (current: number, previous: number) => {
+      if (current <= 0) return 0;
+      return calculateTrend(current, previous);
+    };
+
     const previousCost = toNumber(previousMetrics._sum.spend);
     const previousImpressions = previousMetrics._sum.impressions ?? 0;
     const previousClicks = previousMetrics._sum.clicks ?? 0;
     const previousConversions = previousMetrics._sum.conversions ?? 0;
     const previousRevenue = toNumber(previousMetrics._sum.revenue);
+    const previousProfit = Math.max(previousRevenue - previousCost, 0);
 
     const prevRoas = previousCost > 0 ? previousRevenue / previousCost : 0;
     const prevCpm = previousImpressions > 0 ? (previousCost / previousImpressions) * 1000 : 0;
@@ -873,6 +880,8 @@ export class DashboardService {
 
     const growth = {
       costGrowth: calculateTrend(totalCost, previousCost),
+      revenueGrowth: calculateTrend(totalRevenue, previousRevenue),
+      profitGrowth: calculateProfitTrend(totalProfit, previousProfit),
       impressionsGrowth: calculateTrend(totalImpressions, previousImpressions),
       clicksGrowth: calculateTrend(totalClicks, previousClicks),
       conversionsGrowth: calculateTrend(totalConversions, previousConversions),

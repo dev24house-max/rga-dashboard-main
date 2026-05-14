@@ -17,6 +17,8 @@ export interface DashboardMetricsProps {
     summary?: SummaryMetrics;
     /** Growth metrics data */
     growth?: GrowthMetrics;
+    /** Label for comparison period */
+    comparisonLabel?: string;
     /** Show loading state */
     loading?: boolean;
 }
@@ -31,6 +33,7 @@ interface MetricConfig {
     getValue: (summary: SummaryMetrics) => string;
     getTrend: (growth: GrowthMetrics) => number | null;
     accentColor: 'indigo' | 'violet' | 'cyan' | 'amber';
+    lowerIsBetter?: boolean;
 }
 
 // Helper: ensure numeric values are finite, fallback to 0
@@ -46,6 +49,7 @@ const metricsConfig: MetricConfig[] = [
         getValue: (s) => formatCurrencyTHB(safeNumber(s.totalCost)),
         getTrend: (g) => g.costGrowth,
         accentColor: 'indigo',
+        lowerIsBetter: true,
     },
     {
         title: 'Impressions',
@@ -77,6 +81,7 @@ const metricsConfig: MetricConfig[] = [
 export function DashboardMetrics({
     summary,
     growth,
+    comparisonLabel = 'vs last period',
     loading = false,
 }: DashboardMetricsProps) {
     return (
@@ -98,7 +103,8 @@ export function DashboardMetrics({
                         averageRoi: 0,
                     })}
                     trend={growth ? metric.getTrend(growth) : null}
-                    trendLabel="vs last period"
+                    trendLabel={comparisonLabel}
+                    lowerIsBetter={metric.lowerIsBetter}
                     loading={loading}
                 />
             ))}

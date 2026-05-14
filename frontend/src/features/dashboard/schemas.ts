@@ -97,6 +97,8 @@ export const GrowthMetricsSchema = z
         impressionsGrowth: z.number().nullable(),
         clicksGrowth: z.number().nullable(),
         costGrowth: z.number().nullable(),
+        revenueGrowth: z.number().nullable(),
+        profitGrowth: z.number().nullable(),
         conversionsGrowth: z.number().nullable(),
 
         ctrGrowth: z.number().nullable(),

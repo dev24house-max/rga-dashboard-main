@@ -60,9 +60,9 @@ function deltaClassName(value: number | null | undefined) {
     return value >= 0 ? 'text-emerald-500/70' : 'text-rose-400/70';
 }
 
-function combineGrowth(a: number | null | undefined, b: number | null | undefined): number | null {
-    if (a == null || b == null) return null;
-    return ((1 + a / 100) * (1 + b / 100) - 1) * 100;
+function lowerIsBetterDeltaClassName(value: number | null | undefined) {
+    if (value == null) return undefined;
+    return value <= 0 ? 'text-emerald-500/70' : 'text-rose-400/70';
 }
 
 function getInclusiveDayCount(from: Date, to: Date) {
@@ -253,7 +253,7 @@ export function DashboardPage() {
     const totalCost = data?.summary.totalCost ?? 0;
     const roas = data?.summary.averageRoas ?? 0;
     const estimatedRevenue = totalCost * roas;
-    const estimatedProfit = estimatedRevenue - totalCost;
+    const estimatedProfit = Math.max(estimatedRevenue - totalCost, 0);
     const comparisonLabel = getComparisonLabel(period, customRange);
 
     return (
@@ -283,6 +283,7 @@ export function DashboardPage() {
                     <DashboardMetrics
                         summary={data?.summary}
                         growth={data?.growth}
+                        comparisonLabel={comparisonLabel}
                         loading={isLoading}
                     />
                 </section>
@@ -293,7 +294,11 @@ export function DashboardPage() {
                     {isLoading ? (
                         <Skeleton className="h-[180px] w-full rounded-3xl sm:h-[220px]" />
                     ) : (
-                        <AiSummaries summary={data?.summary} growth={data?.growth} />
+                        <AiSummaries
+                            summary={data?.summary}
+                            growth={data?.growth}
+                            comparisonLabel={comparisonLabel}
+                        />
                     )}
                 </section>
 
@@ -349,20 +354,20 @@ export function DashboardPage() {
                                     {
                                         label: 'Revenue',
                                         value: estimatedRevenue,
-                                        deltaLabel: formatPercentDelta(combineGrowth(data?.growth.costGrowth, data?.growth.roasGrowth)),
-                                        deltaClassName: deltaClassName(combineGrowth(data?.growth.costGrowth, data?.growth.roasGrowth)),
+                                        deltaLabel: formatPercentDelta(data?.growth.revenueGrowth),
+                                        deltaClassName: deltaClassName(data?.growth.revenueGrowth),
                                     },
                                     {
                                         label: 'Profit',
                                         value: estimatedProfit,
-                                        deltaLabel: formatPercentDelta(combineGrowth(data?.growth.costGrowth, data?.growth.roiGrowth)),
-                                        deltaClassName: deltaClassName(combineGrowth(data?.growth.costGrowth, data?.growth.roiGrowth)),
+                                        deltaLabel: formatPercentDelta(data?.growth.profitGrowth),
+                                        deltaClassName: deltaClassName(data?.growth.profitGrowth),
                                     },
                                     {
                                         label: 'Cost',
                                         value: totalCost,
                                         deltaLabel: formatPercentDelta(data?.growth.costGrowth),
-                                        deltaClassName: deltaClassName(data?.growth.costGrowth),
+                                        deltaClassName: lowerIsBetterDeltaClassName(data?.growth.costGrowth),
                                     },
                                 ]}
                             />
