@@ -202,7 +202,7 @@ export function DashboardDateFilter({
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="max-h-[calc(100dvh-1rem)] w-[340px] overflow-auto rounded-xl border border-border/60 p-0 shadow-lg"
+                className="max-h-[calc(100dvh-1rem)] w-full max-w-[90vw] sm:w-[340px] overflow-auto rounded-xl border border-border/60 p-0 shadow-lg"
                 align="start"
             >
                 <div className="p-3">

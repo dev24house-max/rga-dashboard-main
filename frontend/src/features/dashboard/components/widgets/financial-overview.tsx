@@ -129,7 +129,7 @@ export function FinancialOverview({
         <Card
             ref={cardRef}
             className={cn(
-                'relative h-auto min-h-[400px] md:h-[400px] overflow-hidden rounded-3xl border border-border shadow-lg flex flex-col transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl',
+                'relative h-auto min-h-[360px] md:min-h-[400px] overflow-hidden rounded-3xl border border-border shadow-lg flex flex-col transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl',
                 className
             )}
         >
@@ -270,7 +270,7 @@ export function FinancialOverview({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 pt-4 text-center">
+                <div className="grid grid-cols-1 gap-3 pt-4 text-center sm:grid-cols-3">
                     {summary.map((item) => (
                         <div key={item.label} className="space-y-1">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">

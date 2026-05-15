@@ -269,7 +269,9 @@ export function SeoSummaryCards({ data, isLoading }: SeoSummaryCardsProps) {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             <SeoMetricTooltip metric={metric.metric} data={data}>
-                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary cursor-help transition-colors" />
+                                <div className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+                                    <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary cursor-help" />
+                                </div>
                             </SeoMetricTooltip>
                             <div className={`p-2 rounded-full ${metric.bg}`}>
                                 <metric.icon className={`h-4 w-4 ${metric.color}`} />

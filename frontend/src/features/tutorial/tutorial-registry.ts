@@ -42,15 +42,6 @@ export const tutorialRegistry: Record<string, TutorialConfig> = {
         position: 'bottom',
       },
       {
-        id: 'dashboard-date-filter',
-        path: '/dashboard',
-        target: '.date-filter',
-        title: 'Date Filter',
-        description:
-          'Change the reporting period to compare performance and focus on the right time window.',
-        position: 'bottom',
-      },
-      {
         id: 'dashboard-trend-chart',
         path: '/dashboard',
         target: '.trend-chart',
@@ -190,110 +181,6 @@ export const tutorialRegistry: Record<string, TutorialConfig> = {
         description:
           'Ask the AI assistant questions about campaign strategy, SEO, or traffic performance in one place.',
         position: 'bottom',
-      },
-      {
-        id: 'ai-insights-header',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-header"]',
-        title: 'AI Assistant Header',
-        description:
-          'This header shows the AI assistant controls and the current workflow context, including role selection.',
-        position: 'bottom',
-      },
-      {
-        id: 'ai-insights-roles',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-roles"]',
-        title: 'Mode Selection',
-        description:
-          'Switch between role-specific prompts for general, ads, or SEO guidance.',
-        position: 'bottom',
-      },
-      {
-        id: 'ai-insights-new-chat',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-new-chat"]',
-        title: 'Start a New Chat',
-        description:
-          'Start a fresh AI conversation whenever you want to reset the assistant context.',
-        position: 'right',
-      },
-      {
-        id: 'ai-insights-input',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-input"]',
-        title: 'Ask the AI',
-        description:
-          'Type your question or request here and send it to the assistant for a response.',
-        position: 'top',
-      },
-      {
-        id: 'ai-insights-summary',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-summary"]',
-        title: 'AI Detail Summary',
-        description:
-          'Open the AI detail summary to generate or review a strategic campaign summary.',
-        position: 'top',
-      },
-      {
-        id: 'ai-insights-tools',
-        path: '/ai-insights',
-        target: '[data-tutorial="ai-insights-tools"]',
-        title: 'Marketing Calculators',
-        description:
-          'Open calculators for conversion rate, ROI, CPL, CPA, and profit estimates.',
-        position: 'top',
-      },
-    ],
-  },
-  '/settings': {
-    storageKey: 'settings_tutorial_completed',
-    steps: [
-      {
-        id: 'settings-overview',
-        path: '/settings',
-        target: '[data-tutorial="settings-header"]',
-        title: 'Settings Overview',
-        description:
-          'Configure workspace preferences, general appearance options, and alert settings from this page.',
-        position: 'bottom',
-      },
-      {
-        id: 'settings-tabs',
-        path: '/settings',
-        target: '[data-tutorial="settings-tabs"]',
-        title: 'Settings Tabs',
-        description:
-          'Switch between the General tab and Alert Rules tab to manage different types of settings.',
-        position: 'bottom',
-      },
-      {
-        id: 'settings-appearance',
-        path: '/settings',
-        target: '[data-tutorial="settings-appearance"]',
-        title: 'Appearance Settings',
-        description:
-          'Preview dark mode and compact view options; these selectors are shown in the current UI but are not active yet.',
-        position: 'top',
-      },
-      {
-        id: 'settings-regional',
-        path: '/settings',
-        target: '[data-tutorial="settings-regional"]',
-        title: 'Regional Settings',
-        description:
-          'View language, timezone, currency, and date-format options. These controls are displayed as placeholders in the current build.',
-        position: 'top',
-      },
-      {
-        id: 'settings-notifications',
-        path: '/settings',
-        target: '[data-tutorial="settings-notifications"]',
-        title: 'Notification Preferences',
-        description:
-          'See the notification settings available for in-app alerts, email, and LINE. Email and LINE are currently shown as preview states.',
-        position: 'top',
       },
     ],
   },

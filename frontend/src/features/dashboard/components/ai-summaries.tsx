@@ -95,7 +95,7 @@ export function AiSummaries({ summary, growth }: AiSummariesProps) {
             </div>
 
             {isLoading && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {[...Array(4)].map((_, i) => (
                         <div key={i} className="rounded-xl p-3 border border-border bg-card shadow-sm animate-pulse">
                             <div className="h-4 bg-muted rounded w-3/4 mb-2" />
@@ -119,7 +119,7 @@ export function AiSummaries({ summary, growth }: AiSummariesProps) {
             )}
 
             {!isLoading && displayedItems.length > 0 && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {displayedItems.map((item) => (
                         <div
                             key={item.key}

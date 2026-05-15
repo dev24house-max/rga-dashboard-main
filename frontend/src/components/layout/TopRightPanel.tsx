@@ -34,8 +34,8 @@ export function TopRightPanel() {
   };
 
   return (
-    <div className="fixed top-4 right-6 z-50 flex items-center gap-3">
-      {pagePath && (
+<div className="fixed top-4 right-4 z-50 flex items-center gap-3 sm:gap-3">
+      {pagePath && (  
         <div className="group relative">
           <button
             type="button"

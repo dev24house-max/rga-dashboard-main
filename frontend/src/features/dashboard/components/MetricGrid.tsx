@@ -24,8 +24,10 @@ interface MetricGridProps {
 
 export function MetricGrid({ metrics, isLoading, columns = 4 }: MetricGridProps) {
     if (isLoading) {
+        const lgGridClass = columns === 1 ? 'lg:grid-cols-1' : columns === 2 ? 'lg:grid-cols-2' : columns === 3 ? 'lg:grid-cols-3' : columns === 4 ? 'lg:grid-cols-4' : columns === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
+
         return (
-            <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-${columns}`}>
+            <div className={`grid gap-4 md:grid-cols-2 ${lgGridClass}`}>
                 {Array.from({ length: columns }).map((_, i) => (
                     <Card key={i} className="border-slate-200 shadow-sm">
                         <CardContent className="p-4">
@@ -44,8 +46,10 @@ export function MetricGrid({ metrics, isLoading, columns = 4 }: MetricGridProps)
         );
     }
 
+    const lgGridClass = columns === 1 ? 'lg:grid-cols-1' : columns === 2 ? 'lg:grid-cols-2' : columns === 3 ? 'lg:grid-cols-3' : columns === 4 ? 'lg:grid-cols-4' : columns === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
+
     return (
-        <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-${columns}`}>
+        <div className={`grid gap-4 md:grid-cols-2 ${lgGridClass}`}>
             {metrics.map((metric, index) => (
                 <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
                     <CardContent className="p-4">

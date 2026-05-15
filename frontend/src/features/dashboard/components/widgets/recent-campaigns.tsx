@@ -110,7 +110,7 @@ export function RecentCampaigns({
     const hasData = campaigns && campaigns.length > 0;
 
     return (
-        <Card className={`h-[400px] flex flex-col ${className ?? ''}`}>
+        <Card className={`min-h-[360px] sm:h-[400px] flex flex-col ${className ?? ''}`}>
             <CardHeader>
                 <div className="flex items-center gap-2">
                     <CardTitle className="text-base font-semibold">
@@ -147,7 +147,7 @@ export function RecentCampaigns({
                                 return (
                                     <div
                                         key={campaign.id}
-                                        className="flex w-full h-16 items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm"
+                                        className="flex w-full min-h-[72px] flex-col gap-3 rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm sm:flex-row sm:items-center"
                                     >
                                         {/* Left: Platform Icon */}
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted border border-border shadow-sm">
@@ -167,10 +167,10 @@ export function RecentCampaigns({
 
                                         {/* Center-Left: Campaign Info */}
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium leading-tight">
+                                            <p className="text-sm font-medium leading-tight wrap-break-word">
                                                 {campaign.name}
                                             </p>
-                                            <p className="text-xs text-muted-foreground leading-tight">
+                                            <p className="text-xs text-muted-foreground leading-tight wrap-break-word">
                                                 {platformName}
                                             </p>
                                         </div>
@@ -184,7 +184,7 @@ export function RecentCampaigns({
                                         </Badge>
 
                                         {/* Right: Spending Info */}
-                                        <div className="text-right shrink-0 w-16">
+                                        <div className="text-right shrink-0 min-w-20 sm:w-28">
                                             <p className="text-sm font-medium leading-tight">
                                                 {formatCurrency(campaign.spending)}
                                             </p>

@@ -18,22 +18,22 @@ interface ChannelRowProps {
 
 function ChannelRow({ name, isConnected, icon, metricLabel, metricValue, color }: ChannelRowProps) {
     return (
-        <div className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
-            <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs ${color}`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-3 border-b border-slate-50 last:border-0">
+            <div className="flex items-start gap-3 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm ${color}`}>
                     {icon}
                 </div>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-slate-900">{name}</span>
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-sm sm:text-base text-slate-900 truncate">{name}</span>
                         {isConnected && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                     </div>
-                    <p className="text-[10px] text-slate-500">{isConnected ? 'Live' : 'Inactive'}</p>
+                    <p className="text-[10px] sm:text-xs text-slate-500">{isConnected ? 'Live' : 'Inactive'}</p>
                 </div>
             </div>
-            <div className="text-right">
-                <p className="text-sm font-semibold text-slate-900">{isConnected ? metricValue : '-'}</p>
-                {isConnected && <p className="text-[10px] text-slate-400">{metricLabel}</p>}
+            <div className="text-right min-w-[5rem]">
+                <p className="text-sm sm:text-base font-semibold text-slate-900">{isConnected ? metricValue : '-'}</p>
+                {isConnected && <p className="text-[10px] sm:text-xs text-slate-400">{metricLabel}</p>}
             </div>
         </div>
     );

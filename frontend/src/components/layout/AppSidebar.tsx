@@ -125,11 +125,11 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 w-[260px] z-50">
+        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 w-[260px] md:w-[280px] xl:w-[300px] z-50">
             <div className="flex flex-col h-full w-full text-slate-900 dark:text-slate-100">
 
                 {/* Header / Logo */}
-                <div className="px-6 py-6 pb-2">
+                <div className="px-5 py-5 pb-3">
                     <motion.div
                         whileHover={{ scale: 1.02 }}
                         className="flex items-center gap-3 cursor-pointer group"
@@ -146,7 +146,7 @@ export function AppSidebar() {
                 </div>
 
                 {/* Navigation Menu */}
-                <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-8 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                     {getNavGroups().map((group, groupIndex) => (
                         <div
                             key={group.title}
@@ -168,7 +168,7 @@ export function AppSidebar() {
                                             onClick={() => !item.comingSoon && setLocation(item.href)}
                                             disabled={item.comingSoon}
                                             className={cn(
-                                                "w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300",
+                                                "w-full group relative flex items-center gap-3 px-3 py-3 sm:px-4 sm:py-2.5 rounded-xl transition-all duration-300",
                                                 active
                                                     ? "text-white shadow-md shadow-orange-500/20"
                                                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100",
@@ -193,7 +193,7 @@ export function AppSidebar() {
 
                                             {/* Label */}
                                             <span className={cn(
-                                                "text-[13px] font-medium relative z-10 tracking-wide",
+                                                "text-sm font-medium relative z-10 tracking-wide",
                                                 active ? "text-white" : "text-slate-900 dark:text-slate-100"
                                             )}>
                                                 {item.label}
@@ -240,7 +240,7 @@ export function AppSidebar() {
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                                 {user?.name || 'User'}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-medium">
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate font-medium">
                                 {user?.role || 'Viewer'}
                             </p>
                         </div>
