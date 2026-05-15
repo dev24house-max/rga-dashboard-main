@@ -8,7 +8,6 @@ import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
 import { SeoMetricSummary } from '../types';
 import { OrganicKeywordsByIntent } from '../components/organic-keywords-by-intent';
 import { AdsConnectionStatus } from '../components/ads-connection-status';
-import { BingConnectionStatus } from '../components/bing-connection-status';
 import { SeoAnchorText } from '../components/seo-anchor-text';
 import { TopOrganicKeywords } from '../components/top-organic-keywords';
 import { SeoOffPageMetrics } from '../components/seo-offpage-metrics';
@@ -20,8 +19,9 @@ import {
 } from '@/components/ui/tooltip';
 import { Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSyncGsc } from '../hooks';
 import { useState } from 'react';
+import { integrationService } from '@/services/integration-service';
+import { toast } from 'sonner';
 
 // =============================================================================
 // Info Tooltip Component
@@ -50,13 +50,27 @@ function InfoTooltip({ content }: { content: string }) {
 export function SeoPage() {
     const { data, isLoading, refetch } = useSeoSummary();
     const { status: integrationStatus, isLoading: integrationLoading, error: integrationError } = useIntegrationStatus();
-    const syncMutation = useSyncGsc();
     const [isSyncing, setIsSyncing] = useState(false);
 
     const handleSync = async () => {
         setIsSyncing(true);
         try {
-            await syncMutation.mutateAsync(30);
+            // Sync GA4
+            try {
+                await integrationService.syncGoogleAnalytics();
+                toast.success('Successfully synced Google Analytics data');
+            } catch (error) {
+                toast.error('Failed to sync Google Analytics data');
+            }
+
+            // Sync GSC
+            try {
+                await integrationService.syncGoogleSearchConsole(30);
+                toast.success('Successfully synced Google Search Console data');
+            } catch (error) {
+                toast.error('Failed to sync Google Search Console data');
+            }
+
             await refetch();
         } finally {
             setIsSyncing(false);
@@ -93,6 +107,16 @@ export function SeoPage() {
                             isLoading={integrationLoading}
                             error={integrationError ?? null}
                         />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSync}
+                            disabled={isSyncing}
+                            className="flex items-center gap-2"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                            {isSyncing ? 'Syncing...' : 'Refresh Data'}
+                        </Button>
                     </div>
                     <p className="text-sm text-muted-foreground sm:text-base">
                         Track your organic search performance and website engagement.
