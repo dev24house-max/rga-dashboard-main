@@ -345,6 +345,8 @@ export class UnifiedSyncService {
             budget: data.budget,
             // Persist budget mode (e.g., TikTok's BUDGET_MODE_INFINITE) into budgetType column
             budgetType: data.budgetMode || data.budget_mode || data.budgetType || null,
+            // Persist objective where available (adapter may return objective, objective_type or similar)
+            objective: data.objective || data.objective_type || data.objectiveType || null,
             startDate: data.startDate,
             endDate: data.endDate,
             [fkField]: accountId,

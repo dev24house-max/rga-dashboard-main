@@ -4,6 +4,7 @@ import {
     DATE_RANGE_OPTIONS,
     DATE_RANGE_LABELS,
     getStartDateString,
+    getEndDateString,
     DEFAULT_DATE_RANGE,
 } from '@/types/dateRange';
 
@@ -12,6 +13,7 @@ interface DateRangeContextType {
     setDateRange: (range: DateRangeOption) => void;
     dateRangeLabel: string;
     startDateString: string;
+    endDateString: string;
     // ✅ Expose available options for components that need them
     availableOptions: readonly DateRangeOption[];
 }
@@ -26,6 +28,7 @@ export function DateRangeProvider({ children }: { children: ReactNode }) {
         setDateRange,
         dateRangeLabel: DATE_RANGE_LABELS[dateRange],
         startDateString: getStartDateString(dateRange),
+        endDateString: getEndDateString(dateRange),
         availableOptions: DATE_RANGE_OPTIONS,
     };
 

@@ -24,7 +24,7 @@ export class AiController {
     private readonly aiService: AiService,
     private readonly aiAnalyticsService: AiAnalyticsService,
     private readonly http: HttpService,
-  ) {}
+  ) { }
 
   // --- AI Webhook Proxy Methods ---
 

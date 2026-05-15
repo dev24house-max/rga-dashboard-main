@@ -47,7 +47,7 @@ import { Campaign, STATUS_STYLES, PLATFORM_LABELS } from '../types';
 // Types
 // =============================================================================
 
-export type SortableColumn = 'name' | 'status' | 'platform' | 'budget' | 'spend' | 'revenue' | 'impressions' | 'clicks' | 'createdAt' | 'ctr' | 'cpc' | 'cpm' | 'roas' | 'roi' | 'date';
+export type SortableColumn = 'name' | 'status' | 'platform' | 'objective' | 'budget' | 'spend' | 'revenue' | 'impressions' | 'clicks' | 'createdAt' | 'ctr' | 'cpc' | 'cpm' | 'roas' | 'roi' | 'date';
 
 export interface CampaignsTableProps {
     campaigns: Campaign[];
@@ -79,6 +79,7 @@ export interface CampaignsTableProps {
 
 const COLUMN_LABELS: Record<string, string> = {
     platform: 'Platform',
+    objective: 'Type',
     budget: 'Budget',
     spend: 'Spent',
     revenue: 'Revenue',
@@ -182,7 +183,7 @@ export function CampaignsTable({
     // Column Reordering Logic
     // =========================================================================
     const [reorderableColumns, setReorderableColumns] = useState<SortableColumn[]>([
-        'platform', 'budget', 'spend', 'revenue', 'impressions', 'clicks', 'ctr', 'cpc', 'cpm', 'roas', 'roi', 'date'
+        'platform', 'objective', 'budget', 'spend', 'revenue', 'impressions', 'clicks', 'ctr', 'cpc', 'cpm', 'roas', 'roi', 'date'
     ]);
     const [draggedColumn, setDraggedColumn] = useState<SortableColumn | null>(null);
 
@@ -197,7 +198,7 @@ export function CampaignsTable({
         } catch {
             // Ignore errors, use default
         }
-        return new Set(['platform', 'budget', 'spend', 'revenue', 'impressions', 'roi'] as SortableColumn[]);
+        return new Set(['platform', 'objective', 'budget', 'spend', 'revenue', 'impressions', 'roi'] as SortableColumn[]);
     });
 
     // Persist column visibility to localStorage
@@ -300,11 +301,12 @@ export function CampaignsTable({
                 );
             case 'date':
                 return (
-                    <div className="flex flex-col text-xs text-muted-foreground whitespace-nowrap">
-                        <span>{campaign.startDate ? formatDate(new Date(campaign.startDate)) : '-'}</span>
-                        <span>{campaign.endDate ? formatDate(new Date(campaign.endDate)) : '-'}</span>
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                        {campaign.startDate ? formatDate(campaign.startDate) : (campaign.createdAt ? formatDate(campaign.createdAt) : '-')}
                     </div>
                 );
+            case 'objective':
+                return <span className="capitalize text-sm">{(campaign as any).objective_type || (campaign as any).objective || '-'}</span>;
             default:
                 return null;
         }

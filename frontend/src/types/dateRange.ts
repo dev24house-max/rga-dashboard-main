@@ -35,6 +35,16 @@ export const getStartDateString = (option: DateRangeOption): string => {
     return `${days}daysAgo`;
 };
 
+// End date string for API calls: for single-day range use 'today',
+// for multi-day ranges use 'yesterday' to exclude the current day
+export const getEndDateString = (option: DateRangeOption): string => {
+    if (option === '1d') {
+        return 'today';
+    }
+
+    return 'yesterday';
+};
+
 // ✅ Get number of days from option
 export const getDaysFromOption = (option: DateRangeOption): number => {
     return parseInt(option.replace('d', ''));

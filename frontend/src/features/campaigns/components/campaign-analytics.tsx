@@ -13,11 +13,54 @@ import { useFormatter } from '@/hooks/use-formatter';
 
 interface CampaignAnalyticsProps {
     campaigns: Campaign[];
+    tenantId?: string | null;
 }
 
-export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
+export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProps) {
     const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+    const [loadingAnalyze, setLoadingAnalyze] = useState(false);
+    const [aiResult, setAiResult] = useState<any | null>(null);
     const { formatCurrency } = useFormatter();
+
+    const ai = aiResult;
+    const aiInsight = ai?.insight ?? null;
+    const aiBenchmark = ai?.benchmark ?? null;
+    const aiActions = ai?.recommended_actions ?? null;
+
+    // Helper: call analyze endpoint (n8n or backend). VITE_ANALYZE_URL can override.
+    const analyzeUrl = (import.meta as any).env?.VITE_ANALYZE_URL || '/api/ai/analyze';
+
+    const handleSelectCampaign = async (id: string) => {
+        setSelectedCampaignId(id);
+        const campaign = campaigns.find(c => c.id === id);
+        const payload = {
+            campaignId: id,
+            dateFrom: null,
+            dateTo: null,
+            tenantId: tenantId ?? (campaign as any)?.tenantId ?? null,
+            source: 'frontend'
+        };
+
+        setLoadingAnalyze(true);
+        try {
+            const res = await fetch(analyzeUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAiResult(data);
+            } else {
+                const text = await res.text();
+                console.error('Analyze failed', res.status, text);
+            }
+        } catch (err) {
+            console.error('Analyze request error', err);
+        } finally {
+            setLoadingAnalyze(false);
+        }
+    };
 
     // Initial Selection Effect
     if (!selectedCampaignId && campaigns.length > 0) {
@@ -246,7 +289,7 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                         {campaigns.slice(0, 10).map(campaign => (
                             <button
                                 key={campaign.id}
-                                onClick={() => setSelectedCampaignId(campaign.id)}
+                                onClick={() => handleSelectCampaign(campaign.id)}
                                 className={cn(
                                     "rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 border",
                                     selectedCampaignId === campaign.id
@@ -272,7 +315,12 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div>
                                     <p className="text-xs uppercase text-gray-200 font-medium tracking-wider dark:text-white">Active Channel</p>
-                                    <p className="text-lg font-semibold text-gray-900 mt-1 dark:text-white">{selectedCampaign.name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-lg font-semibold text-gray-900 mt-1 dark:text-white">{selectedCampaign.name}</p>
+                                        {loadingAnalyze && selectedCampaignId === selectedCampaign.id && (
+                                            <span className="text-sm text-gray-500 ml-2">Analyzing...</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-xs uppercase text-gray-500 font-medium tracking-wider dark:text-white">Conversion Rate</p>
@@ -323,14 +371,20 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                         )}>Insight</p>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
-                                        {selectedCampaign.name} is performing
-                                        <span className="font-semibold text-gray-900 dark:text-white"> {insights.performanceTier === 'medium' ? 'steadily' : (Math.abs(insights.diffFromAvg).toFixed(2) + '% ' + (insights.isAboveAvg ? 'higher' : 'lower'))}</span>
-                                        {insights.performanceTier === 'medium' ? ' around the average.' : ' than average.'}
-                                        {insights.performanceTier === 'high'
-                                            ? ' This campaign is performing exceptionally well driven by optimized targeting.'
-                                            : insights.performanceTier === 'medium'
-                                                ? ' Performance is stable. Look for opportunities to optimize incrementally.'
-                                                : ' Consider reviewing ad creatives or landing page relevance to improve performance.'}
+                                        {aiInsight ? (
+                                            <span>{aiInsight}</span>
+                                        ) : (
+                                            <>
+                                                {selectedCampaign.name} is performing
+                                                <span className="font-semibold text-gray-900 dark:text-white"> {insights.performanceTier === 'medium' ? 'steadily' : (Math.abs(insights.diffFromAvg).toFixed(2) + '% ' + (insights.isAboveAvg ? 'higher' : 'lower'))}</span>
+                                                {insights.performanceTier === 'medium' ? ' around the average.' : ' than average.'}
+                                                {insights.performanceTier === 'high'
+                                                    ? ' This campaign is performing exceptionally well driven by optimized targeting.'
+                                                    : insights.performanceTier === 'medium'
+                                                        ? ' Performance is stable. Look for opportunities to optimize incrementally.'
+                                                        : ' Consider reviewing ad creatives or landing page relevance to improve performance.'}
+                                            </>
+                                        )}
                                     </p>
                                 </motion.div>
 
@@ -348,13 +402,13 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-100">
                                         <div className="flex justify-between">
                                             <span>Top:</span>
-                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.bestCampaign?.name}>{insights.bestCampaign?.name}</span>
-                                            <span className="font-bold text-emerald-600">({insights.maxRate.toFixed(1)}%)</span>
+                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.bestCampaign?.name}>{aiBenchmark?.comparison_to === 'channel_avg' && aiBenchmark?.relative ? `${aiBenchmark.metric} ${aiBenchmark.relative}` : (insights.bestCampaign?.name)}</span>
+                                            <span className="font-bold text-emerald-600">({(aiBenchmark?.value ?? insights.maxRate).toFixed ? (aiBenchmark?.value ?? insights.maxRate).toFixed(1) : (insights.maxRate.toFixed(1))}%)</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Lowest:</span>
                                             <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.worstCampaign?.name}>{insights.worstCampaign?.name}</span>
-                                            <span className="font-bold text-rose-500">({insights.minRate.toFixed(1)}%)</span>
+                                            <span className="font-bold text-rose-500">({(aiBenchmark?.value ?? insights.minRate).toFixed ? (aiBenchmark?.value ?? insights.minRate).toFixed(1) : (insights.minRate.toFixed(1))}%)</span>
                                         </div>
                                         <div className="pt-1 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-300 mt-2">
                                             Keep {selectedCampaign.name} above {(insights.avgRate).toFixed(2)}% to stay competitive.
@@ -388,11 +442,19 @@ export function CampaignAnalytics({ campaigns }: CampaignAnalyticsProps) {
                                         )}>Action</p>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
-                                        {insights.performanceTier === 'high'
-                                            ? `Double down on creatives performing in ${selectedCampaign.name}. Scale budget by 10-15% to maximize ROI while maintaining efficiency.`
-                                            : insights.performanceTier === 'medium'
-                                                ? `Maintain current settings for ${selectedCampaign.name} while testing small variations in ad copy to boost conversion rate slightly.`
-                                                : `Test new offer variants to close the gap with ${insights.bestCampaign?.name}. Analyze audience segmentation for potential mismatches.`}
+                                        {aiActions && aiActions.length > 0 ? (
+                                            <ul className="list-disc pl-5 space-y-1">
+                                                {aiActions.map((a: any, idx: number) => (
+                                                    <li key={idx} className="text-sm text-gray-600 dark:text-gray-100">{a.detail || a.type || JSON.stringify(a)}</li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            insights.performanceTier === 'high'
+                                                ? `Double down on creatives performing in ${selectedCampaign.name}. Scale budget by 10-15% to maximize ROI while maintaining efficiency.`
+                                                : insights.performanceTier === 'medium'
+                                                    ? `Maintain current settings for ${selectedCampaign.name} while testing small variations in ad copy to boost conversion rate slightly.`
+                                                    : `Test new offer variants to close the gap with ${insights.bestCampaign?.name}. Analyze audience segmentation for potential mismatches.`
+                                        )}
                                     </p>
                                 </motion.div>
                             </div>

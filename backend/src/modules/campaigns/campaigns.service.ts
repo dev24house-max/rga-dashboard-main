@@ -325,10 +325,26 @@ export class CampaignsService {
       ctr: impressions > 0 ? Number(((clicks / impressions) * 100).toFixed(2)) : 0,
       cpc: clicks > 0 ? Number((spend / clicks).toFixed(2)) : 0,
       cpm: impressions > 0 ? Number(((spend / impressions) * 1000).toFixed(2)) : 0,
+      // Ensure frontend gets a simple ISO date (YYYY-MM-DD) for startDate
+      // Prefer stored `startDate` (from integrations) if present, otherwise fall back to `createdAt`.
+      startDate: (function () {
+        const src = c.startDate ?? c.start_date ?? c.createdAt ?? null;
+        if (!src) return null;
+        try {
+          const d = new Date(src);
+          if (isNaN(d.getTime())) return null;
+          return d.toISOString().split('T')[0];
+        } catch {
+          return null;
+        }
+      })(),
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       // Period-specific data for reference
       periodSpent: Number(periodSpend),
+      // Expose objective and budgetType to frontend
+      objective: c.objective || c.objective_type || null,
+      budgetType: c.budgetType || null,
     };
   }
 }

@@ -48,27 +48,37 @@ const GLOBAL_QUERY_LIMIT = 1000;
 
 function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDate: string } {
     const today = new Date();
-    const endDate = today.toISOString().split('T')[0];
+    // For multi-day presets we want ranges that exclude today (end = yesterday).
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const endDateStr = yesterday.toISOString().split('T')[0];
 
     switch (period) {
         case '1d': {
-            return { startDate: endDate, endDate };
+            // Single-day 'Today' should still reference today
+            const todayStr = today.toISOString().split('T')[0];
+            return { startDate: todayStr, endDate: todayStr };
         }
         case '7d': {
-            const start = new Date(today);
+            const start = new Date(yesterday);
             start.setDate(start.getDate() - 6);
-            return { startDate: start.toISOString().split('T')[0], endDate };
+            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
         }
         case '90d': {
-            const start = new Date(today);
+            const start = new Date(yesterday);
             start.setDate(start.getDate() - 89);
-            return { startDate: start.toISOString().split('T')[0], endDate };
+            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
         }
         case 'this_month': {
             const start = new Date(today.getFullYear(), today.getMonth(), 1);
-            return { startDate: start.toISOString().split('T')[0], endDate };
+            // For 'this_month' use yesterday as end so today is excluded
+            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
         }
-        case '30d':
+        case '30d': {
+            const start = new Date(yesterday);
+            start.setDate(start.getDate() - 29);
+            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
+        }
         case 'last_month': {
             const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
             const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -78,9 +88,12 @@ function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDat
             };
         }
         case 'custom':
-            return { startDate: endDate, endDate };
+            // custom range provided by user should be used as-is
+            const todayStr = today.toISOString().split('T')[0];
+            return { startDate: todayStr, endDate: todayStr };
         default:
-            return { startDate: endDate, endDate };
+            const defaultStr = yesterday.toISOString().split('T')[0];
+            return { startDate: defaultStr, endDate: defaultStr };
     }
 }
 
