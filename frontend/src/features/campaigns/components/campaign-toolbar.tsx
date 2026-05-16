@@ -1,19 +1,12 @@
 // src/features/campaigns/components/campaign-toolbar.tsx
 // =============================================================================
-// Campaign Toolbar - Search and Filter Controls
+// Campaign Toolbar - Search and Filter Controls (Responsive Redesign)
 // =============================================================================
 
 import { useState, useEffect } from 'react';
-import { Search, X, ListFilter } from 'lucide-react';
+import { Search, X, ListFilter, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -21,8 +14,16 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
     DropdownMenuLabel,
-    DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+    SheetFooter,
+} from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
 import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 
@@ -31,54 +32,35 @@ import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 // =============================================================================
 
 export interface CampaignToolbarProps {
-    /** Current search query */
     search: string;
-    /** Callback when search changes */
     onSearchChange: (value: string) => void;
-    /** Current status filter */
     status: Set<string>;
-    /** Callback when status filter changes */
     onStatusChange: (value: Set<string>) => void;
-    /** Current platform filter */
     platform: Set<string>;
-    /** Callback when platform filter changes */
     onPlatformChange: (value: Set<string>) => void;
-    /** Optional: Show loading state */
-    /** Optional: Show loading state */
     isLoading?: boolean;
-    /** Current period filter */
     period: PeriodEnum;
-    /** Callback when period filter changes */
     onPeriodChange: (value: PeriodEnum) => void;
-    /** Custom range for 'custom' period */
     customRange?: { from: Date; to: Date };
-    /** Callback when custom range changes */
     onCustomRangeChange?: (value: { from: Date; to: Date }) => void;
-    /** Week start for this_week/last_week periods */
     weekStartsOn: WeekStartsOn;
-    /** Callback when week start changes */
     onWeekStartsOnChange: (value: WeekStartsOn) => void;
-    /** Toggle to show only selected items */
     showSelectedOnly: boolean;
-    /** Callback when show selected only toggle changes */
     onShowSelectedOnlyChange: (value: boolean) => void;
-    /** Number of selected campaigns */
     selectedCount: number;
 }
 
 // =============================================================================
-// Status Filter Options
+// Options
 // =============================================================================
 
 const STATUS_OPTIONS = [
-    { value: 'ALL', label: 'All Statuses' },
     { value: 'ACTIVE', label: 'Active' },
     { value: 'PAUSED', label: 'Paused' },
     { value: 'COMPLETED', label: 'Completed' },
 ] as const;
 
 const PLATFORM_OPTIONS = [
-    { value: 'ALL', label: 'All Platforms' },
     { value: 'FACEBOOK', label: 'Facebook' },
     { value: 'GOOGLE_ADS', label: 'Google Ads' },
     { value: 'TIKTOK', label: 'TikTok' },
@@ -86,7 +68,275 @@ const PLATFORM_OPTIONS = [
 ] as const;
 
 // =============================================================================
-// Component
+// Helpers
+// =============================================================================
+
+function toggleSetItem(
+    currentSet: Set<string>,
+    onChange: (val: Set<string>) => void,
+    value: string
+) {
+    const next = new Set(currentSet);
+    if (next.has('ALL')) next.delete('ALL');
+    if (next.has(value)) {
+        next.delete(value);
+    } else {
+        next.add(value);
+    }
+    onChange(next.size === 0 ? new Set(['ALL']) : next);
+}
+
+// =============================================================================
+// Active filter count helper
+// =============================================================================
+
+function getActiveFilterCount(status: Set<string>, platform: Set<string>) {
+    let count = 0;
+    if (!status.has('ALL')) count += status.size;
+    if (!platform.has('ALL')) count += platform.size;
+    return count;
+}
+
+// =============================================================================
+// Desktop Filter Dropdowns (md+)
+// =============================================================================
+
+function StatusDropdown({
+    status,
+    onStatusChange,
+}: {
+    status: Set<string>;
+    onStatusChange: (v: Set<string>) => void;
+}) {
+    const active = !status.has('ALL');
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 border-dashed rounded-lg px-3 font-normal gap-1.5 transition-all ${
+                        active
+                            ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-blue-500' : 'opacity-40'}`} />
+                    Status
+                    {active && (
+                        <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-blue-500 text-white rounded-full shrink-0">
+                            {status.size}
+                        </Badge>
+                    )}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100">
+                <DropdownMenuLabel className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 pb-1">
+                    Filter by Status
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="-mx-1.5 mb-1" />
+                <DropdownMenuCheckboxItem
+                    checked={status.has('ALL')}
+                    onCheckedChange={() => onStatusChange(new Set(['ALL']))}
+                    className="rounded-lg cursor-pointer text-sm"
+                >
+                    All Statuses
+                </DropdownMenuCheckboxItem>
+                {STATUS_OPTIONS.map((opt) => (
+                    <DropdownMenuCheckboxItem
+                        key={opt.value}
+                        checked={status.has(opt.value)}
+                        onCheckedChange={() => toggleSetItem(status, onStatusChange, opt.value)}
+                        className="rounded-lg cursor-pointer text-sm"
+                    >
+                        {opt.label}
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function PlatformDropdown({
+    platform,
+    onPlatformChange,
+}: {
+    platform: Set<string>;
+    onPlatformChange: (v: Set<string>) => void;
+}) {
+    const active = !platform.has('ALL');
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 border-dashed rounded-lg px-3 font-normal gap-1.5 transition-all ${
+                        active
+                            ? 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-indigo-500' : 'opacity-40'}`} />
+                    Platform
+                    {active && (
+                        <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-indigo-500 text-white rounded-full shrink-0">
+                            {platform.size}
+                        </Badge>
+                    )}
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100">
+                <DropdownMenuLabel className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 pb-1">
+                    Filter by Platform
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="-mx-1.5 mb-1" />
+                <DropdownMenuCheckboxItem
+                    checked={platform.has('ALL')}
+                    onCheckedChange={() => onPlatformChange(new Set(['ALL']))}
+                    className="rounded-lg cursor-pointer text-sm"
+                >
+                    All Platforms
+                </DropdownMenuCheckboxItem>
+                {PLATFORM_OPTIONS.map((opt) => (
+                    <DropdownMenuCheckboxItem
+                        key={opt.value}
+                        checked={platform.has(opt.value)}
+                        onCheckedChange={() => toggleSetItem(platform, onPlatformChange, opt.value)}
+                        className="rounded-lg cursor-pointer text-sm"
+                    >
+                        {opt.label}
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+// =============================================================================
+// Mobile Filter Sheet (< md)
+// =============================================================================
+
+function MobileFilterSheet({
+    status,
+    onStatusChange,
+    platform,
+    onPlatformChange,
+    activeCount,
+}: {
+    status: Set<string>;
+    onStatusChange: (v: Set<string>) => void;
+    platform: Set<string>;
+    onPlatformChange: (v: Set<string>) => void;
+    activeCount: number;
+}) {
+    return (
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 rounded-lg px-3 gap-1.5 font-normal flex-shrink-0 transition-all ${
+                        activeCount > 0
+                            ? 'border-blue-300 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 text-gray-600'
+                    }`}
+                >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Filters
+                    {activeCount > 0 && (
+                        <Badge className="h-4 px-1 text-[10px] bg-blue-500 text-white rounded-full">
+                            {activeCount}
+                        </Badge>
+                    )}
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8">
+                <SheetHeader className="pb-4">
+                    <SheetTitle className="text-left text-base font-semibold">Filters</SheetTitle>
+                </SheetHeader>
+
+                {/* Status Section */}
+                <div className="mb-5">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Status</p>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => onStatusChange(new Set(['ALL']))}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                status.has('ALL')
+                                    ? 'bg-gray-900 text-white border-gray-900'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
+                            All
+                        </button>
+                        {STATUS_OPTIONS.map((opt) => (
+                            <button
+                                key={opt.value}
+                                onClick={() => toggleSetItem(status, onStatusChange, opt.value)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                    status.has(opt.value)
+                                        ? 'bg-blue-500 text-white border-blue-500'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Platform Section */}
+                <div className="mb-6">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Platform</p>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => onPlatformChange(new Set(['ALL']))}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                platform.has('ALL')
+                                    ? 'bg-gray-900 text-white border-gray-900'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
+                            All
+                        </button>
+                        {PLATFORM_OPTIONS.map((opt) => (
+                            <button
+                                key={opt.value}
+                                onClick={() => toggleSetItem(platform, onPlatformChange, opt.value)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                    platform.has(opt.value)
+                                        ? 'bg-indigo-500 text-white border-indigo-500'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <SheetFooter>
+                    <Button
+                        variant="outline"
+                        className="flex-1 rounded-xl h-11"
+                        onClick={() => {
+                            onStatusChange(new Set(['ALL']));
+                            onPlatformChange(new Set(['ALL']));
+                        }}
+                    >
+                        Clear All
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
+// =============================================================================
+// Main Component
 // =============================================================================
 
 export function CampaignToolbar({
@@ -107,59 +357,16 @@ export function CampaignToolbar({
     onShowSelectedOnlyChange,
     selectedCount,
 }: CampaignToolbarProps) {
-
-
-    const handleToggle = (
-        currentSet: Set<string>,
-        onChange: (val: Set<string>) => void,
-        value: string
-    ) => {
-        const next = new Set(currentSet);
-        if (value === 'ALL') {
-            onChange(new Set(['ALL']));
-            return;
-        }
-
-        if (next.has('ALL')) {
-            next.delete('ALL');
-        }
-
-        if (next.has(value)) {
-            next.delete(value);
-        } else {
-            next.add(value);
-        }
-
-        if (next.size === 0) {
-            onChange(new Set(['ALL']));
-        } else {
-            onChange(next);
-        }
-    };
-
-    const handleSingleSelectPlatform = (value: string) => {
-        if (value === 'ALL') {
-            onPlatformChange(new Set(['ALL']));
-            return;
-        }
-        onPlatformChange(new Set([value]));
-    };
-
     const [query, setQuery] = useState(search);
 
-    // Sync local state with prop when prop changes (e.g. from URL or other external source)
     useEffect(() => {
         setQuery(search);
     }, [search]);
 
-    const handleSearch = () => {
-        onSearchChange(query);
-    };
+    const handleSearch = () => onSearchChange(query);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
+        if (e.key === 'Enter') handleSearch();
     };
 
     const handleClearSearch = () => {
@@ -167,12 +374,17 @@ export function CampaignToolbar({
         onSearchChange('');
     };
 
-    return (
-        <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+    const activeFilterCount = getActiveFilterCount(status, platform);
 
-                {/* Search Input */}
-                <div data-tutorial="campaigns-search" className="relative w-full md:max-w-sm group">
+    return (
+        <div className="p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-3">
+
+            {/* ── Row 1: Search + Search Button ── */}
+            <div className="flex items-center gap-2">
+                <div
+                    data-tutorial="campaigns-search"
+                    className="relative flex-1 min-w-0 group"
+                >
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
                     </div>
@@ -182,7 +394,7 @@ export function CampaignToolbar({
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="pl-10 pr-10 h-11 bg-gray-50/50 border-transparent hover:bg-gray-50 focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 rounded-xl transition-all duration-200"
+                        className="pl-9 pr-9 h-9 w-full bg-gray-50/50 border-transparent hover:bg-gray-50 focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 rounded-xl transition-all duration-200 text-sm"
                         disabled={isLoading}
                     />
                     {query && (
@@ -190,113 +402,104 @@ export function CampaignToolbar({
                             onClick={handleClearSearch}
                             className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                            <X className="h-4 w-4" />
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     )}
                 </div>
 
-                {/* Filters & Actions */}
-                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <Button
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                    size="sm"
+                    className="h-9 rounded-xl px-4 flex-shrink-0 bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-primary/35 hover:bg-primary/90 transition-all active:scale-95 text-sm"
+                >
+                    Search
+                </Button>
+            </div>
 
-                    {/* Status + Platform Filters */}
-                    <div data-tutorial="campaigns-filters" className="flex flex-wrap items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={`h-10 border-dashed rounded-lg px-3 lg:px-4 font-normal ${status.has('ALL')
-                                            ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                            : 'border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-50'
-                                        }`}
-                                >
-                                <ListFilter className={`mr-2 h-4 w-4 ${status.has('ALL') ? 'opacity-50' : 'text-blue-600'}`} />
-                                <span className="truncate max-w-[100px] lg:max-w-none">
-                                    {status.has('ALL') ? 'Status' : `${status.size} Selected`}
-                                </span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[200px] p-2 rounded-xl shadow-xl border-gray-100">
-                            <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase px-2 mb-1">Filter by Status</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="-mx-2 mb-1" />
-                            <DropdownMenuCheckboxItem
-                                checked={status.has('ALL')}
-                                onCheckedChange={() => onStatusChange(new Set(['ALL']))}
-                                className="rounded-lg cursor-pointer"
-                            >
-                                All Statuses
-                            </DropdownMenuCheckboxItem>
-                            {STATUS_OPTIONS.slice(1).map((option) => (
-                                <DropdownMenuCheckboxItem
-                                    key={option.value}
-                                    checked={status.has(option.value)}
-                                    onCheckedChange={() => handleToggle(status, onStatusChange, option.value)}
-                                    className="rounded-lg cursor-pointer"
-                                >
-                                    {option.label}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+            {/* ── Row 2: Filters + Date + Selected ── */}
+            <div
+                data-tutorial="campaigns-filters"
+                className="flex flex-wrap items-center gap-2"
+            >
+                {/* Mobile: single Filters sheet button */}
+                <div className="md:hidden">
+                    <MobileFilterSheet
+                        status={status}
+                        onStatusChange={onStatusChange}
+                        platform={platform}
+                        onPlatformChange={onPlatformChange}
+                        activeCount={activeFilterCount}
+                    />
+                </div>
 
-                    {/* Platform Filter */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className={`h-10 border-dashed rounded-lg px-3 lg:px-4 font-normal ${platform.has('ALL')
-                                        ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                        : 'border-indigo-200 bg-indigo-50/50 text-indigo-700 hover:bg-indigo-50'
-                                    }`}
+                {/* Desktop: inline filter dropdowns */}
+                <div className="hidden md:flex items-center gap-2">
+                    <StatusDropdown status={status} onStatusChange={onStatusChange} />
+                    <PlatformDropdown platform={platform} onPlatformChange={onPlatformChange} />
+                    <div className="h-5 w-px bg-gray-200 mx-0.5" />
+                </div>
+
+                {/* Selected Only toggle */}
+                <Button
+                    data-tutorial="campaigns-selection-toggle"
+                    variant={showSelectedOnly ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => onShowSelectedOnlyChange(!showSelectedOnly)}
+                    disabled={selectedCount === 0}
+                    className={`h-9 rounded-lg px-3 font-normal text-sm transition-all flex-shrink-0 ${
+                        showSelectedOnly
+                            ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                    Selected
+                    {selectedCount > 0 && (
+                        <Badge className="ml-1.5 h-4 px-1.5 text-[10px] rounded-full bg-current/20">
+                            {selectedCount}
+                        </Badge>
+                    )}
+                </Button>
+
+                {/* Active filter chips — show what's currently selected */}
+                {(!status.has('ALL') || !platform.has('ALL')) && (
+                    <div className="flex items-center flex-wrap gap-1.5">
+                        {/* Status chips */}
+                        {!status.has('ALL') && STATUS_OPTIONS.filter((o) => status.has(o.value)).map((opt) => (
+                            <span
+                                key={opt.value}
+                                className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700 border border-blue-200"
                             >
-                                <ListFilter className={`mr-2 h-4 w-4 ${platform.has('ALL') ? 'opacity-50' : 'text-indigo-600'}`} />
-                                <span className="truncate max-w-[100px] lg:max-w-none">
-                                    {platform.has('ALL') ? 'Platform' : `${platform.size} Selected`}
-                                </span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[200px] p-2 rounded-xl shadow-xl border-gray-100">
-                            <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase px-2 mb-1">Filter by Platform</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="-mx-2 mb-1" />
-                            <DropdownMenuCheckboxItem
-                                checked={platform.has('ALL')}
-                                onCheckedChange={() => handleSingleSelectPlatform('ALL')}
-                                className="rounded-lg cursor-pointer"
-                            >
-                                All Platforms
-                            </DropdownMenuCheckboxItem>
-                            {PLATFORM_OPTIONS.slice(1).map((option) => (
-                                <DropdownMenuCheckboxItem
-                                    key={option.value}
-                                    checked={platform.has(option.value)}
-                                    onCheckedChange={() => handleSingleSelectPlatform(option.value)}
-                                    className="rounded-lg cursor-pointer"
+                                {opt.label}
+                                <button
+                                    onClick={() => toggleSetItem(status, onStatusChange, opt.value)}
+                                    className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-blue-200 transition-colors"
                                 >
-                                    {option.label}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                    <X className="h-2.5 w-2.5" />
+                                </button>
+                            </span>
+                        ))}
+                        {/* Platform chips */}
+                        {!platform.has('ALL') && PLATFORM_OPTIONS.filter((o) => platform.has(o.value)).map((opt) => (
+                            <span
+                                key={opt.value}
+                                className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-indigo-100 text-indigo-700 border border-indigo-200"
+                            >
+                                {opt.label}
+                                <button
+                                    onClick={() => toggleSetItem(platform, onPlatformChange, opt.value)}
+                                    className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-indigo-200 transition-colors"
+                                >
+                                    <X className="h-2.5 w-2.5" />
+                                </button>
+                            </span>
+                        ))}
                     </div>
+                )}
 
-                    {/* Divider */}
-                    <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block" />
-
-                    {/* Only Select Filter */}
-                    <Button
-                        data-tutorial="campaigns-selection-toggle"
-                        variant={showSelectedOnly ? 'secondary' : 'ghost'}
-                        onClick={() => onShowSelectedOnlyChange(!showSelectedOnly)}
-                        disabled={selectedCount === 0}
-                        className={`h-10 rounded-lg px-3 font-normal transition-all ${showSelectedOnly
-                                ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-md transform scale-105'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            } ${selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        Selected Only {selectedCount > 0 && `(${selectedCount})`}
-                    </Button>
-
-                    {/* Date Filter - Wrapped for consistent height */}
-                    <div className="h-10 [&>button]:h-10 [&>button]:rounded-lg [&>button]:border-gray-200 [&>button]:shadow-sm">
+                {/* Date Filter — auto-pushed to right */}
+                <div className="ml-auto flex-shrink-0">
+                    <div className="h-9 [&>button]:h-9 [&>button]:rounded-lg [&>button]:border-gray-200 [&>button]:text-sm">
                         <DashboardDateFilter
                             value={period}
                             onValueChange={onPeriodChange}
@@ -306,15 +509,6 @@ export function CampaignToolbar({
                             onWeekStartsOnChange={onWeekStartsOnChange}
                         />
                     </div>
-
-                    {/* Search Button (Mobile/Desktop consistent) */}
-                    <Button
-                        onClick={handleSearch}
-                        disabled={isLoading}
-                        className="h-10 rounded-lg px-6 bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all active:scale-95 ml-auto md:ml-0"
-                    >
-                        Search
-                    </Button>
                 </div>
             </div>
         </div>

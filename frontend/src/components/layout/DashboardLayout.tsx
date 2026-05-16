@@ -22,13 +22,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content Area */}
       <SidebarInset>
         {/* Mobile Header with Trigger */}
-        <header className="sticky top-0 z-50 flex h-14 items-center gap-4 border-b border-slate-200/70 bg-background/95 backdrop-blur-sm px-4 shadow-sm xl:hidden">
+        <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-slate-200/70 bg-background/95 backdrop-blur-sm px-4 sm:px-5 shadow-sm xl:hidden">
           <SidebarTrigger />
         </header>
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-6">
+          <div className="p-4 sm:p-5 lg:p-6">
             {children}
           </div>
         </main>

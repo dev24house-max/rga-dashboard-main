@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DEFAULT_WEEK_STARTS_ON } from '@/lib/date-range-utils';
+import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -25,14 +27,12 @@ import { CampaignAnalytics } from '../components/campaign-analytics';
 import { CampaignVisualization } from '../components/campaign-visualization';
 
 import { BulkActionBar } from '../components/bulk-action-bar';
-import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFileDownload } from '@/hooks/use-file-download';
 import { useCampaigns } from '../hooks/use-campaigns';
 import { useDeleteCampaign, useToggleCampaignStatus } from '../hooks/use-campaign-mutations';
 import { exportService } from '@/features/dashboard/services/export-service';
 import type { Campaign } from '../types';
-import type { PeriodEnum } from '@/features/dashboard/schemas';
 
 // =============================================================================
 // Constants
@@ -161,6 +161,7 @@ export function CampaignsPage() {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<Set<string>>(new Set(['ALL']));
     const [platform, setPlatform] = useState<Set<string>>(new Set(['ALL']));
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -528,7 +529,7 @@ export function CampaignsPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-8 relative z-10">
                 {/* Page Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div data-tutorial="campaigns-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
                         <p className="text-muted-foreground">
@@ -549,7 +550,7 @@ export function CampaignsPage() {
                             {/* We manually override the internal style of Progress to create an infinite loading effect 
                          by using a value of null (which renders 0%) but adding a custom animation class if we could.
                          Since we can't easily modify Progress internals, we will use a self-updating value. */}
-                            <IndeterminateProgress className="h-2.5 w-full bg-orange-500/20 [&>[data-slot=progress-indicator]]:bg-gradient-to-r [&>[data-slot=progress-indicator]]:from-orange-500 [&>[data-slot=progress-indicator]]:to-amber-500" />
+                            <IndeterminateProgress className="h-2.5 w-full bg-orange-500/20 *:data-[slot=progress-indicator]:bg-linear-to-r *:data-[slot=progress-indicator]:from-orange-500 *:data-[slot=progress-indicator]:to-amber-500" />
                             <div className="flex justify-between items-center mt-1">
                                 <span className="text-[10px] text-muted-foreground">Updating data...</span>
                             </div>
@@ -558,25 +559,26 @@ export function CampaignsPage() {
                 </div>
 
                 {/* Search and Filter Toolbar */}
-                <CampaignToolbar
-                    search={search}
-                    onSearchChange={setSearch}
-                    status={status}
-                    onStatusChange={setStatus}
-                    platform={platform}
-                    onPlatformChange={setPlatform}
-                    isLoading={isFetching}
-                    period={period}
-                    onPeriodChange={setPeriod}
-                    customRange={customRange ?? undefined}
-                    onCustomRangeChange={setCustomRange}
-                    showSelectedOnly={showSelectedOnly}
-                    onShowSelectedOnlyChange={setShowSelectedOnly}
-                    selectedCount={selectedIds.size}
-                />
-
-
-
+                <div data-tutorial="campaigns-toolbar">
+                    <CampaignToolbar
+                        search={search}
+                        onSearchChange={setSearch}
+                        status={status}
+                        onStatusChange={setStatus}
+                        platform={platform}
+                        onPlatformChange={setPlatform}
+                        isLoading={isFetching}
+                        period={period}
+                        onPeriodChange={setPeriod}
+                        customRange={customRange ?? undefined}
+                        onCustomRangeChange={setCustomRange}
+                        weekStartsOn={weekStartsOn}
+                        onWeekStartsOnChange={setWeekStartsOn}
+                        showSelectedOnly={showSelectedOnly}
+                        onShowSelectedOnlyChange={setShowSelectedOnly}
+                        selectedCount={selectedIds.size}
+                    />
+                </div>
 
 
                 {/* Bulk Action Bar (shown when items selected) */}
@@ -591,41 +593,47 @@ export function CampaignsPage() {
                 {/* Pagination Header (Removed - Moved to Table) */}
 
                 {/* Campaigns Table with Sorting and Selection */}
-                <CampaignsTable
-                    campaigns={displayedCampaigns}
-                    isLoading={isFetching}
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    selectedIds={selectedIds}
-                    onToggleSelect={handleToggleSelect}
-                    onToggleAll={handleToggleAll}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteClick}
+                <div data-tutorial="campaigns-table">
+                    <CampaignsTable
+                        campaigns={displayedCampaigns}
+                        isLoading={isFetching}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        selectedIds={selectedIds}
+                        onToggleSelect={handleToggleSelect}
+                        onToggleAll={handleToggleAll}
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteClick}
 
-                    page={showSelectedOnly ? 1 : page}
-                    totalPages={totalPages}
-                    totalItems={totalItems}
-                    pageSize={DEFAULT_PAGE_SIZE}
-                    onPageChange={handlePageChange}
-                />
-
-
+                        page={showSelectedOnly ? 1 : page}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        pageSize={DEFAULT_PAGE_SIZE}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
 
                 {/* Campaign Summary Dashboard (Middle Section) */}
-                <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
+                <div data-tutorial="campaigns-summary">
+                    <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
+                </div>
 
                 {/* Visualization Panel (Bottom) */}
                 {!isLoading && campaignsResponse?.summary && (
                     <>
-                        <CampaignVisualization
-                            campaigns={displayedGlobalCampaigns}
-                            summary={campaignsResponse.summary}
-                            onDownload={handleExport}
-                        />
+                        <div data-tutorial="campaigns-visualization">
+                            <CampaignVisualization
+                                campaigns={displayedGlobalCampaigns}
+                                summary={campaignsResponse.summary}
+                                onDownload={handleExport}
+                            />
+                        </div>
 
                         {/* Campaign Analytics (Conversion Rate) */}
-                        <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
+                        <div data-tutorial="campaigns-analytics">
+                            <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
+                        </div>
                     </>
                 )}
             </div>

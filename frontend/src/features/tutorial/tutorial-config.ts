@@ -36,15 +36,6 @@ export const tutorialSteps: TutorialRouteStep[] = [
     position: 'bottom',
   },
   {
-    id: 'dashboard-date-filter',
-    path: '/dashboard',
-    target: '.date-filter',
-    title: 'Date Filter',
-    description:
-      'Change the reporting period to compare performance and focus on the right time window.',
-    position: 'bottom',
-  },
-  {
     id: 'dashboard-trend-chart',
     path: '/dashboard',
     target: '.trend-chart',
@@ -216,60 +207,6 @@ export const tutorialSteps: TutorialRouteStep[] = [
     position: 'bottom',
   },
   {
-    id: 'ai-insights-header',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-header"]',
-    title: 'AI Assistant Header',
-    description:
-      'This area introduces the AI Assistant experience and gives you quick context for the page.',
-    position: 'bottom',
-  },
-  {
-    id: 'ai-insights-roles',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-roles"]',
-    title: 'Mode Selection',
-    description:
-      'Choose between General, Ads, and SEO modes to tailor AI responses for the right use case.',
-    position: 'bottom',
-  },
-  {
-    id: 'ai-insights-new-chat',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-new-chat"]',
-    title: 'Start a New Chat',
-    description:
-      'Start a fresh AI conversation whenever you want to ask about a new topic or reset the context.',
-    position: 'right',
-  },
-  {
-    id: 'ai-insights-input',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-input"]',
-    title: 'Ask the AI',
-    description:
-      'Type your question here and hit send to get an instant response from the assistant.',
-    position: 'top',
-  },
-  {
-    id: 'ai-insights-summary',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-summary"]',
-    title: 'AI Detail Summary',
-    description:
-      'Generate a strategic summary that highlights your campaign performance and recommendations.',
-    position: 'top',
-  },
-  {
-    id: 'ai-insights-tools',
-    path: '/ai-insights',
-    target: '[data-tutorial="ai-insights-tools"]',
-    title: 'Marketing Tools',
-    description:
-      'Open quick tools for ad and SEO planning to support your AI workflow.',
-    position: 'top',
-  },
-  {
     id: 'users-page',
     path: '/users',
     target: '[data-tutorial="users-header"]',
@@ -285,114 +222,6 @@ export const tutorialSteps: TutorialRouteStep[] = [
     title: 'User Directory',
     description:
       'Search, filter, and edit users quickly using the user list and built-in controls.',
-    position: 'top',
-  },
-  {
-    id: 'settings-page',
-    path: '/settings',
-    target: '[data-tutorial="settings-header"]',
-    title: 'Settings Overview',
-    description:
-      'Manage all workspace preferences, notifications, and alert configurations from this page.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-tabs',
-    path: '/settings',
-    target: '[data-tutorial="settings-tabs"]',
-    title: 'Settings Tabs',
-    description:
-      'Choose between General settings for your preferences, or Alert Rules to configure automated alerts.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-appearance',
-    path: '/settings',
-    target: '[data-tutorial="settings-appearance"]',
-    title: 'Appearance Settings',
-    description:
-      'Customize the dashboard appearance. Toggle dark mode for low-light environments or compact view for more density.',
-    position: 'top',
-  },
-  {
-    id: 'settings-regional',
-    path: '/settings',
-    target: '[data-tutorial="settings-regional"]',
-    title: 'Regional Configuration',
-    description:
-      'Configure your language, timezone, currency, and date format preferences to match your location.',
-    position: 'top',
-  },
-  {
-    id: 'settings-language',
-    path: '/settings',
-    target: '[data-tutorial="settings-language"]',
-    title: 'Language Selection',
-    description:
-      'Choose your preferred interface language. Currently supports Thai and English.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-timezone',
-    path: '/settings',
-    target: '[data-tutorial="settings-timezone"]',
-    title: 'Timezone Setting',
-    description:
-      'Set your timezone to ensure all dates and times are displayed correctly for your location.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-currency',
-    path: '/settings',
-    target: '[data-tutorial="settings-currency"]',
-    title: 'Currency Preference',
-    description:
-      'Select your preferred currency for financial metrics and cost calculations throughout the dashboard.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-dateformat',
-    path: '/settings',
-    target: '[data-tutorial="settings-dateformat"]',
-    title: 'Date Format',
-    description:
-      'Choose how dates are displayed. Options include DD/MM/YYYY, MM/DD/YYYY, or YYYY-MM-DD formats.',
-    position: 'bottom',
-  },
-  {
-    id: 'settings-notifications',
-    path: '/settings',
-    target: '[data-tutorial="settings-notifications"]',
-    title: 'Notification Preferences',
-    description:
-      'Control how you receive alerts. Enable or disable in-app notifications, email alerts, and LINE integrations.',
-    position: 'top',
-  },
-  {
-    id: 'settings-inapp-notify',
-    path: '/settings',
-    target: '[data-tutorial="settings-inapp-notify"]',
-    title: 'In-App Notifications',
-    description:
-      'When enabled, important alerts and updates will appear directly in your dashboard notification panel.',
-    position: 'top',
-  },
-  {
-    id: 'settings-email-notify',
-    path: '/settings',
-    target: '[data-tutorial="settings-email-notify"]',
-    title: 'Email Notifications',
-    description:
-      'Email alerts are currently unavailable but will be coming soon. You\'ll be able to receive critical updates via email.',
-    position: 'top',
-  },
-  {
-    id: 'settings-line-notify',
-    path: '/settings',
-    target: '[data-tutorial="settings-line-notify"]',
-    title: 'LINE Notifications',
-    description:
-      'LINE integration for alerts is coming soon. You\'ll be able to receive notifications directly on LINE.',
     position: 'top',
   },
   {

@@ -166,7 +166,7 @@ export function ConversionFunnel({
 
                             return (
                                 <div key={stage.label}>
-                                    <div className="group flex items-center justify-between gap-4">
+                                    <div className="group flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div
                                             className={cn(
                                                 'relative h-10 overflow-hidden rounded-full shadow-sm transition-all duration-700 ease-out group-hover:shadow-lg group-hover:scale-[1.01] brightness-105',
@@ -180,7 +180,7 @@ export function ConversionFunnel({
                                             <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] mix-blend-overlay" />
                                         </div>
 
-                                        <div className="flex flex-col items-end min-w-[100px] text-right">
+                                        <div className="flex w-full flex-col items-end text-right sm:min-w-[100px]">
                                             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                                 {stage.label}
                                             </span>
@@ -220,7 +220,7 @@ export function ConversionFunnel({
                                 Platform Performance
                             </h4>
 
-                            <div className="grid gap-3 sm:grid-cols-1">
+                            <div className="grid gap-3 md:grid-cols-2">
                                 {platformStages?.map((platform) => (
                                     <div
                                         key={platform.platform}

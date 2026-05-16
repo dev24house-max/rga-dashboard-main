@@ -572,7 +572,9 @@ export default function Users() {
                         </div>
                     </div>
 
-                    <MetricGrid metrics={stats} isLoading={isLoading} columns={4} />
+                    <div data-tutorial="users-metrics">
+                        <MetricGrid metrics={stats} isLoading={isLoading} columns={4} />
+                    </div>
 
                     {/* Create dialog */}
                     <UserDialog
@@ -610,13 +612,13 @@ export default function Users() {
                                 </CardTitle>
                                 <CardDescription>View and manage all user accounts</CardDescription>
                             </div>
-                            <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+                            <Button data-tutorial="users-add-button" size="sm" onClick={() => setIsCreateDialogOpen(true)}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 Add user
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                            <div data-tutorial="users-search-filter" className="flex flex-col sm:flex-row gap-3 mb-4">
                                 <div className="flex-1">
                                     <SearchInput
                                         value={searchTerm}
@@ -682,7 +684,7 @@ export default function Users() {
                                                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                                                         </TableCell>
                                                         <TableCell className="text-right">
-                                                            <div className="flex justify-end gap-2">
+                                                            <div data-tutorial="users-actions" className="flex justify-end gap-2">
                                                                 <Button
                                                                     size="icon-sm"
                                                                     variant="ghost"

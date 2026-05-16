@@ -30,6 +30,7 @@ import Reports from "./pages/Reports";
 import TrendAnalysis from "./pages/TrendAnalysis";
 import EcommerceInsights from "./pages/EcommerceInsights";
 import CrmLeadsInsights from "./pages/CrmLeadsInsights";
+import { TutorialFlow } from '@/features/tutorial/TutorialFlow';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore, selectUser } from '@/stores/auth-store';
 import { useAuthEventListener } from '@/lib/auth-events';
@@ -127,6 +128,7 @@ function App() {
             {/* ✅ REMOVED: AuthProvider - Zustand doesn't need a Provider */}
             <TooltipProvider>
               <Toaster />
+              <TutorialFlow />
               <Router />
             </TooltipProvider>
           </ThemeProvider>

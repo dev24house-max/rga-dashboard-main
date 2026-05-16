@@ -228,7 +228,7 @@ export function SeoOffPageMetrics() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
                 {[1, 2, 3].map((i) => (
                     <Card key={i} className="shadow-sm h-[400px] flex flex-col">
                         <CardHeader className="p-3 pb-2 border-b">
@@ -248,7 +248,7 @@ export function SeoOffPageMetrics() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
             {pages.map((page, index) => (
                 <Card key={index} className="shadow-sm h-[400px] flex flex-col relative group">
                     <CardHeader className="p-3 pb-2 border-b flex flex-row items-center justify-between space-y-0">
@@ -275,8 +275,8 @@ export function SeoOffPageMetrics() {
 
                                 <div className="space-y-3">
                                     {page.items.map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-between text-xs">
-                                            <div className="flex items-center gap-2">
+                                        <div key={idx} className="flex items-center justify-between gap-4 text-xs min-w-0">
+                                            <div className="flex items-center gap-2 min-w-0">
                                                 {/* Color dot for ratings */}
                                                 {item.label.includes("UR") && (
                                                     <div className={cn("w-2 h-2 rounded-sm",
@@ -287,7 +287,7 @@ export function SeoOffPageMetrics() {
                                                                         "bg-red-600"
                                                     )} />
                                                 )}
-                                                <span className="text-muted-foreground">{item.label}</span>
+                                                <span className="text-muted-foreground truncate">{item.label}</span>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <span className="font-medium">{item.count}</span>

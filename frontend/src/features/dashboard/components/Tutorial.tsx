@@ -173,7 +173,24 @@ const Tutorial: React.FC<TutorialProps> = ({
 
     // FIX: use ref so keydown always calls the latest handleSkip
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleSkipRef.current();
+      if (e.key === 'Escape') {
+        handleSkipRef.current();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault();
+        if (isLastStep) {
+          onComplete();
+          setIsVisible(false);
+        } else {
+          onStepChange(currentStep + 1);
+        }
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (currentStep > 0) {
+          onStepChange(currentStep - 1);
+        }
+      }
     };
 
     window.addEventListener('resize', scheduleCompute);
@@ -187,7 +204,7 @@ const Tutorial: React.FC<TutorialProps> = ({
       window.removeEventListener('scroll', scheduleCompute, true);
       window.removeEventListener('keydown', onKey);
     };
-  }, [step, computePosition]); // handleSkip intentionally omitted — accessed via ref
+  }, [step, computePosition, currentStep, isLastStep, onComplete, onStepChange]); // handleSkip intentionally omitted — accessed via ref
 
   if (!isVisible) return null;
 
@@ -241,7 +258,10 @@ const Tutorial: React.FC<TutorialProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[9999] pointer-events-none"
+        className="fixed inset-0 z-50 pointer-events-none"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Tutorial step ${currentStep + 1} of ${steps.length}: ${step.title}`}
       >
         {/* SVG overlay with spotlight cutout */}
         {sr && (
@@ -280,11 +300,13 @@ const Tutorial: React.FC<TutorialProps> = ({
           </svg>
         )}
 
-        {/* Click-to-dismiss backdrop */}
+        {/* Background overlay — non-interactive, blocks all clicks */}
         <div
-          className="absolute inset-0 pointer-events-auto"
-          style={{ zIndex: 0 }}
-          onClick={handleSkip}
+          className="absolute inset-0"
+          style={{ zIndex: 5, pointerEvents: 'auto' }}
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.preventDefault()}
+          onTouchEnd={(e) => e.preventDefault()}
         />
 
         {/* Arrow connector */}
@@ -330,8 +352,8 @@ const Tutorial: React.FC<TutorialProps> = ({
                   <h3 className="text-lg font-bold text-slate-900 mt-1">{step.title}</h3>
                 </div>
                 <button
-                  onClick={handleSkip}
-                  className="shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
+                  onClick={(e) => { e.stopPropagation(); handleSkip(); }}
+                  className="shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500"
                   aria-label="Close tutorial"
                 >
                   ✕
@@ -344,13 +366,21 @@ const Tutorial: React.FC<TutorialProps> = ({
 
               <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-3 pt-2">
                 {currentStep > 0 && (
-                  <button onClick={handleBack} className="flex-1 py-3 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleBack(); }} 
+                    className="flex-1 py-3 px-3 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    type="button"
+                  >
                     ← Back
                   </button>
                 )}
-                <button onClick={handleNext} className="flex-1 py-3 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleNext(); }} 
+                  className="flex-1 py-3 px-3 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-orange-600"
+                  type="button"
+                >
                   {isLastStep ? 'Done ✓' : 'Next →'}
                 </button>
               </div>
@@ -371,10 +401,12 @@ const Tutorial: React.FC<TutorialProps> = ({
               top: tooltipPos.top,
               left: tooltipPos.left,
               width: TOOLTIP_WIDTH,
-              zIndex: 20,
+              zIndex: 25,
               boxShadow: '0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(15,23,42,0.08)',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            onTouchStart={(e) => { e.stopPropagation(); }}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
@@ -382,9 +414,10 @@ const Tutorial: React.FC<TutorialProps> = ({
                   Step {currentStep + 1} of {steps.length}
                 </span>
                 <button
-                  onClick={handleSkip}
-                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 text-xs transition"
+                  onClick={(e) => { e.stopPropagation(); handleSkip(); }}
+                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 text-xs transition focus:outline-none focus:ring-2 focus:ring-orange-500"
                   aria-label="Close tutorial"
+                  type="button"
                 >
                   ✕
                 </button>
@@ -409,20 +442,32 @@ const Tutorial: React.FC<TutorialProps> = ({
               </div>
 
               <h3 className="text-base font-bold text-slate-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed mb-5">{step.description}</p>
+              <p className="text-sm text-slate-500 leading-relaxed mb-6">{step.description}</p>
 
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
                   {currentStep > 0 && (
-                    <button onClick={handleBack} className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleBack(); }} 
+                      className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition focus:outline-none focus:ring-2 focus:ring-slate-400"
+                      type="button"
+                    >
                       ← Back
                     </button>
                   )}
-                  <button onClick={handleSkip} className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleSkip(); }} 
+                    className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    type="button"
+                  >
                     Skip
                   </button>
                 </div>
-                <button onClick={handleNext} className="px-5 py-2 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 active:scale-95 transition">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleNext(); }} 
+                  className="px-6 py-2 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-orange-600"
+                  type="button"
+                >
                   {isLastStep ? 'Done ✓' : 'Next →'}
                 </button>
               </div>

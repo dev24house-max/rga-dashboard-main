@@ -20,14 +20,14 @@ const PLATFORMS: { value: Platform; label: string; color: string }[] = [
 export function PlatformTabs({ selectedPlatform, onPlatformChange, className }: PlatformTabsProps) {
     return (
         <Tabs value={selectedPlatform} onValueChange={(v) => onPlatformChange(v as Platform)} className={className}>
-            <TabsList className="bg-slate-100 p-1">
+            <TabsList className="bg-slate-100 p-2 flex flex-wrap justify-center gap-2">
                 {PLATFORMS.map((platform) => (
                     <TabsTrigger
                         key={platform.value}
                         value={platform.value}
                         className={cn(
                             "data-[state=active]:bg-white data-[state=active]:shadow-sm",
-                            "flex items-center gap-2 px-4 py-2"
+                            "flex min-w-[8rem] items-center justify-center gap-2 px-3 py-2 text-sm"
                         )}
                     >
                         <span

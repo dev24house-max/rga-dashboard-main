@@ -303,9 +303,9 @@ export function DashboardPage() {
                 {/* Charts & Campaigns Grid - Responsive Layout */}
                 <section id="performance-trends" className="w-full">
                     <h3 className="sr-only">Performance Trends & Recent Campaigns</h3>
-                    <div className="grid gap-4 grid-cols-1 2xl:grid-cols-7 xl:gap-6 2xl:gap-6 items-stretch">
+                    <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-7 xl:gap-6 2xl:gap-6 items-stretch">
                         {/* Trend Chart - 4/7 on desktop */}
-                        <div className="col-span-1 2xl:col-span-4 flex h-full flex-col">
+                        <div className="col-span-1 lg:col-span-1 2xl:col-span-4 flex h-full flex-col">
                             {isLoading ? (
                                 <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                             ) : (

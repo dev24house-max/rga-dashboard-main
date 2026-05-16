@@ -32,16 +32,16 @@ export function DashboardHeader({ onExportCSV, onExportPDF, isExporting }: Dashb
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             {/* Title Section */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-heading">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 font-heading">
                     Dashboard Overview
                 </h1>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm md:text-base text-slate-500 mt-1">
                     Real-time performance metrics across your channels.
                 </p>
             </div>
 
             {/* Actions Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto justify-between sm:justify-end">
                 <GlobalDateRangePicker />
 
                 {/* Export Menu */}

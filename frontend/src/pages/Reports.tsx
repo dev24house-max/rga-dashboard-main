@@ -213,7 +213,7 @@ export default function Reports() {
                     {/* Export Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* CSV Export Card */}
-                        <Card className="border-slate-200 hover:border-slate-300 transition-colors">
+                        <Card data-tutorial="reports-export-csv" className="border-slate-200 hover:border-slate-300 transition-colors">
                             <CardHeader>
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-emerald-100 rounded-lg">
@@ -258,7 +258,7 @@ export default function Reports() {
                         </Card>
 
                         {/* PDF Export Card */}
-                        <Card className="border-slate-200 hover:border-slate-300 transition-colors">
+                        <Card data-tutorial="reports-export-pdf" className="border-slate-200 hover:border-slate-300 transition-colors">
                             <CardHeader>
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-red-100 rounded-lg">
@@ -308,7 +308,7 @@ export default function Reports() {
                     </div>
 
                     {/* Info Section */}
-                    <Card className="bg-slate-50 border-slate-200">
+                    <Card data-tutorial="reports-info" className="bg-slate-50 border-slate-200">
                         <CardContent className="pt-6">
                             <div className="flex items-start gap-3">
                                 <div className="p-1.5 bg-blue-100 rounded-full">
