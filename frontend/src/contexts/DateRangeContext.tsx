@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import {
+    DateRangeOption,
     DATE_RANGE_OPTIONS,
     DATE_RANGE_LABELS,
-    getDateRangeStrings,
+    getStartDateString,
+    getEndDateString,
     DEFAULT_DATE_RANGE,
 } from '@/types/dateRange';
-
-import type { DateRangeOption } from '@/types/dateRange';
 
 interface DateRangeContextType {
     dateRange: DateRangeOption;
     setDateRange: (range: DateRangeOption) => void;
     dateRangeLabel: string;
-    startDate: string;
-    endDate: string;
+    startDateString: string;
+    endDateString: string;
+    // ✅ Expose available options for components that need them
     availableOptions: readonly DateRangeOption[];
 }
 
@@ -22,14 +23,12 @@ const DateRangeContext = createContext<DateRangeContextType | undefined>(undefin
 export function DateRangeProvider({ children }: { children: ReactNode }) {
     const [dateRange, setDateRange] = useState<DateRangeOption>(DEFAULT_DATE_RANGE);
 
-    const { startDate, endDate } = getDateRangeStrings(dateRange);
-
     const value: DateRangeContextType = {
         dateRange,
         setDateRange,
         dateRangeLabel: DATE_RANGE_LABELS[dateRange],
-        startDate,
-        endDate,
+        startDateString: getStartDateString(dateRange),
+        endDateString: getEndDateString(dateRange),
         availableOptions: DATE_RANGE_OPTIONS,
     };
 

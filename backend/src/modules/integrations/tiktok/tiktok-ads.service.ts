@@ -148,8 +148,23 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
           status: this.mapStatus(c.operation_status || c.status),
           // Preserve the raw TikTok budget_mode for downstream consumers
           budgetMode: c.budget_mode || c.budgetMode || null,
+          // Objective information from TikTok: objective_type (e.g. REACH) and objective (more specific)
+          objective: c.objective_type || c.objective || c.virtual_objective_type || null,
           budget: new Prisma.Decimal(budget || dailyBudget || 0),
-          startDate: c.start_time ? new Date(c.start_time) : null,
+          // Prefer explicit start_time from TikTok; if missing, fall back to create_time
+          // Normalize common TikTok timestamp format "YYYY-MM-DD HH:mm:ss" to ISO by replacing space with 'T'
+          startDate: (function () {
+            const ts = c.start_time || c.start_time_local || c.create_time || c.create_time_local;
+            if (!ts) return null;
+            try {
+              const norm = String(ts).includes('T') ? String(ts) : String(ts).replace(' ', 'T');
+              const d = new Date(norm);
+              if (isNaN(d.getTime())) return null;
+              return d;
+            } catch {
+              return null;
+            }
+          })(),
           endDate: c.end_time ? new Date(c.end_time) : null,
           platform: AdPlatform.TIKTOK,
           metrics: metrics ? {

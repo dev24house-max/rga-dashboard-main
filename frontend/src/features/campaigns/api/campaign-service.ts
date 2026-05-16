@@ -77,6 +77,11 @@ interface BackendCampaign {
     startDate: string;
     endDate?: string;
     externalId?: string;
+    // Optional platform-specific fields
+    objective?: string;
+    objective_type?: string;
+    budgetType?: string;
+    budget_type?: string;
     // Calculated metrics from backend
     ctr?: number;
     cpc?: number;
@@ -171,6 +176,11 @@ function normalizeCampaign(raw: BackendCampaign): Campaign {
         clicks: safeNumber(raw.clicks, 0),
         startDate: raw.startDate,
         endDate: raw.endDate ?? '',
+        // Pass through objective and budgetType for UI usage
+        // Normalize various backend names into a consistent shape
+        // `objective_type` preferred for external platform enums (e.g., ENGAGEMENT)
+        ...(raw.objective_type ? { objective_type: raw.objective_type } : raw.objective ? { objective_type: raw.objective } : {}),
+        budgetType: raw.budgetType || raw.budget_type || undefined,
         // Calculated metrics from backend (guard against invalid numbers)
         ctr: safeNumber(raw.ctr, 0),
         cpc: safeNumber(raw.cpc, 0),

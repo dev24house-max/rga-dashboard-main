@@ -4,6 +4,7 @@ export type CampaignStatus = 'active' | 'paused' | 'completed' | 'draft';
 export type CampaignPlatform = 'facebook' | 'instagram' | 'google' | 'tiktok' | 'line';
 
 export interface Campaign {
+    createdAt: any;
     id: string;
     name: string;
     status: CampaignStatus;
@@ -15,6 +16,8 @@ export interface Campaign {
     endDate: string;   // ISO date string
     platform: CampaignPlatform;
     budgetType?: string;
+    // External platform objective (e.g. "ENGAGEMENT", "REACH")
+    objective_type?: string;
     // Metrics for Summary
     revenue?: number;
     conversions?: number;
