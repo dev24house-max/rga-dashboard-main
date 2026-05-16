@@ -128,6 +128,12 @@ export class GrowthMetricsDto {
     @ApiProperty({ example: -5.2, nullable: true })
     costGrowth: number | null;
 
+    @ApiProperty({ example: 9.8, nullable: true, description: 'Revenue growth vs previous period' })
+    revenueGrowth: number | null;
+
+    @ApiProperty({ example: -7.4, nullable: true, description: 'Non-negative profit growth vs previous period; 0 when current profit is 0' })
+    profitGrowth: number | null;
+
     @ApiProperty({ example: 15.7, nullable: true })
     conversionsGrowth: number | null;
 

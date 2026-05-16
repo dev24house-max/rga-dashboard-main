@@ -5,7 +5,7 @@
 
 import { CreditCard, Eye, MousePointerClick, Target } from 'lucide-react';
 import { SummaryCard } from './ui/summary-card';
-import { useFormatter } from '@/hooks/use-formatter';
+import { formatCurrencyTHB, formatNumber } from '@/lib/formatters';
 import type { SummaryMetrics, GrowthMetrics } from '../schemas';
 
 // =============================================================================
@@ -17,6 +17,8 @@ export interface DashboardMetricsProps {
     summary?: SummaryMetrics;
     /** Growth metrics data */
     growth?: GrowthMetrics;
+    /** Label for comparison period */
+    comparisonLabel?: string;
     /** Show loading state */
     loading?: boolean;
 }
@@ -31,6 +33,7 @@ interface MetricConfig {
     getValue: (summary: SummaryMetrics) => string;
     getTrend: (growth: GrowthMetrics) => number | null;
     accentColor: 'indigo' | 'violet' | 'cyan' | 'amber';
+    lowerIsBetter?: boolean;
 }
 
 // Helper: ensure numeric values are finite, fallback to 0
@@ -39,6 +42,38 @@ const safeNumber = (v: any, fallback = 0) => {
     return Number.isFinite(n) ? n : fallback;
 };
 
+const metricsConfig: MetricConfig[] = [
+    {
+        title: 'Total Spend',
+        icon: CreditCard,
+        getValue: (s) => formatCurrencyTHB(safeNumber(s.totalCost)),
+        getTrend: (g) => g.costGrowth,
+        accentColor: 'indigo',
+        lowerIsBetter: true,
+    },
+    {
+        title: 'Impressions',
+        icon: Eye,
+        getValue: (s) => formatNumber(safeNumber(s.totalImpressions)),
+        getTrend: (g) => g.impressionsGrowth,
+        accentColor: 'violet',
+    },
+    {
+        title: 'Clicks',
+        icon: MousePointerClick,
+        getValue: (s) => formatNumber(safeNumber(s.totalClicks)),
+        getTrend: (g) => g.clicksGrowth,
+        accentColor: 'cyan',
+    },
+    {
+        title: 'Conversions',
+        icon: Target,
+        getValue: (s) => formatNumber(safeNumber(s.totalConversions)),
+        getTrend: (g) => g.conversionsGrowth,
+        accentColor: 'amber',
+    },
+];
+
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -46,41 +81,9 @@ const safeNumber = (v: any, fallback = 0) => {
 export function DashboardMetrics({
     summary,
     growth,
+    comparisonLabel = 'vs last period',
     loading = false,
 }: DashboardMetricsProps) {
-    const { formatCurrency, formatNumber } = useFormatter();
-
-    const metricsConfig: MetricConfig[] = [
-        {
-            title: 'Total Spend',
-            icon: CreditCard,
-            getValue: (s) => formatCurrency(safeNumber(s.totalCost)),
-            getTrend: (g) => g.costGrowth,
-            accentColor: 'indigo',
-        },
-        {
-            title: 'Impressions',
-            icon: Eye,
-            getValue: (s) => formatNumber(safeNumber(s.totalImpressions)),
-            getTrend: (g) => g.impressionsGrowth,
-            accentColor: 'violet',
-        },
-        {
-            title: 'Clicks',
-            icon: MousePointerClick,
-            getValue: (s) => formatNumber(safeNumber(s.totalClicks)),
-            getTrend: (g) => g.clicksGrowth,
-            accentColor: 'cyan',
-        },
-        {
-            title: 'Conversions',
-            icon: Target,
-            getValue: (s) => formatNumber(safeNumber(s.totalConversions)),
-            getTrend: (g) => g.conversionsGrowth,
-            accentColor: 'amber',
-        },
-    ];
-
     return (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {metricsConfig.map((metric) => (
@@ -100,7 +103,8 @@ export function DashboardMetrics({
                         averageRoi: 0,
                     })}
                     trend={growth ? metric.getTrend(growth) : null}
-                    trendLabel="vs last period"
+                    trendLabel={comparisonLabel}
+                    lowerIsBetter={metric.lowerIsBetter}
                     loading={loading}
                 />
             ))}

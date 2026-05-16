@@ -35,6 +35,8 @@ const mockValidResponse: DashboardOverviewData = {
         impressionsGrowth: 12.5,
         clicksGrowth: 8.3,
         costGrowth: -5.2,
+        revenueGrowth: 9.8,
+        profitGrowth: -7.4,
         conversionsGrowth: 15.7,
         ctrGrowth: 0.6,
         cpmGrowth: -3.2,
@@ -127,7 +129,7 @@ describe('Dashboard Service', () => {
 
             // Assert
             expect(apiClient.get).toHaveBeenCalledWith('/dashboard/overview', {
-                params: { period: '7d' },
+                params: { period: 'this_month' },
             });
         });
 
@@ -224,10 +226,17 @@ describe('Dashboard Service', () => {
             const responseWithNullGrowth = {
                 ...mockValidResponse,
                 growth: {
+                    ...mockValidResponse.growth,
                     impressionsGrowth: null,
                     clicksGrowth: null,
                     costGrowth: null,
+                    revenueGrowth: null,
+                    profitGrowth: null,
                     conversionsGrowth: null,
+                    ctrGrowth: null,
+                    cpmGrowth: null,
+                    roasGrowth: null,
+                    roiGrowth: null,
                 },
             };
             vi.mocked(apiClient.get).mockResolvedValueOnce({

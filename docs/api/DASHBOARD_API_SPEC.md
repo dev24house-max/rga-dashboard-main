@@ -119,6 +119,12 @@ export interface GrowthMetrics {
   
   /** Cost/Spend growth percentage */
   costGrowth: number | null;
+
+  /** Revenue growth percentage */
+  revenueGrowth: number | null;
+
+  /** Non-negative profit growth percentage; 0 when current profit is 0 */
+  profitGrowth: number | null;
   
   /** Conversions growth percentage */
   conversionsGrowth: number | null;
@@ -216,6 +222,8 @@ Based on seed data structure (`Summer Sale 2026`, `Brand Awareness Q1` campaigns
       "impressionsGrowth": 12.5,
       "clicksGrowth": 8.3,
       "costGrowth": -5.2,
+      "revenueGrowth": 9.8,
+      "profitGrowth": -7.4,
       "conversionsGrowth": 15.7
     },
     "trends": [

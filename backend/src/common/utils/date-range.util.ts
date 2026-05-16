@@ -61,21 +61,50 @@ export class DateRangeUtil {
     }
 
     /**
-     * Get previous period date range for growth comparison
-     * Matches the same duration as the current period
+     * Get previous period date range for growth comparison.
+     * Calendar presets compare against their matching calendar period, while
+     * trailing/custom ranges compare against the immediately preceding duration.
+     * Current partial calendar periods compare against the same partial window.
      */
     static getPreviousPeriodByPeriod(period: PeriodEnum, currentStartDate: Date, currentEndDate: Date): { startDate: Date; endDate: Date } {
-        const duration = Math.ceil((currentEndDate.getTime() - currentStartDate.getTime()) / (1000 * 60 * 60 * 24));
+        switch (period) {
+            case PeriodEnum.ONE_DAY:
+            case PeriodEnum.YESTERDAY:
+                return this.getPreviousDaysRange(currentStartDate, 1);
 
-        const endDate = new Date(currentStartDate);
-        endDate.setUTCDate(endDate.getUTCDate() - 1);
-        endDate.setUTCHours(23, 59, 59, 999);
+            case PeriodEnum.LAST_WEEK:
+                return this.getPreviousDaysRange(currentStartDate, 7);
 
-        const startDate = new Date(endDate);
-        startDate.setUTCDate(startDate.getUTCDate() - duration + 1);
-        startDate.setUTCHours(0, 0, 0, 0);
+            case PeriodEnum.THIS_WEEK:
+                return this.getPreviousWeekToDateRange(currentStartDate, currentEndDate);
 
-        return { startDate, endDate };
+            case PeriodEnum.SEVEN_DAYS:
+                return this.getPreviousDaysRange(currentStartDate, 7);
+
+            case PeriodEnum.FOURTEEN_DAYS:
+                return this.getPreviousDaysRange(currentStartDate, 14);
+
+            case PeriodEnum.THIRTY_DAYS:
+                return this.getPreviousDaysRange(currentStartDate, 30);
+
+            case PeriodEnum.NINETY_DAYS:
+                return this.getPreviousDaysRange(currentStartDate, 90);
+
+            case PeriodEnum.LAST_MONTH:
+                return this.getPreviousCalendarMonthsRange(currentStartDate, 1);
+
+            case PeriodEnum.THIS_MONTH:
+                return this.getPreviousCalendarMonthToDateRange(currentStartDate, currentEndDate);
+
+            case PeriodEnum.LAST_3_MONTHS:
+                return this.getPreviousCalendarMonthsRange(currentStartDate, 3);
+
+            case PeriodEnum.CUSTOM:
+            default: {
+                const duration = this.getInclusiveUtcDayCount(currentStartDate, currentEndDate);
+                return this.getPreviousDaysRange(currentStartDate, duration);
+            }
+        }
     }
 
     /**
@@ -161,6 +190,93 @@ export class DateRangeUtil {
         ));
 
         return { startDate, endDate };
+    }
+
+    static getPreviousCalendarMonthToDateRange(currentStartDate: Date, currentEndDate: Date): { startDate: Date; endDate: Date } {
+        const previousMonthLastDay = new Date(Date.UTC(
+            currentStartDate.getUTCFullYear(),
+            currentStartDate.getUTCMonth(),
+            0
+        )).getUTCDate();
+        const endDay = Math.min(currentEndDate.getUTCDate(), previousMonthLastDay);
+
+        const startDate = new Date(Date.UTC(
+            currentStartDate.getUTCFullYear(),
+            currentStartDate.getUTCMonth() - 1,
+            1,
+            0,
+            0,
+            0,
+            0
+        ));
+
+        const endDate = new Date(Date.UTC(
+            currentStartDate.getUTCFullYear(),
+            currentStartDate.getUTCMonth() - 1,
+            endDay,
+            23,
+            59,
+            59,
+            999
+        ));
+
+        return { startDate, endDate };
+    }
+
+    static getPreviousWeekToDateRange(currentStartDate: Date, currentEndDate: Date): { startDate: Date; endDate: Date } {
+        const startDate = new Date(currentStartDate);
+        startDate.setUTCDate(startDate.getUTCDate() - 7);
+        startDate.setUTCHours(0, 0, 0, 0);
+
+        const endDate = new Date(currentEndDate);
+        endDate.setUTCDate(endDate.getUTCDate() - 7);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        return { startDate, endDate };
+    }
+
+    static getPreviousCalendarMonthsRange(currentStartDate: Date, months: number): { startDate: Date; endDate: Date } {
+        const startDate = new Date(Date.UTC(
+            currentStartDate.getUTCFullYear(),
+            currentStartDate.getUTCMonth() - months,
+            1,
+            0,
+            0,
+            0,
+            0
+        ));
+
+        const endDate = new Date(Date.UTC(
+            currentStartDate.getUTCFullYear(),
+            currentStartDate.getUTCMonth(),
+            0,
+            23,
+            59,
+            59,
+            999
+        ));
+
+        return { startDate, endDate };
+    }
+
+    static getPreviousDaysRange(currentStartDate: Date, days: number): { startDate: Date; endDate: Date } {
+        const endDate = new Date(currentStartDate);
+        endDate.setUTCDate(endDate.getUTCDate() - 1);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        const startDate = new Date(endDate);
+        startDate.setUTCDate(startDate.getUTCDate() - days + 1);
+        startDate.setUTCHours(0, 0, 0, 0);
+
+        return { startDate, endDate };
+    }
+
+    private static getInclusiveUtcDayCount(startDate: Date, endDate: Date): number {
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const startUtc = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+        const endUtc = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
+
+        return Math.max(1, Math.floor((endUtc - startUtc) / msPerDay) + 1);
     }
 
     static getWeekRange(

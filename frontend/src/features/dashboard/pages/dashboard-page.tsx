@@ -90,9 +90,41 @@ function deltaClassName(value: number | null | undefined) {
     return value >= 0 ? 'text-emerald-500/70' : 'text-rose-400/70';
 }
 
-function combineGrowth(a: number | null | undefined, b: number | null | undefined): number | null {
-    if (a == null || b == null) return null;
-    return ((1 + a / 100) * (1 + b / 100) - 1) * 100;
+function lowerIsBetterDeltaClassName(value: number | null | undefined) {
+    if (value == null) return undefined;
+    return value <= 0 ? 'text-emerald-500/70' : 'text-rose-400/70';
+}
+
+function getInclusiveDayCount(from: Date, to: Date) {
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const fromDay = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+
+    return Math.max(1, Math.floor((toDay.getTime() - fromDay.getTime()) / msPerDay) + 1);
+}
+
+function getComparisonLabel(period: PeriodEnum, customRange?: { from: Date; to: Date }) {
+    if (period === 'custom' && customRange) {
+        const days = getInclusiveDayCount(customRange.from, customRange.to);
+        return days === 1 ? 'vs previous day' : `vs previous ${days} days`;
+    }
+
+    const labels: Record<PeriodEnum, string> = {
+        '1d': 'vs yesterday',
+        yesterday: 'vs previous day',
+        this_week: 'vs last week',
+        last_week: 'vs previous week',
+        '7d': 'vs previous 7 days',
+        '14d': 'vs previous 14 days',
+        '30d': 'vs previous 30 days',
+        '90d': 'vs previous 90 days',
+        this_month: 'vs last month',
+        last_month: 'vs previous month',
+        last_3_months: 'vs previous 3 months',
+        custom: 'vs previous period',
+    };
+
+    return labels[period];
 }
 
 const PLATFORM_LABELS: Partial<Record<AdPlatform, string>> = {
@@ -251,7 +283,8 @@ export function DashboardPage() {
     const totalCost = data?.summary.totalCost ?? 0;
     const roas = data?.summary.averageRoas ?? 0;
     const estimatedRevenue = totalCost * roas;
-    const estimatedProfit = estimatedRevenue - totalCost;
+    const estimatedProfit = Math.max(estimatedRevenue - totalCost, 0);
+    const comparisonLabel = getComparisonLabel(period, customRange);
 
     return (
         <DashboardLayout>
@@ -283,6 +316,7 @@ export function DashboardPage() {
                     <DashboardMetrics
                         summary={data?.summary}
                         growth={data?.growth}
+                        comparisonLabel={comparisonLabel}
                         loading={isLoading}
                     />
                 </section>
@@ -296,7 +330,11 @@ export function DashboardPage() {
                     {isLoading ? (
                         <Skeleton className="h-[180px] w-full rounded-3xl sm:h-[220px]" />
                     ) : (
-                        <AiSummaries summary={data?.summary} growth={data?.growth} />
+                        <AiSummaries
+                            summary={data?.summary}
+                            growth={data?.growth}
+                            comparisonLabel={comparisonLabel}
+                        />
                     )}
                 </section>
 
@@ -347,26 +385,27 @@ export function DashboardPage() {
                                 subtitle="ROAS"
                                 roi={data?.summary.averageRoas ?? 0}
                                 roiDelta={data?.growth.roasGrowth ?? 0}
+                                roiComparisonLabel={comparisonLabel}
                                 total={totalCost}
                                 breakdown={financialBreakdown}
                                 summary={[
                                     {
                                         label: 'Revenue',
                                         value: estimatedRevenue,
-                                        deltaLabel: formatPercentDelta(combineGrowth(data?.growth.costGrowth, data?.growth.roasGrowth)),
-                                        deltaClassName: deltaClassName(combineGrowth(data?.growth.costGrowth, data?.growth.roasGrowth)),
+                                        deltaLabel: formatPercentDelta(data?.growth.revenueGrowth),
+                                        deltaClassName: deltaClassName(data?.growth.revenueGrowth),
                                     },
                                     {
                                         label: 'Profit',
                                         value: estimatedProfit,
-                                        deltaLabel: formatPercentDelta(combineGrowth(data?.growth.costGrowth, data?.growth.roiGrowth)),
-                                        deltaClassName: deltaClassName(combineGrowth(data?.growth.costGrowth, data?.growth.roiGrowth)),
+                                        deltaLabel: formatPercentDelta(data?.growth.profitGrowth),
+                                        deltaClassName: deltaClassName(data?.growth.profitGrowth),
                                     },
                                     {
                                         label: 'Cost',
                                         value: totalCost,
                                         deltaLabel: formatPercentDelta(data?.growth.costGrowth),
-                                        deltaClassName: deltaClassName(data?.growth.costGrowth),
+                                        deltaClassName: lowerIsBetterDeltaClassName(data?.growth.costGrowth),
                                     },
                                 ]}
                             />

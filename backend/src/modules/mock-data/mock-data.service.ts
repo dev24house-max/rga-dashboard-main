@@ -93,6 +93,8 @@ export class MockDataService {
             impressionsGrowth: randomGrowth(),
             clicksGrowth: randomGrowth(),
             costGrowth: randomGrowth(),
+            revenueGrowth: randomGrowth(),
+            profitGrowth: randomGrowth(),
             conversionsGrowth: randomGrowth(),
             ctrGrowth: randomGrowth(),
             cpmGrowth: randomGrowth(),

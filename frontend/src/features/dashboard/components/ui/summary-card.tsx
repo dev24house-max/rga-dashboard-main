@@ -24,6 +24,8 @@ export interface SummaryCardProps {
     trend: number | null;
     /** Label shown next to trend (e.g., "vs last period") */
     trendLabel?: string;
+    /** Use positive trend as bad and negative trend as good */
+    lowerIsBetter?: boolean;
     /** Show loading skeleton */
     loading?: boolean;
     /** Optional additional className */
@@ -89,6 +91,7 @@ export function SummaryCard({
     icon: Icon,
     trend,
     trendLabel = 'vs last period',
+    lowerIsBetter = false,
     loading = false,
     className,
     accentColor = 'indigo',
@@ -101,6 +104,8 @@ export function SummaryCard({
     // Determine trend styling
     const isPositive = trend !== null && trend > 0;
     const isNegative = trend !== null && trend < 0;
+    const isGoodTrend = lowerIsBetter ? isNegative : isPositive;
+    const isBadTrend = lowerIsBetter ? isPositive : isNegative;
     const TrendIcon = isPositive ? TrendingUp : TrendingDown;
     const accent = ACCENT_STYLES[accentColor];
 
@@ -142,15 +147,15 @@ export function SummaryCard({
                         <TrendIcon
                             className={cn(
                                 'h-3 w-3 transition-transform group-hover:scale-110',
-                                isPositive && 'text-emerald-500',
-                                isNegative && 'text-rose-500'
+                                isGoodTrend && 'text-emerald-500',
+                                isBadTrend && 'text-rose-500'
                             )}
                         />
                         <span
                             className={cn(
                                 'font-medium',
-                                isPositive && 'text-emerald-500',
-                                isNegative && 'text-rose-500'
+                                isGoodTrend && 'text-emerald-500',
+                                isBadTrend && 'text-rose-500'
                             )}
                         >
                             {formatPercentage(trend)}
