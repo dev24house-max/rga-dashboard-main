@@ -9,10 +9,9 @@ import { GoogleSearchConsoleOAuthService } from './google-search-console-oauth.s
 import { GoogleSearchConsoleAuthController } from './google-search-console-auth.controller';
 import { SeoAggregationService } from './seo-aggregation.service';
 import { GoogleAnalyticsModule } from '../integrations/google-analytics/google-analytics.module';
-import { BingWebmasterModule } from '../integrations/bing-webmaster/bing-webmaster.module';
 
 @Module({
-    imports: [PrismaModule, ConfigModule, GoogleAnalyticsModule, BingWebmasterModule],
+    imports: [PrismaModule, ConfigModule, GoogleAnalyticsModule],
     controllers: [SeoController, GoogleSearchConsoleAuthController],
     providers: [
         SeoService,

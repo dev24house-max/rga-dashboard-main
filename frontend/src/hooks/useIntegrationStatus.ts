@@ -14,7 +14,6 @@ export interface IntegrationStatus {
     tiktokAds: boolean;
     googleAnalytics: boolean;
     googleSearchConsole: boolean;
-    bingWebmaster: boolean;
 }
 
 export function useIntegrationStatus() {
@@ -28,7 +27,6 @@ export function useIntegrationStatus() {
         tiktokAds: false,
         googleAnalytics: false,
         googleSearchConsole: false,
-        bingWebmaster: false,
     });
     const [accounts, setAccounts] = useState<any[]>([]);
     const [ga4Account, setGa4Account] = useState<any>(null);
@@ -48,7 +46,6 @@ export function useIntegrationStatus() {
                 tiktokAds: false,
                 googleAnalytics: false,
                 googleSearchConsole: false,
-                bingWebmaster: false,
             });
             setAccounts([]);
             setGa4Account(null);
@@ -65,14 +62,13 @@ export function useIntegrationStatus() {
             setError(null);
 
             // Fetch all statuses in parallel
-            const [googleAdsRes, facebookAdsRes, ga4Res, lineAdsRes, tiktokAdsRes, gscStatusRes, bingStatusRes] = await Promise.allSettled([
+            const [googleAdsRes, facebookAdsRes, ga4Res, lineAdsRes, tiktokAdsRes, gscStatusRes] = await Promise.allSettled([
                 integrationService.getGoogleAdsStatus(),
                 integrationService.getFacebookAdsStatus(),
                 integrationService.getGoogleAnalyticsStatus(),
                 integrationService.getLineAdsStatus(),
                 integrationService.getTikTokAdsStatus(),
                 integrationService.getGoogleSearchConsoleStatus(),
-                integrationService.getBingWebmasterStatus(),
             ]);
 
             const googleAdsStatus = googleAdsRes.status === 'fulfilled' ? googleAdsRes.value.data : { isConnected: false, accounts: [] };
@@ -81,7 +77,6 @@ export function useIntegrationStatus() {
             const lineAdsStatus = lineAdsRes.status === 'fulfilled' ? lineAdsRes.value.data : { isConnected: false, accounts: [] };
             const tiktokAdsStatus = tiktokAdsRes.status === 'fulfilled' ? tiktokAdsRes.value.data : { isConnected: false, accounts: [] };
             const gscStatus = gscStatusRes.status === 'fulfilled' ? gscStatusRes.value.data : { isConnected: false, accounts: [] };
-            const bingStatus = bingStatusRes.status === 'fulfilled' ? bingStatusRes.value.data : { connected: false, siteUrl: null };
 
             setStatus(prev => ({
                 ...prev,
@@ -91,7 +86,6 @@ export function useIntegrationStatus() {
                 lineAds: lineAdsStatus.isConnected,
                 tiktokAds: tiktokAdsStatus.isConnected,
                 googleSearchConsole: gscStatus.isConnected,
-                bingWebmaster: bingStatus.connected,
             }));
 
             setAccounts(googleAdsStatus.accounts || []);
@@ -211,32 +205,6 @@ export function useIntegrationStatus() {
         }
     };
 
-    const syncBingWebmaster = async () => {
-        try {
-            setIsSyncing(true);
-            await integrationService.syncBingWebmaster();
-            await fetchStatus();
-            return true;
-        } catch (error) {
-            throw error;
-        } finally {
-            setIsSyncing(false);
-        }
-    };
-
-    const disconnectBingWebmaster = async () => {
-        try {
-            setIsLoading(true);
-            await integrationService.disconnectBingWebmaster();
-            await fetchStatus();
-            return true;
-        } catch (error) {
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
         fetchStatus();
     }, [fetchStatus]);
@@ -255,12 +223,10 @@ export function useIntegrationStatus() {
         syncGoogleAds,
         syncGoogleAnalytics,
         syncGoogleSearchConsole,
-        syncBingWebmaster,
         disconnectGoogleAds,
         disconnectGoogleAnalytics,
         disconnectLineAds,
         disconnectTikTokAds,
         disconnectGoogleSearchConsole,
-        disconnectBingWebmaster,
     };
 }

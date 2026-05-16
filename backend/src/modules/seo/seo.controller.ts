@@ -5,9 +5,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SeoService } from './seo.service';
 import { SeoAggregationService } from './seo-aggregation.service';
 import { ConnectGscDto } from './dto/connect-gsc.dto';
-import { ConnectBingDto } from './dto/connect-bing.dto';
 import { GoogleSearchConsoleOAuthService } from './google-search-console-oauth.service';
-import { BingWebmasterService } from '../integrations/bing-webmaster/bing-webmaster.service';
 
 @ApiTags('SEO')
 @ApiBearerAuth()
@@ -18,7 +16,6 @@ export class SeoController {
         private readonly seoService: SeoService,
         private readonly gscOAuthService: GoogleSearchConsoleOAuthService,
         private readonly seoAggregationService: SeoAggregationService,
-        private readonly bingWebmasterService: BingWebmasterService,
     ) { }
 
     @Get('summary')
@@ -131,85 +128,6 @@ export class SeoController {
     @ApiOperation({ summary: 'Disconnect Google Search Console' })
     async disconnectGsc(@CurrentUser('tenantId') tenantId: string) {
         return this.gscOAuthService.disconnect(tenantId);
-    }
-
-    @Post('bing/connect')
-    @ApiOperation({ summary: 'Configure Bing Webmaster site URL for this tenant' })
-    async connectBing(
-        @CurrentUser('tenantId') tenantId: string,
-        @Body() dto: ConnectBingDto,
-    ) {
-        try {
-            await this.bingWebmasterService.setSiteUrl(tenantId, dto.siteUrl);
-            return { success: true, siteUrl: dto.siteUrl };
-        } catch (error: any) {
-            return {
-                success: false,
-                error: 'Failed to connect Bing Webmaster',
-                message: error.message
-            };
-        }
-    }
-
-    @Get('bing/status')
-    @ApiOperation({ summary: 'Get Bing Webmaster connection status' })
-    async getBingStatus(@CurrentUser('tenantId') tenantId: string) {
-        try {
-            const siteUrl = await this.bingWebmasterService.getSiteUrl(tenantId);
-            return {
-                connected: !!siteUrl,
-                siteUrl,
-            };
-        } catch (error: any) {
-            return {
-                connected: false,
-                error: 'Failed to get Bing status',
-                message: error.message
-            };
-        }
-    }
-
-    @Post('sync/bing')
-    @ApiOperation({ summary: 'Manually sync Bing Webmaster backlinks data into DB' })
-    async syncBing(@CurrentUser('tenantId') tenantId: string) {
-        try {
-            return await this.bingWebmasterService.syncBacklinksForTenant(tenantId);
-        } catch (error: any) {
-            return {
-                success: false,
-                error: 'Failed to sync Bing backlinks',
-                message: error.message
-            };
-        }
-    }
-
-    @Delete('bing')
-    @ApiOperation({ summary: 'Disconnect Bing Webmaster' })
-    async disconnectBing(@CurrentUser('tenantId') tenantId: string) {
-        try {
-            await this.bingWebmasterService.setSiteUrl(tenantId, '');
-            return { success: true };
-        } catch (error: any) {
-            return {
-                success: false,
-                error: 'Failed to disconnect Bing Webmaster',
-                message: error.message
-            };
-        }
-    }
-
-    @Get('bing/sites')
-    @ApiOperation({ summary: 'Get user sites from Bing Webmaster API' })
-    async getBingUserSites(@CurrentUser('tenantId') tenantId: string): Promise<any> {
-        try {
-            return await this.bingWebmasterService.getUserSites(tenantId);
-        } catch (error: any) {
-            return {
-                error: 'Failed to fetch Bing user sites',
-                message: error.message,
-                sites: []
-            };
-        }
     }
 
     @Get('top-keywords')
