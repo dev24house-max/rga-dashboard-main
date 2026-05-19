@@ -6,7 +6,7 @@ import { ContactButton } from "@/components/ui/ContactButton";
 import { tutorialRegistry, resolveTutorialRoute } from "@/features/tutorial/tutorial-registry";
 
 function normalizePath(path: string) {
-  const cleaned = path.split("?")[0].replace(/\/+$/u, "");
+  const cleaned = path.split("?")[0].replace(/\/+$/, "");
   return cleaned === "" ? "/" : cleaned;
 }
 
@@ -39,6 +39,7 @@ export function TopRightPanel() {
         <div className="group relative">
           <button
             type="button"
+            aria-label="Start page tutorial"
             onClick={handleStartPageTutorial}
             className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50"
           >

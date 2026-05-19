@@ -131,6 +131,7 @@ function App() {
               <Toaster />
               <MidnightRefresher />
               <Router />
+              <TutorialFlow />
             </TooltipProvider>
           </ThemeProvider>
         </RegionalSettingsProvider>

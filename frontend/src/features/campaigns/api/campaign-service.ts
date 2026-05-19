@@ -3,6 +3,7 @@
 // Supports time-window filtering via startDate/endDate params
 
 import { apiClient } from '@/services/api-client';
+import { formatLocalDate } from '@/lib/date-range-utils';
 import type { Campaign, CampaignStatus, CampaignPlatform } from '../types';
 import type { CreateCampaignFormData } from '../types/schema';
 
@@ -76,6 +77,7 @@ interface BackendCampaign {
     clicks?: number;
     startDate: string;
     endDate?: string;
+    createdAt?: string;
     externalId?: string;
     // Optional platform-specific fields
     objective?: string;
@@ -176,6 +178,7 @@ function normalizeCampaign(raw: BackendCampaign): Campaign {
         clicks: safeNumber(raw.clicks, 0),
         startDate: raw.startDate,
         endDate: raw.endDate ?? '',
+        createdAt: raw.createdAt ?? raw.startDate,
         // Pass through objective and budgetType for UI usage
         // Normalize various backend names into a consistent shape
         // `objective_type` preferred for external platform enums (e.g., ENGAGEMENT)
@@ -211,9 +214,9 @@ function toBackendPayload(formData: CreateCampaignFormData): CreateCampaignPaylo
         platform: PLATFORM_REVERSE_MAP[formData.platform] || formData.platform.toUpperCase(),
         status: STATUS_REVERSE_MAP[formData.status] || formData.status.toUpperCase(),
         budget: formData.budget,
-        startDate: formData.startDate.toISOString().split('T')[0], // YYYY-MM-DD
+        startDate: formatLocalDate(formData.startDate),
         endDate: formData.endDate
-            ? formData.endDate.toISOString().split('T')[0]
+            ? formatLocalDate(formData.endDate)
             : undefined,
     };
 }
@@ -354,8 +357,8 @@ export const CampaignService = {
         if (formData.platform) payload.platform = PLATFORM_REVERSE_MAP[formData.platform];
         if (formData.status) payload.status = STATUS_REVERSE_MAP[formData.status];
         if (formData.budget) payload.budget = formData.budget;
-        if (formData.startDate) payload.startDate = formData.startDate.toISOString().split('T')[0];
-        if (formData.endDate) payload.endDate = formData.endDate.toISOString().split('T')[0];
+        if (formData.startDate) payload.startDate = formatLocalDate(formData.startDate);
+        if (formData.endDate) payload.endDate = formatLocalDate(formData.endDate);
 
         const response = await apiClient.put<BackendCampaign>(`/campaigns/${id}`, payload);
         return normalizeCampaign(response.data);

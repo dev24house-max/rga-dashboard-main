@@ -4,7 +4,11 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { DEFAULT_WEEK_STARTS_ON } from '@/lib/date-range-utils';
+import {
+    DEFAULT_WEEK_STARTS_ON,
+    formatLocalDate,
+    getDateRangeFromPeriod,
+} from '@/lib/date-range-utils';
 import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -42,61 +46,6 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_SELECTION_LIMIT = 20;
 const GLOBAL_QUERY_LIMIT = 1000;
 
-// =============================================================================
-// Period to Date Range Converter
-// =============================================================================
-
-function getDateRangeFromPeriod(period: PeriodEnum): { startDate: string; endDate: string } {
-    const today = new Date();
-    // For multi-day presets we want ranges that exclude today (end = yesterday).
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const endDateStr = yesterday.toISOString().split('T')[0];
-
-    switch (period) {
-        case '1d': {
-            // Single-day 'Today' should still reference today
-            const todayStr = today.toISOString().split('T')[0];
-            return { startDate: todayStr, endDate: todayStr };
-        }
-        case '7d': {
-            const start = new Date(yesterday);
-            start.setDate(start.getDate() - 6);
-            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
-        }
-        case '90d': {
-            const start = new Date(yesterday);
-            start.setDate(start.getDate() - 89);
-            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
-        }
-        case 'this_month': {
-            const start = new Date(today.getFullYear(), today.getMonth(), 1);
-            // For 'this_month' use yesterday as end so today is excluded
-            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
-        }
-        case '30d': {
-            const start = new Date(yesterday);
-            start.setDate(start.getDate() - 29);
-            return { startDate: start.toISOString().split('T')[0], endDate: endDateStr };
-        }
-        case 'last_month': {
-            const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-            return {
-                startDate: firstDayLastMonth.toISOString().split('T')[0],
-                endDate: lastDayLastMonth.toISOString().split('T')[0],
-            };
-        }
-        case 'custom':
-            // custom range provided by user should be used as-is
-            const todayStr = today.toISOString().split('T')[0];
-            return { startDate: todayStr, endDate: todayStr };
-        default:
-            const defaultStr = yesterday.toISOString().split('T')[0];
-            return { startDate: defaultStr, endDate: defaultStr };
-    }
-}
-
 function formatDateDisplay(dateStr: string): string {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -128,26 +77,6 @@ function IndeterminateProgress({ className }: { className?: string }) {
     }, []);
 
     return <Progress value={progress} className={className} />;
-}
-
-function InfoTooltip({ content }: { content: string }) {
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Info className="h-4 w-4" />
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
-                    {content}
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
 }
 
 // =============================================================================
@@ -203,7 +132,7 @@ export function CampaignsPage() {
         setPage(1);
         // Removed: setSelectedIds(new Set()); // Allow keeping selection across filter changes
         // Removed: setShowSelectedOnly(false); // Allow keeping "Selected Only" mode
-    }, [debouncedSearch, status, platform, period, sortBy, sortOrder]);
+    }, [debouncedSearch, status, platform, period, weekStartsOn, sortBy, sortOrder]);
 
     // ==========================================================================
     // Auto-exit "Selected Only" Mode when selection is empty
@@ -220,12 +149,12 @@ export function CampaignsPage() {
     const dateRange = useMemo(() => {
         if (period === 'custom' && customRange) {
             return {
-                startDate: customRange.from.toISOString().split('T')[0],
-                endDate: customRange.to.toISOString().split('T')[0],
+                startDate: formatLocalDate(customRange.from),
+                endDate: formatLocalDate(customRange.to),
             };
         }
-        return getDateRangeFromPeriod(period);
-    }, [period, customRange]);
+        return getDateRangeFromPeriod(period, weekStartsOn);
+    }, [period, customRange, weekStartsOn]);
 
     // Reset custom range if user switches off custom mode
     useEffect(() => {
@@ -540,7 +469,7 @@ export function CampaignsPage() {
     // ==========================================================================
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-8 relative z-10">
+            <div className="flex flex-col gap-4 md:gap-6 relative z-10">
                 {/* Page Header */}
                 <div data-tutorial="campaigns-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>

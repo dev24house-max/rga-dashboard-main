@@ -69,7 +69,7 @@ function GeneralSettingsTab({
     return (
         <div className="space-y-6">
             {/* Appearance Settings */}
-            <Card>
+            <Card data-tutorial="settings-appearance">
                 <CardHeader>
                     <CardTitle className="dark:text-zinc-100">Appearance</CardTitle>
                     <CardDescription className="dark:text-zinc-400">
@@ -106,7 +106,7 @@ function GeneralSettingsTab({
             </Card>
 
             {/* Regional Settings */}
-            <Card>
+            <Card data-tutorial="settings-regional">
                 <CardHeader>
                     <CardTitle className="dark:text-zinc-100">Regional</CardTitle>
                     <CardDescription className="dark:text-zinc-400">
@@ -171,7 +171,7 @@ function GeneralSettingsTab({
             </Card>
 
             {/* Notification Preferences */}
-            <Card>
+            <Card data-tutorial="settings-notifications">
                 <CardHeader>
                     <CardTitle className="dark:text-zinc-100">Notification Preferences</CardTitle>
                     <CardDescription className="dark:text-zinc-400">
@@ -248,7 +248,7 @@ export default function Settings() {
             <DashboardLayout>
                 <div className="space-y-6">
                     {/* Page Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div data-tutorial="settings-header" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
                                 Settings
@@ -261,12 +261,12 @@ export default function Settings() {
 
                     {/* Settings Tabs */}
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList className="grid w-full max-w-md grid-cols-2">
+                        <TabsList data-tutorial="settings-tabs" className="grid w-full max-w-md grid-cols-2">
                             <TabsTrigger value="general" className="flex items-center gap-2">
                                 <Settings2 className="h-4 w-4" />
                                 General
                             </TabsTrigger>
-                            <TabsTrigger value="alerts" className="flex items-center gap-2">
+                            <TabsTrigger data-tutorial="settings-alerts-tab" value="alerts" className="flex items-center gap-2">
                                 <Bell className="h-4 w-4" />
                                 Alert Rules
                             </TabsTrigger>

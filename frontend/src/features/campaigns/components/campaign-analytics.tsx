@@ -279,9 +279,9 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
 
     return (
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mt-6">
+        <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4 2xl:gap-6 mt-6 items-start">
             {/* LEFT COLUMN: Conversion Rate Insights (2/3 width) */}
-            <div className="lg:col-span-1 xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm h-full flex flex-col dark:bg-[#18191b] dark:border-gray-700">
+            <div className="col-span-1 2xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm flex flex-col dark:bg-[#18191b] dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1">
                         <div className="flex-1">
@@ -511,7 +511,7 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             </div>
 
             {/* RIGHT COLUMN: Platform Breakdown (1/3 width) */}
-            <div className="lg:col-span-1 xl:col-span-1 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm flex flex-col h-full">
+            <div className="col-span-1 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm flex flex-col">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <p className="text-2xl font-bold tracking-tight">Platform Breakdown</p>

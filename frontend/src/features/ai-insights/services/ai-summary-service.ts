@@ -13,7 +13,8 @@ export interface AiSummaryCard {
 interface AiSummaryResponse extends AiDetailSummaryData { }
 
 // Path relative to apiClient baseURL
-const BACKEND_WEBHOOK_PATH = (import.meta.env.VITE_API_URL || '/api/v1') + '/ai/webhook/summary';
+//const BACKEND_WEBHOOK_PATH = (import.meta.env.VITE_API_URL || '/api/v1') + '/ai/webhook/summary';
+const BACKEND_WEBHOOK_PATH = '/ai/webhook/summary';
 
 const normalizeSummaryResponse = (responseData: any) => {
     let payload = responseData;

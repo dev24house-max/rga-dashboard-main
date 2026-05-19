@@ -5,7 +5,7 @@ import { tutorialRegistry, TutorialConfig, resolveTutorialRoute } from './tutori
 const PROTECTED_MATCHER_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']);
 
 function normalizePath(path: string) {
-  const cleaned = path.split('?')[0].replace(/\/+$/u, '');
+  const cleaned = path.split('?')[0].replace(/\/+$/, '');
   return cleaned === '' ? '/' : cleaned;
 }
 

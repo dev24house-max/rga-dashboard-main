@@ -118,6 +118,7 @@ function getComparisonLabel(period: PeriodEnum, customRange?: { from: Date; to: 
         '14d': 'vs previous 14 days',
         '30d': 'vs previous 30 days',
         '90d': 'vs previous 90 days',
+        '365d': 'vs previous 365 days',
         this_month: 'vs last month',
         last_month: 'vs previous month',
         last_3_months: 'vs previous 3 months',
@@ -288,7 +289,7 @@ export function DashboardPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5 md:gap-6 md:p-8">
+            <div className="flex flex-1 flex-col gap-4 md:gap-6">
                 {/* Page Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between dashboard-header">
                     <div className="space-y-1">
@@ -341,14 +342,14 @@ export function DashboardPage() {
                 {/* Charts & Campaigns Grid - Responsive Layout */}
                 <section id="performance-trends" className="w-full">
                     <h3 className="sr-only">Performance Trends & Recent Campaigns</h3>
-                    <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-7 xl:gap-6 2xl:gap-6 items-stretch">
+                    <div className="grid gap-4 grid-cols-1 2xl:grid-cols-7 2xl:gap-6 items-stretch">
                         {/* Trend Chart - 4/7 on desktop */}
-                        <div className="col-span-1 lg:col-span-1 2xl:col-span-4 flex h-full flex-col">
+                        <div className="col-span-1 2xl:col-span-4 flex h-full flex-col">
                             {isLoading ? (
-                                <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
+                                <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] md:h-[460px] 2xl:h-[400px]" />
                             ) : (
                                 <TrendChart
-                                    className="h-full trend-chart"
+                                    className="md:h-[460px] 2xl:h-[400px] trend-chart"
                                     data={data?.trends ?? []}
                                     period={period}
                                     onPeriodChange={handlePeriodChange}
@@ -377,7 +378,7 @@ export function DashboardPage() {
                         <h3 className="text-base font-semibold sm:text-lg">Financial Overview & Conversion Funnel</h3>
                         <InfoTooltip content="Analyze your advertising spend by platform, view financial metrics including revenue and profit estimations based on ROAS, and track the conversion funnel from impressions through to conversions." />
                     </div>
-                    <div className="grid gap-4 grid-cols-1 xl:grid-cols-2 xl:gap-6">
+                    <div className="grid gap-4 grid-cols-1 2xl:grid-cols-2 2xl:gap-6">
                         {isLoading ? (
                             <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                         ) : (

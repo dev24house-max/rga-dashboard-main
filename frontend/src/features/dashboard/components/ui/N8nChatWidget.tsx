@@ -14,7 +14,7 @@ interface N8nChatWidgetProps {
 const DEFAULT_MESSAGES = ['เธชเธงเธฑเธชเธ”เธตเธเธฃเธฑเธ เธเธกเน€เธเนเธ RGA AI Assistant เธ–เธฒเธกเธญเธฐเนเธฃเนเธ”เนเน€เธฅเธขเธเธฃเธฑเธ'];
 
 export const N8nChatWidget = ({
-  webhookUrl,
+  webhookUrl, 
   mode = 'window',
   initialMessages = DEFAULT_MESSAGES,
   title = 'RGA Chat',
@@ -22,7 +22,7 @@ export const N8nChatWidget = ({
   inputPlaceholder = 'เธเธดเธกเธเนเธเธณเธ–เธฒเธกเธเธญเธเธเธธเธ“...',
 }: N8nChatWidgetProps) => {
   useEffect(() => {
-    const defaultWebhook = 'https://suttipatrga1.app.n8n.cloud/webhook/chat-general';
+    const defaultWebhook = 'https://yourrga1.app.n8n.cloud/webhook/chat-general';
     const resolvedWebhookUrl =
       webhookUrl ||
       (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL : '') ||

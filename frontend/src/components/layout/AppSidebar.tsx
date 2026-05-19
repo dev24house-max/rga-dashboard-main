@@ -125,7 +125,7 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 w-[260px] md:w-[280px] xl:w-[300px] z-50">
+        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 z-50">
             <div className="flex flex-col h-full w-full text-slate-900 dark:text-slate-100">
 
                 {/* Header / Logo */}

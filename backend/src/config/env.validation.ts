@@ -121,6 +121,19 @@ export const envValidationSchema = Joi.object({
     SMTP_PASSWORD: Joi.string().optional(),
     SMTP_FROM: Joi.string().optional(),
     EMAIL_FROM: Joi.string().optional(),
+
+    // ============================================
+    // n8n AI Webhooks
+    // ============================================
+    N8N_WEBHOOK_URL_GENERAL: Joi.string().uri().optional(),
+    N8N_WEBHOOK_URL_SUMMARY: Joi.string().uri().optional(),
+    N8N_WEBHOOK_URL_ADS: Joi.string().uri().optional(),
+    N8N_WEBHOOK_URL_SEO: Joi.string().uri().optional(),
+    N8N_BASE_URL: Joi.string().uri().optional(),
+    N8N_CHAT_WEBHOOK_PATH: Joi.string().optional(),
+    N8N_WEBHOOK_PATH: Joi.string().optional(),
+    N8N_REQUEST_TIMEOUT_MS: Joi.number().optional(),
+
     // ============================================
     // Rate Limiting
     // ============================================

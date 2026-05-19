@@ -6,7 +6,7 @@ export interface TutorialConfig {
 }
 
 export function resolveTutorialRoute(path: string) {
-  const cleaned = path.split('?')[0].replace(/\/+$/u, '');
+  const cleaned = path.split('?')[0].replace(/\/+$/, '');
   return cleaned === '' ? '/dashboard' : cleaned;
 }
 
@@ -290,6 +290,65 @@ export const tutorialRegistry: Record<string, TutorialConfig> = {
         description:
           'Use the edit or delete buttons to update user details or remove accounts that are no longer needed.',
         position: 'top',
+      },
+    ],
+  },
+  '/settings': {
+    storageKey: 'settings_tutorial_completed',
+    steps: [
+      {
+        id: 'settings-overview',
+        path: '/settings',
+        target: '[data-tutorial="settings-header"]',
+        title: 'Settings Overview',
+        description:
+          'Manage account preferences, regional formatting, notification behavior, and alert configuration from this page.',
+        position: 'bottom',
+      },
+      {
+        id: 'settings-tabs',
+        path: '/settings',
+        target: '[data-tutorial="settings-tabs"]',
+        title: 'Settings Sections',
+        description:
+          'Switch between general preferences and alert rules using these tabs.',
+        position: 'bottom',
+      },
+      {
+        id: 'settings-appearance',
+        path: '/settings',
+        target: '[data-tutorial="settings-appearance"]',
+        title: 'Appearance',
+        description:
+          'Control display preferences such as dark mode and compact view.',
+        position: 'top',
+      },
+      {
+        id: 'settings-regional',
+        path: '/settings',
+        target: '[data-tutorial="settings-regional"]',
+        title: 'Regional Preferences',
+        description:
+          'Set language, timezone, currency, and date format so reports match your working context.',
+        position: 'top',
+      },
+      {
+        id: 'settings-notifications',
+        path: '/settings',
+        target: '[data-tutorial="settings-notifications"]',
+        title: 'Notification Preferences',
+        description:
+          'Choose which channels should receive dashboard alerts and system notifications.',
+        position: 'top',
+      },
+      {
+        id: 'settings-alert-rules-tab',
+        path: '/settings',
+        target: '[data-tutorial="settings-alerts-tab"]',
+        title: 'Alert Rules',
+        description:
+          'Open this tab to create watchdog rules that monitor metrics and trigger alerts.',
+        position: 'bottom',
       },
     ],
   },
