@@ -83,13 +83,13 @@ export function NotificationWindow({
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="fixed top-16 right-6 w-[calc(100vw-3rem)] max-w-[340px] z-50 origin-top-right"
                 >
-                    <Card className="shadow-xl border-border/60">
-                        <CardHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0 bg-slate-50/50">
+                    <Card className="overflow-hidden border-border/60 bg-card/95 shadow-xl backdrop-blur dark:border-border dark:bg-card/95 dark:shadow-black/40">
+                        <CardHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0 bg-slate-50/50 dark:border-border dark:bg-popover/70">
                             <div className="flex items-center gap-2">
                                 <Bell className="h-4 w-4 text-primary" />
                                 <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
                                 {unreadCount > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold dark:bg-red-500/15 dark:text-red-300 dark:ring-1 dark:ring-red-500/25">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -99,7 +99,7 @@ export function NotificationWindow({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                        className="h-6 w-6 text-muted-foreground hover:bg-blue-50 hover:text-primary dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
                                         onClick={onMarkAllRead}
                                         title="Mark all as read"
                                     >
@@ -117,13 +117,15 @@ export function NotificationWindow({
                                     <p className="text-xs mt-1">You're all caught up!</p>
                                 </div>
                             ) : (
-                                <div className="divide-y text-left">
+                                <div className="divide-y divide-border text-left">
                                     {notifications.map((notification) => (
                                         <div
                                             key={notification.id}
                                             className={cn(
-                                                "p-4 hover:bg-slate-50/80 transition-colors relative group",
-                                                !notification.isRead ? "bg-blue-50/40" : ""
+                                                "p-4 transition-colors relative group dark:hover:bg-muted/60",
+                                                !notification.isRead
+                                                    ? "bg-blue-50/40 hover:bg-blue-50/70 dark:bg-blue-500/[0.08] dark:hover:bg-blue-500/[0.12]"
+                                                    : "hover:bg-slate-50/80"
                                             )}
                                         >
                                             <div className="flex items-start gap-3">
@@ -131,7 +133,7 @@ export function NotificationWindow({
                                                 <div className="pt-1 shrink-0">
                                                     <span className={cn(
                                                         "block h-2 w-2 rounded-full",
-                                                        !notification.isRead ? "bg-blue-500" : "bg-transparent"
+                                                        !notification.isRead ? "bg-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.12)] dark:bg-blue-400 dark:shadow-[0_0_0_3px_rgba(96,165,250,0.16)]" : "bg-transparent"
                                                     )} />
                                                 </div>
 
@@ -148,7 +150,7 @@ export function NotificationWindow({
                                                             {formatTimeAgo(notification.timestamp)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed dark:text-muted-foreground">
                                                         {notification.message}
                                                     </p>
                                                 </div>
@@ -159,7 +161,7 @@ export function NotificationWindow({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                                            className="h-6 w-6 text-muted-foreground hover:bg-blue-50 hover:text-primary dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
                                                             onClick={() => onMarkAsRead(notification.id)}
                                                             title="Mark as read"
                                                         >
@@ -169,7 +171,7 @@ export function NotificationWindow({
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                                                        className="h-6 w-6 text-muted-foreground hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                                                         onClick={() => onDismiss(notification.id)}
                                                         title="Dismiss"
                                                     >
@@ -183,11 +185,11 @@ export function NotificationWindow({
                             )}
                         </ScrollArea>
 
-                        <CardFooter className="p-2 border-t bg-slate-50/50 flex items-center justify-between gap-2">
+                        <CardFooter className="p-2 border-t bg-slate-50/50 flex items-center justify-between gap-2 dark:border-border dark:bg-popover/70">
                             <span className="text-[10px] text-muted-foreground pl-2">
                                 {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
                             </span>
-                            <Button variant="ghost" className="h-7 text-xs text-muted-foreground px-3" onClick={onClose}>
+                            <Button variant="ghost" className="h-7 text-xs text-muted-foreground px-3 hover:text-foreground dark:hover:bg-muted/80" onClick={onClose}>
                                 Close
                             </Button>
                         </CardFooter>

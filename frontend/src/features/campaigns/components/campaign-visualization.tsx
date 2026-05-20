@@ -61,17 +61,17 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
         <div className="space-y-4 pt-6 mt-6 border-t border-border/60">
             {/* Header */}
             <div>
-                <p className="font-semibold text-gray-900 text-xl">Performance Summary</p>
-                <p className="text-gray-500 text-sm">Track budget distribution and ROI performance at a glance</p>
+                <p className="font-semibold text-foreground text-xl">Performance Summary</p>
+                <p className="text-muted-foreground text-sm">Track budget distribution and ROI performance at a glance</p>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {/* 1. Budget vs Spend vs Revenue Chart */}
-                <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-inner space-y-4">
+                <div className="rounded-3xl border border-border bg-card p-6 shadow-inner space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-semibold text-gray-900">Performance (Budget vs Spend vs Revenue)</p>
-                            <p className="text-xs text-gray-500">Top 5 campaigns by spend</p>
+                            <p className="text-sm font-semibold text-foreground">Performance (Budget vs Spend vs Revenue)</p>
+                            <p className="text-xs text-muted-foreground">Top 5 campaigns by spend</p>
                         </div>
                         <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase font-medium">Live Data</span>
                     </div>
@@ -83,24 +83,32 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
                                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                                 barSize={16}
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                                 <XAxis
                                     dataKey="name"
-                                    tick={{ fontSize: 11, fill: '#6B7280' }}
+                                    tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                                     tickLine={false}
-                                    axisLine={{ stroke: '#9CA3AF' }}
+                                    axisLine={{ stroke: 'var(--border)' }}
                                     tickFormatter={(val) => val.length > 15 ? `${val.substring(0, 15)}...` : val}
                                 />
                                 <YAxis
                                     tickFormatter={formatMoney}
-                                    tick={{ fontSize: 11, fill: '#6B7280' }}
+                                    tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                                     tickLine={false}
                                     axisLine={false}
                                 />
                                 <Tooltip
                                     cursor={{ fill: 'transparent' }}
                                     formatter={(value: number) => formatMoney(value)}
-                                    contentStyle={{ borderRadius: '12px', borderColor: '#E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                    contentStyle={{
+                                        backgroundColor: 'var(--popover)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '12px',
+                                        color: 'var(--popover-foreground)',
+                                        boxShadow: '0 12px 28px rgba(0, 0, 0, 0.28)',
+                                    }}
+                                    itemStyle={{ color: 'var(--popover-foreground)' }}
+                                    labelStyle={{ color: 'var(--muted-foreground)' }}
                                 />
                                 <Legend
                                     iconType="circle"
@@ -136,60 +144,60 @@ export function CampaignVisualization({ campaigns, summary, onDownload }: Campai
                 </div>
 
                 {/* 2. Campaign Snapshot */}
-                <div className="rounded-3xl border border-gray-100 bg-white p-6 flex flex-col justify-between space-y-4">
+                <div className="rounded-3xl border border-border bg-card p-6 flex flex-col justify-between space-y-4">
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold text-gray-900">Performance Highlights</p>
-                        <p className="text-xs text-gray-500 mt-1">Quick view of spend and best-performing campaign</p>
+                        <p className="text-sm font-semibold text-foreground">Performance Highlights</p>
+                        <p className="text-xs text-muted-foreground mt-1">Quick view of spend and best-performing campaign</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         {/* Total Spend */}
-                        <div className="group relative bg-white rounded-2xl p-4 border border-gray-100 hover:border-violet-200 hover:shadow-md transition-all duration-300">
-                            <div className="absolute top-4 right-4 p-2 bg-violet-50 rounded-full group-hover:bg-violet-100 transition-colors">
+                        <div className="group relative bg-card rounded-2xl p-4 border border-border hover:border-violet-300/60 hover:shadow-md transition-all duration-300">
+                            <div className="absolute top-4 right-4 p-2 bg-violet-50 rounded-full group-hover:bg-violet-100 transition-colors dark:bg-violet-500/15 dark:group-hover:bg-violet-500/25">
                                 <Wallet className="w-4 h-4 text-violet-500" />
                             </div>
-                            <p className="text-xs uppercase text-gray-500 font-medium">Total Spend</p>
-                            <p className="mt-2 text-lg font-bold text-gray-900 group-hover:text-violet-600 transition-colors">{formatMoney(summary.spend)}</p>
-                            <p className="text-[10px] text-gray-400 mt-1 cursor-help" title="Exact amount">{formatCurrency(summary.spend, { maximumFractionDigits: 0 })}</p>
+                            <p className="text-xs uppercase text-muted-foreground font-medium">Total Spend</p>
+                            <p className="mt-2 text-lg font-bold text-foreground group-hover:text-violet-500 transition-colors">{formatMoney(summary.spend)}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 cursor-help" title="Exact amount">{formatCurrency(summary.spend, { maximumFractionDigits: 0 })}</p>
                         </div>
 
                         {/* Top ROI */}
-                        <div className="group relative bg-white rounded-2xl p-4 border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all duration-300">
-                            <div className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors">
+                        <div className="group relative bg-card rounded-2xl p-4 border border-border hover:border-emerald-300/60 hover:shadow-md transition-all duration-300">
+                            <div className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors dark:bg-emerald-500/15 dark:group-hover:bg-emerald-500/25">
                                 <TrendingUp className="w-4 h-4 text-emerald-500" />
                             </div>
-                            <p className="text-xs uppercase text-gray-500 font-medium">Top ROI</p>
-                            <p className="mt-2 text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">{bestRoiValue.toFixed(0)}%</p>
-                            <p className="text-[10px] text-gray-500 mt-1 truncate w-[85%]" title={bestRoiName}>
+                            <p className="text-xs uppercase text-muted-foreground font-medium">Top ROI</p>
+                            <p className="mt-2 text-lg font-bold text-foreground group-hover:text-emerald-500 transition-colors">{bestRoiValue.toFixed(0)}%</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 truncate w-[85%]" title={bestRoiName}>
                                 {bestRoiName}
                             </p>
                         </div>
 
                         {/* Best Campaign */}
-                        <div className="group relative bg-white rounded-2xl p-4 border border-gray-100 hover:border-amber-200 hover:shadow-md transition-all duration-300">
-                            <div className="absolute top-4 right-4 p-2 bg-amber-50 rounded-full group-hover:bg-amber-100 transition-colors">
+                        <div className="group relative bg-card rounded-2xl p-4 border border-border hover:border-amber-300/60 hover:shadow-md transition-all duration-300">
+                            <div className="absolute top-4 right-4 p-2 bg-amber-50 rounded-full group-hover:bg-amber-100 transition-colors dark:bg-amber-500/15 dark:group-hover:bg-amber-500/25">
                                 <Trophy className="w-4 h-4 text-amber-500" />
                             </div>
-                            <p className="text-xs uppercase text-gray-500 font-medium">Best Campaign</p>
-                            <p className="mt-2 text-sm font-semibold text-gray-900 truncate w-[85%] group-hover:text-amber-600 transition-colors" title={bestRoiName}>
+                            <p className="text-xs uppercase text-muted-foreground font-medium">Best Campaign</p>
+                            <p className="mt-2 text-sm font-semibold text-foreground truncate w-[85%] group-hover:text-amber-500 transition-colors" title={bestRoiName}>
                                 {bestRoiName}
                             </p>
                             <p className="text-xs text-emerald-600 font-medium mt-1">ROI {bestRoiValue.toFixed(0)}%</p>
                         </div>
 
                         {/* Active Campaigns */}
-                        <div className="group relative bg-white rounded-2xl p-4 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-300">
-                            <div className="absolute top-4 right-4 p-2 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                        <div className="group relative bg-card rounded-2xl p-4 border border-border hover:border-blue-300/60 hover:shadow-md transition-all duration-300">
+                            <div className="absolute top-4 right-4 p-2 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors dark:bg-blue-500/15 dark:group-hover:bg-blue-500/25">
                                 <Activity className="w-4 h-4 text-blue-500" />
                             </div>
-                            <p className="text-xs uppercase text-gray-500 font-medium">Active Campaigns</p>
-                            <p className="mt-2 text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{activeCount}</p>
+                            <p className="text-xs uppercase text-muted-foreground font-medium">Active Campaigns</p>
+                            <p className="mt-2 text-lg font-bold text-foreground group-hover:text-blue-500 transition-colors">{activeCount}</p>
                             <div className="flex items-center gap-1 mt-1">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </span>
-                                <span className="text-[10px] text-gray-400">Running now</span>
+                                <span className="text-[10px] text-muted-foreground">Running now</span>
                             </div>
                         </div>
                     </div>

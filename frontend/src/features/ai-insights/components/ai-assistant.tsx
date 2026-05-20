@@ -935,7 +935,7 @@ export function AiAssistant() {
 
                                                 {/* Campaign Tools Button (Secondary) */}
                                                 <motion.button
-                                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(248, 250, 252, 1)' }}
+                                                    whileHover={{ scale: 1.02 }}
                                                     whileTap={{ scale: 0.98 }}
                                                     onClick={() => setViewMode('tools')}
                                                     className="relative px-6 py-6 rounded-2xl text-left border border-slate-200 dark:border-zinc-600 shadow-sm bg-white dark:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:shadow-md transition-all group h-full"

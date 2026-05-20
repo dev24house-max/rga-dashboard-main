@@ -321,21 +321,21 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="fixed bottom-24 right-6 w-[300px] z-[60] origin-bottom-right will-change-transform"
                 >
-                    <Card className="border-0 shadow-2xl overflow-hidden flex flex-col h-[480px] max-h-[calc(100dvh-7rem)] rounded-2xl bg-white/95 backdrop-blur-xl border-slate-100 ring-1 ring-slate-200">
+                    <Card className="border-0 shadow-2xl overflow-hidden flex flex-col h-[480px] max-h-[calc(100dvh-7rem)] rounded-2xl bg-white/95 backdrop-blur-xl border-slate-100 ring-1 ring-slate-200 dark:bg-card/95 dark:ring-border dark:shadow-black/40">
                         {/* Header */}
-                        <div className="p-3 border-b border-slate-100 bg-white/60 backdrop-blur flex flex-row items-center justify-between shrink-0">
+                        <div className="p-3 border-b border-slate-100 bg-white/60 backdrop-blur flex flex-row items-center justify-between shrink-0 dark:border-border dark:bg-popover/80">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden">
+                                <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden dark:border-border dark:bg-muted">
                                     <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
                                 </div>
                                 <div>
-                                    <div className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                    <div className="text-sm font-bold text-slate-800 flex items-center gap-1.5 dark:text-foreground">
                                         AI Assistant
-                                        <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wide uppercase border border-orange-200">
+                                        <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wide uppercase border border-orange-200 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-300">
                                             Beta
                                         </span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                    <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 dark:text-muted-foreground">
                                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                                         Online
                                     </p>
@@ -345,7 +345,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={handleNewChat}
-                                className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full"
+                                className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground"
                                 title="Start New Chat"
                             >
                                 <RefreshCw className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                         {/* Messages Body */}
                         <div
                             ref={scrollRef}
-                            className="flex-1 overflow-y-auto p-4 space-y-5 bg-slate-50/50 scroll-smooth custom-scrollbar"
+                            className="flex-1 overflow-y-auto p-4 space-y-5 bg-slate-50/50 scroll-smooth custom-scrollbar dark:bg-background"
                         >
                             {messages.map((msg) => (
                                 <motion.div
@@ -367,16 +367,16 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                         msg.sender === 'user' ? "flex-row-reverse" : ""
                                     )}
                                 >
-                                    <Avatar className="h-7 w-7 mt-0.5 border border-slate-100 shadow-sm bg-white">
+                                    <Avatar className="h-7 w-7 mt-0.5 border border-slate-100 shadow-sm bg-white dark:border-border dark:bg-muted">
                                         {msg.sender === 'user' ? (
                                             <>
                                                 <AvatarImage src="/avatars/user.png" />
-                                                <AvatarFallback className="bg-slate-100 text-slate-500"><User className="h-3.5 w-3.5" /></AvatarFallback>
+                                                <AvatarFallback className="bg-slate-100 text-slate-500 dark:bg-muted dark:text-muted-foreground"><User className="h-3.5 w-3.5" /></AvatarFallback>
                                             </>
                                         ) : (
                                             <>
                                                 <AvatarImage src={chatbotImage} className="object-cover" />
-                                                <AvatarFallback className="bg-white"><Bot className="h-3.5 w-3.5 text-orange-500" /></AvatarFallback>
+                                                <AvatarFallback className="bg-white dark:bg-muted"><Bot className="h-3.5 w-3.5 text-orange-500" /></AvatarFallback>
                                             </>
                                         )}
                                     </Avatar>
@@ -385,12 +385,12 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                         "max-w-[85%] p-3 text-[13px] leading-relaxed shadow-sm break-words",
                                         msg.sender === 'user'
                                             ? "bg-orange-500 text-white rounded-2xl rounded-tr-sm"
-                                            : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm"
+                                            : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm dark:border-border dark:bg-popover dark:text-popover-foreground"
                                     )}>
                                         {msg.text}
                                         <div className={cn(
                                             "text-[9px] mt-1 text-right opacity-70",
-                                            msg.sender === 'user' ? "text-orange-100" : "text-slate-400"
+                                            msg.sender === 'user' ? "text-orange-100" : "text-slate-400 dark:text-muted-foreground"
                                         )}>
                                             {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
@@ -405,25 +405,25 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="flex w-full items-start gap-2.5"
                                 >
-                                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden shrink-0 mt-0.5">
+                                    <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden shrink-0 mt-0.5 dark:border-border dark:bg-muted">
                                         <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
                                     </div>
-                                    <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                    <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm p-3 shadow-sm dark:border-border dark:bg-popover">
                                         <div className="flex gap-1">
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
                                                 transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                                                className="w-1 h-1 bg-slate-400 rounded-full"
+                                                className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
                                                 transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                                                className="w-1 h-1 bg-slate-400 rounded-full"
+                                                className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
                                                 transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                                                className="w-1 h-1 bg-slate-400 rounded-full"
+                                                className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                         </div>
                                     </div>
@@ -432,12 +432,12 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                         </div>
 
                         {/* Footer Input */}
-                        <div className="p-3 bg-white border-t border-slate-100">
-                            <div className="relative flex items-center bg-slate-50 border border-slate-200 rounded-[1.5rem] shadow-sm focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-200 transition-all pr-1">
+                        <div className="px-3 pt-3 pb-3 bg-white border-t border-slate-100 dark:border-border dark:bg-card">
+                            <div className="relative flex min-h-[44px] items-center overflow-hidden bg-slate-50 border border-slate-200 rounded-[1.5rem] shadow-sm transition-all duration-200 ease-out py-1 pl-1 pr-1.5 focus-within:!border-orange-300/70 focus-within:shadow-[0_0_0_1px_rgba(251,146,60,0.14),0_0_18px_rgba(251,146,60,0.08)] dark:border-border dark:bg-popover dark:focus-within:!border-orange-400/35 dark:focus-within:shadow-[0_0_0_1px_rgba(249,115,22,0.16),0_0_18px_rgba(249,115,22,0.08)]">
                                 <textarea
                                     ref={textareaRef}
                                     placeholder={isListening ? "Listening..." : "Ask me anything..."}
-                                    className="flex-1 bg-transparent border-none outline-none text-[13px] px-3 py-3 text-slate-700 placeholder:text-slate-400 min-h-[44px] max-h-[120px] resize-none custom-scrollbar"
+                                    className="flex-1 !bg-transparent border-none outline-none text-[13px] leading-5 px-2.5 py-2 text-slate-700 placeholder:text-slate-400 min-h-[36px] max-h-[120px] resize-none custom-scrollbar dark:!bg-transparent dark:text-foreground dark:placeholder:text-muted-foreground"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyDown={handleKeyDown}
@@ -445,15 +445,15 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                     rows={1}
                                 />
 
-                                <div className="flex items-center gap-1 pr-1">
+                                <div className="flex items-center gap-1">
                                     {!inputValue.trim() && (
                                         <Button
                                             size="icon"
                                             variant="ghost"
                                             onClick={handleVoiceInput}
                                             className={cn(
-                                                "h-8 w-8 rounded-full hover:bg-slate-200 text-slate-400 transition-colors",
-                                                isListening && "text-red-500 bg-red-50 hover:bg-red-100 animate-pulse"
+                                                "h-8 w-8 rounded-full bg-transparent hover:bg-slate-200 text-slate-400 transition-colors dark:bg-transparent dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground",
+                                                isListening && "text-red-500 bg-red-50 hover:bg-red-100 animate-pulse dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25"
                                             )}
                                         >
                                             {isListening ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -476,7 +476,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                     {!inputValue.trim() && <div className="w-1" />} {/* Spacer when send is hidden */}
                                 </div>
                             </div>
-                            <div className="text-center mt-1.5 text-[9px] text-slate-400 font-medium tracking-wide opacity-80">
+                            <div className="text-center mt-2.5 text-[9px] leading-none text-slate-400 font-medium tracking-wide opacity-80 dark:text-muted-foreground">
                                 AI can make mistakes. Check important info.
                             </div>
                         </div>

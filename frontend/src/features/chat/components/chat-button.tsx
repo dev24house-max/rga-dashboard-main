@@ -16,7 +16,7 @@ export function ChatButton({ isOpen, onClick }: ChatButtonProps) {
             size="icon"
             className={cn(
                 "h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50 overflow-hidden",
-                isOpen ? "bg-destructive hover:bg-destructive/90 rotate-90 text-white" : "bg-white hover:bg-white/90 drop-shadow p-2"
+                isOpen ? "bg-destructive hover:bg-destructive/90 rotate-90 text-white" : "bg-white hover:bg-white/90 drop-shadow p-2 dark:border dark:border-border dark:bg-card dark:hover:bg-muted"
             )}
         >
             <AnimatePresence mode="wait">

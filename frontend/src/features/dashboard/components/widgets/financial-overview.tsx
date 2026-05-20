@@ -118,7 +118,7 @@ export function FinancialOverview({
 
     const chartData = hasData
         ? breakdown
-        : [{ name: 'No Data', value: 1, color: 'var(--muted, #e2e8f0)' }];
+        : [{ name: 'No Data', value: 1, color: 'var(--chart-empty, #cbd5e1)' }];
 
     const handleExportCsv = () => {
         downloadCsv(
@@ -214,8 +214,11 @@ export function FinancialOverview({
                                                 border: '1px solid var(--border)',
                                                 borderRadius: '0.75rem',
                                                 color: 'var(--popover-foreground)',
+                                                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.28)',
                                             }}
+                                            itemStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
                                             labelStyle={{ color: 'var(--muted-foreground)' }}
+                                            separator=" : "
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>

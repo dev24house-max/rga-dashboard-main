@@ -248,7 +248,7 @@ export function AppSidebar() {
                         {/* Logout Button */}
                         <button
                             onClick={handleLogoutClick}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                             title="Sign out"
                         >
                             <LogOut className="w-5 h-5" />

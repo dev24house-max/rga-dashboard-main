@@ -340,8 +340,8 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                 className={cn(
                                     "rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 border",
                                     selectedCampaignId === campaign.id
-                                        ? "bg-gray-900 text-white border-gray-900 shadow-md transform scale-105"
-                                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                                        ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20 transform scale-105 dark:bg-blue-500/20 dark:text-blue-100 dark:border-blue-400/50 dark:ring-1 dark:ring-blue-400/20 dark:shadow-blue-950/30"
+                                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50 dark:bg-card dark:text-muted-foreground dark:border-border dark:hover:bg-muted dark:hover:text-foreground dark:hover:border-slate-600"
                                 )}
                             >
                                 {campaign.name}

@@ -123,7 +123,7 @@ export function DataSourceCard({
         <Card className="relative overflow-hidden">
             {/* Status indicator stripe */}
             <div
-                className={`absolute top-0 left-0 right-0 h-1 ${isConnected ? 'bg-green-500' : 'bg-gray-300'
+                className={`absolute top-0 left-0 right-0 h-1 ${isConnected ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-700/80'
                     }`}
             />
 

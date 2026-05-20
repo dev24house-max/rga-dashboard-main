@@ -118,11 +118,11 @@ function StatusDropdown({
                     size="sm"
                     className={`h-9 border-dashed rounded-lg px-3 font-normal gap-1.5 transition-all ${
                         active
-                            ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20 dark:hover:text-blue-100'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 dark:border-border dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     }`}
                 >
-                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-blue-500' : 'opacity-40'}`} />
+                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-blue-500 dark:text-blue-300' : 'opacity-40'}`} />
                     Status
                     {active && (
                         <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-blue-500 text-white rounded-full shrink-0">
@@ -175,11 +175,11 @@ function PlatformDropdown({
                     size="sm"
                     className={`h-9 border-dashed rounded-lg px-3 font-normal gap-1.5 transition-all ${
                         active
-                            ? 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            ? 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-100'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 dark:border-border dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     }`}
                 >
-                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-indigo-500' : 'opacity-40'}`} />
+                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-indigo-500 dark:text-indigo-300' : 'opacity-40'}`} />
                     Platform
                     {active && (
                         <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-indigo-500 text-white rounded-full shrink-0">
@@ -450,7 +450,7 @@ export function CampaignToolbar({
                     className={`h-9 rounded-lg px-3 font-normal text-sm transition-all flex-shrink-0 ${
                         showSelectedOnly
                             ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
-                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                     Selected
@@ -499,7 +499,7 @@ export function CampaignToolbar({
 
                 {/* Date Filter — auto-pushed to right */}
                 <div className="ml-auto flex-shrink-0">
-                    <div className="h-9 [&>button]:h-9 [&>button]:rounded-lg [&>button]:border-gray-200 [&>button]:text-sm">
+                    <div className="h-9">
                         <DashboardDateFilter
                             value={period}
                             onValueChange={onPeriodChange}
@@ -507,6 +507,7 @@ export function CampaignToolbar({
                             onCustomRangeChange={onCustomRangeChange}
                             weekStartsOn={weekStartsOn}
                             onWeekStartsOnChange={onWeekStartsOnChange}
+                            className="h-9 rounded-lg border-gray-200 text-sm dark:border-border dark:bg-card dark:text-foreground dark:hover:border-slate-600 dark:hover:bg-muted"
                         />
                     </div>
                 </div>
