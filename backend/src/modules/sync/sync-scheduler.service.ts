@@ -14,52 +14,52 @@ export class SyncSchedulerService {
     ) { }
 
     /**
-     * Scheduled sync for Google Ads - runs every 6 hours
+     * Scheduled sync for Google Ads - runs every hour
      */
-    @Cron(CronExpression.EVERY_6_HOURS)
+    @Cron(CronExpression.EVERY_HOUR)
     async scheduledGoogleAdsSync() {
         this.logger.log('Starting scheduled Google Ads sync (Unified Engine)...');
-        await this.unifiedSyncService.syncPlatform(AdPlatform.GOOGLE_ADS);
+        await this.unifiedSyncService.syncPlatform(AdPlatform.GOOGLE_ADS, 30);
         this.logger.log('Scheduled Google Ads sync completed');
     }
 
     /**
-     * Scheduled sync for GA4 - runs every 6 hours
+     * Scheduled sync for GA4 - runs every hour
      */
-    @Cron(CronExpression.EVERY_6_HOURS)
+    @Cron(CronExpression.EVERY_HOUR)
     async scheduledGA4Sync() {
         this.logger.log('Starting scheduled GA4 sync (Unified Engine)...');
-        await this.unifiedSyncService.syncPlatform(AdPlatform.GOOGLE_ANALYTICS);
+        await this.unifiedSyncService.syncPlatform(AdPlatform.GOOGLE_ANALYTICS, 30);
         this.logger.log('Scheduled GA4 sync completed');
     }
 
     /**
-     * Scheduled sync for Facebook Ads - runs every 6 hours
+     * Scheduled sync for Facebook Ads - runs every hour
      */
-    @Cron(CronExpression.EVERY_6_HOURS)
+    @Cron(CronExpression.EVERY_HOUR)
     async scheduledFacebookAdsSync() {
         this.logger.log('Starting scheduled Facebook Ads sync (Unified Engine)...');
-        await this.unifiedSyncService.syncPlatform(AdPlatform.FACEBOOK);
+        await this.unifiedSyncService.syncPlatform(AdPlatform.FACEBOOK, 30);
         this.logger.log('Scheduled Facebook Ads sync completed');
     }
 
     /**
-     * Scheduled sync for TikTok Ads - runs every 6 hours
+     * Scheduled sync for TikTok Ads - runs every hour
      */
-    @Cron(CronExpression.EVERY_6_HOURS)
+    @Cron(CronExpression.EVERY_HOUR)
     async scheduledTikTokAdsSync() {
         this.logger.log('Starting scheduled TikTok Ads sync (Unified Engine)...');
-        await this.unifiedSyncService.syncPlatform(AdPlatform.TIKTOK);
+        await this.unifiedSyncService.syncPlatform(AdPlatform.TIKTOK, 30);
         this.logger.log('Scheduled TikTok Ads sync completed');
     }
 
     /**
-     * Scheduled sync for LINE Ads - runs every 6 hours
+     * Scheduled sync for LINE Ads - runs every hour
      */
-    @Cron(CronExpression.EVERY_6_HOURS)
+    @Cron(CronExpression.EVERY_HOUR)
     async scheduledLineAdsSync() {
         this.logger.log('Starting scheduled LINE Ads sync (Unified Engine)...');
-        await this.unifiedSyncService.syncPlatform(AdPlatform.LINE_ADS);
+        await this.unifiedSyncService.syncPlatform(AdPlatform.LINE_ADS, 30);
         this.logger.log('Scheduled LINE Ads sync completed');
     }
 

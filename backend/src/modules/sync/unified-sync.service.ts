@@ -85,7 +85,7 @@ export class UnifiedSyncService {
     /**
      * Sync all accounts for a specific platform
      */
-    async syncPlatform(platform: AdPlatform) {
+    async syncPlatform(platform: AdPlatform, lookbackDays?: number) {
         this.logger.log(`Syncing all accounts for platform: ${platform}`);
         let accounts: any[] = [];
 
@@ -118,7 +118,7 @@ export class UnifiedSyncService {
 
         for (const account of accounts) {
             try {
-                await this.syncAccount(platform, account.id, account.tenantId, account);
+                await this.syncAccount(platform, account.id, account.tenantId, account, lookbackDays);
                 success++;
             } catch (error) {
                 this.logger.error(`Failed to sync account ${account.id} (${platform}): ${error.message}`);

@@ -4,12 +4,13 @@
 // Features: Glassmorphism, Gradient Active States, Smooth Animations
 // =============================================================================
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore, selectUser } from '@/stores/auth-store';
 import { UserRole } from '@/types/enums';
 import {
     Sidebar,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import {
     BarChart3,
@@ -91,14 +92,38 @@ const NAV_GROUPS: NavGroup[] = [
 export function AppSidebar() {
     const [location, setLocation] = useLocation();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+    const logoutDialogTimerRef = useRef<number | null>(null);
+    const { isMobile, openMobile, setOpenMobile } = useSidebar();
     const user = useAuthStore(selectUser);
     const logout = useAuthStore((state) => state.logout);
+
+    useEffect(() => {
+        return () => {
+            if (logoutDialogTimerRef.current !== null) {
+                window.clearTimeout(logoutDialogTimerRef.current);
+            }
+        };
+    }, []);
 
     // ✅ FIX: Sub-route matching (e.g., /campaigns/abc123 highlights /campaigns)
     const isActive = (url: string) =>
         location === url || location.startsWith(`${url}/`);
 
     const handleLogoutClick = () => {
+        if (isMobile && openMobile) {
+            setOpenMobile(false);
+
+            if (logoutDialogTimerRef.current !== null) {
+                window.clearTimeout(logoutDialogTimerRef.current);
+            }
+
+            logoutDialogTimerRef.current = window.setTimeout(() => {
+                setIsLogoutDialogOpen(true);
+                logoutDialogTimerRef.current = null;
+            }, 300);
+            return;
+        }
+
         setIsLogoutDialogOpen(true);
     };
 
@@ -125,8 +150,9 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 z-50">
-            <div className="flex flex-col h-full w-full text-slate-900 dark:text-slate-100">
+        <>
+            <Sidebar className="border-r border-slate-200/60 bg-white/80 dark:bg-slate-950/90 dark:border-slate-800/60 backdrop-blur-xl shadow-lg shadow-slate-200/20 z-50">
+                <div className="flex flex-col h-full w-full text-slate-900 dark:text-slate-100">
 
                 {/* Header / Logo */}
                 <div className="px-5 py-5 pb-3">
@@ -256,7 +282,8 @@ export function AppSidebar() {
                     </div>
                 </div>
 
-            </div>
+                </div>
+            </Sidebar>
 
             {/* Logout Confirmation Dialog */}
             <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
@@ -285,6 +312,6 @@ export function AppSidebar() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Sidebar>
+        </>
     );
 }

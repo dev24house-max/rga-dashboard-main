@@ -90,13 +90,13 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
     ];
 
     return (
-        <div className="flex flex-col items-center w-full h-full overflow-y-auto custom-scrollbar pb-12 space-y-8 relative">
+        <div className="flex flex-col items-center w-full h-full min-w-0 overflow-x-hidden overflow-y-auto custom-scrollbar pb-12 gap-4 sm:gap-8 relative">
             {onBack && (
-                <div className="h-14 sm:h-16 w-full border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 bg-white/80 backdrop-blur sticky top-0 z-10">
+                <div className="min-h-12 sm:min-h-14 w-full shrink-0 border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 py-2 bg-white/80 backdrop-blur relative z-10">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onBack}
-                            className="group flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200"
+                            className="group flex h-10 w-10 sm:w-auto items-center justify-center gap-2 sm:gap-3 bg-white border border-slate-200 rounded-full sm:rounded-xl shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-200 sm:px-4 sm:py-2"
                         >
                             <div className="p-1 sm:p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
                                 <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
@@ -112,7 +112,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="flex flex-col items-center text-center space-y-2 sm:space-y-3 max-w-2xl px-4 pt-8 sm:pt-12"
+                className="flex shrink-0 flex-col items-center text-center space-y-2 sm:space-y-3 max-w-2xl px-4 pt-6 sm:pt-10"
             >
                 <div className="p-2 sm:p-3 bg-orange-50 rounded-xl mb-1 sm:mb-2">
                     <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
@@ -120,45 +120,47 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                     Marketing Calculators
                 </h2>
-                <p className="text-slate-500 text-xs sm:text-base max-w-lg">
+                <p className="text-slate-500 text-xs sm:text-base max-w-lg leading-5 sm:leading-6">
                     Simple calculators for your digital marketing metrics.
                 </p>
             </motion.div>
 
             {/* Tabs Navigation */}
-            <div className="w-full max-w-4xl px-4">
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                    className="flex flex-wrap justify-center gap-2 mb-8 border-b border-slate-200 pb-1"
-                >
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    "flex items-center gap-1 px-2.5 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 relative whitespace-nowrap",
-                                    isActive
-                                        ? "text-orange-600"
-                                        : "text-slate-500 hover:text-slate-700"
-                                )}
-                            >
-                                <Icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-orange-600" : "text-slate-400")} />
-                                <span className="hidden sm:inline">{tab.label}</span>
-                                {isActive && (
-                                    <motion.span
-                                        layoutId="activeTab"
-                                        className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-orange-600 rounded-t-full"
-                                    />
-                                )}
-                            </button>
-                        );
-                    })}
-                </motion.div>
+            <div className="w-full max-w-4xl min-w-0 shrink-0 px-4">
+                <div className="-mx-4 mb-6 sm:mb-8 overflow-x-auto overscroll-x-contain px-4 pb-1 custom-scrollbar [-webkit-overflow-scrolling:touch]">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.5 }}
+                        className="flex w-max min-w-full flex-nowrap items-center gap-2 border-b border-slate-200 pb-1 sm:justify-center"
+                    >
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        "relative flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-2 text-xs sm:text-sm font-medium transition-colors duration-200",
+                                        isActive
+                                            ? "text-orange-600"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    )}
+                                >
+                                    <Icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-orange-600" : "text-slate-400")} />
+                                    <span>{tab.label}</span>
+                                    {isActive && (
+                                        <motion.span
+                                            layoutId="activeTab"
+                                            className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-orange-600 rounded-t-full"
+                                        />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </motion.div>
+                </div>
 
                 {/* Tab Content Panels */}
                 <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-12 items-start w-full">

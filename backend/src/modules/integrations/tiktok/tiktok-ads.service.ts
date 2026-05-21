@@ -15,6 +15,31 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
     private readonly adsApiLogService: AdsApiLogService,
   ) { }
 
+  private parseStatTimeDay(statTimeDay: unknown): Date {
+    if (typeof statTimeDay === 'string') {
+      const match = statTimeDay.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+      if (match) {
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const date = new Date(Date.UTC(year, month - 1, day));
+
+        if (
+          date.getUTCFullYear() === year &&
+          date.getUTCMonth() === month - 1 &&
+          date.getUTCDate() === day
+        ) {
+          return date;
+        }
+      }
+    }
+
+    const fallbackDate = new Date(statTimeDay as string);
+    this.logger.warn(`[TikTok Date Parse] Invalid stat_time_day: ${String(statTimeDay)}`);
+    return fallbackDate;
+  }
+
   async validateCredentials(credentials: PlatformCredentials): Promise<boolean> {
     try {
       // Simple check: try to fetch advertiser info
@@ -327,7 +352,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
         );
 
         const result = {
-          date: new Date(row.dimensions?.stat_time_day),
+          date: this.parseStatTimeDay(row.dimensions?.stat_time_day),
           impressions: parseInt(row.metrics?.impressions || '0'),
           clicks: parseInt(row.metrics?.clicks || '0'),
           spend: new Prisma.Decimal(isNaN(spend) ? 0 : spend),
