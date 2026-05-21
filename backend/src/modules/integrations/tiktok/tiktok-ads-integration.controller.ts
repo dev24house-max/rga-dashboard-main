@@ -2,13 +2,17 @@ import { Controller, Get, Delete, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { TikTokAdsOAuthService } from './tiktok-ads-oauth.service';
 
 @ApiTags('TikTok Ads Integration')
 @ApiBearerAuth()
 @Controller('integrations/tiktok-ads')
 @UseGuards(JwtAuthGuard)
 export class TikTokAdsIntegrationController {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly oauthService: TikTokAdsOAuthService,
+    ) { }
 
     @Get('status')
     @ApiOperation({ summary: 'Check TikTok Ads integration status' })
@@ -55,10 +59,7 @@ export class TikTokAdsIntegrationController {
     async disconnect(@Req() req: any) {
         const tenantId = req.user.tenantId;
 
-        // Delete all TikTok Ads accounts for this tenant
-        await this.prisma.tikTokAdsAccount.deleteMany({
-            where: { tenantId },
-        });
+        await this.oauthService.disconnect(tenantId);
 
         return {
             success: true,

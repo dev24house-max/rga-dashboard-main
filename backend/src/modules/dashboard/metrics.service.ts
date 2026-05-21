@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DateRangeUtil } from '../../common/utils/date-range.util';
-import { AdPlatform, Prisma } from '@prisma/client';
+import { AdPlatform, CampaignStatus, Prisma } from '@prisma/client';
 import { PeriodEnum } from './dto/dashboard-overview.dto';
 
 // ============================================================
@@ -92,7 +92,10 @@ export class MetricsService {
 
         const result = await this.prisma.metric.aggregate({
             where: {
-                campaign: { tenantId },
+                campaign: {
+                    tenantId,
+                    status: { not: CampaignStatus.DELETED },
+                },
                 date: {
                     gte: startDate,
                     lte: endDate,
@@ -189,7 +192,10 @@ export class MetricsService {
         const metrics = await this.prisma.metric.groupBy({
             by: ['date'],
             where: {
-                campaign: { tenantId },
+                campaign: {
+                    tenantId,
+                    status: { not: CampaignStatus.DELETED },
+                },
                 date: {
                     gte: startDate,
                     lte: endDate,
@@ -276,6 +282,10 @@ export class MetricsService {
                 by: ['date'],
                 where: {
                     tenantId,
+                    campaign: {
+                        tenantId,
+                        status: { not: CampaignStatus.DELETED },
+                    },
                     date: {
                         gte: startDate,
                         lte: endDate,
@@ -303,6 +313,10 @@ export class MetricsService {
                 by: ['date'],
                 where: {
                     tenantId,
+                    campaign: {
+                        tenantId,
+                        status: { not: CampaignStatus.DELETED },
+                    },
                     date: {
                         gte: startDate,
                         lte: endDate,
@@ -330,6 +344,10 @@ export class MetricsService {
                 by: ['date'],
                 where: {
                     tenantId,
+                    campaign: {
+                        tenantId,
+                        status: { not: CampaignStatus.DELETED },
+                    },
                     date: {
                         gte: startDate,
                         lte: endDate,
@@ -357,6 +375,10 @@ export class MetricsService {
                 by: ['date'],
                 where: {
                     tenantId,
+                    campaign: {
+                        tenantId,
+                        status: { not: CampaignStatus.DELETED },
+                    },
                     date: {
                         gte: startDate,
                         lte: endDate,
@@ -383,6 +405,10 @@ export class MetricsService {
             by: ['date'],
             where: {
                 tenantId,
+                campaign: {
+                    tenantId,
+                    status: { not: CampaignStatus.DELETED },
+                },
                 date: {
                     gte: startDate,
                     lte: endDate,

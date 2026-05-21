@@ -48,6 +48,10 @@ async function shouldUseMockFallback(
 
   const where: Prisma.MetricWhereInput = {
     tenantId,
+    campaign: {
+      tenantId,
+      status: { not: CampaignStatus.DELETED },
+    },
     date: {
       gte: startDate,
       lte: endDate,
@@ -73,6 +77,10 @@ function buildMetricWhere(
 ): Prisma.MetricWhereInput {
   const where: Prisma.MetricWhereInput = {
     tenantId,
+    campaign: {
+      tenantId,
+      status: { not: CampaignStatus.DELETED },
+    },
     date: {
       gte: startDate,
       lte: endDate,
@@ -147,7 +155,10 @@ async function ensureTodayMockMetrics(prisma: PrismaService, tenantId: string) {
   const todayUtc = getUtcMidnight(new Date());
 
   const campaigns = await prisma.campaign.findMany({
-    where: { tenantId },
+    where: {
+      tenantId,
+      status: { not: CampaignStatus.DELETED },
+    },
     select: { id: true, platform: true },
   });
 
@@ -198,7 +209,10 @@ export class DashboardService {
 
     // Get campaigns
     const totalCampaigns = await this.prisma.campaign.count({
-      where: { tenantId },
+      where: {
+        tenantId,
+        status: { not: CampaignStatus.DELETED },
+      },
     });
     const activeCampaigns = await this.prisma.campaign.count({
       where: {
@@ -211,6 +225,7 @@ export class DashboardService {
     const previousTotalCampaigns = await this.prisma.campaign.count({
       where: {
         tenantId,
+        status: { not: CampaignStatus.DELETED },
         createdAt: {
           lte: currentStartDate,
         },
@@ -251,22 +266,14 @@ export class DashboardService {
         ? useMockCurrent
           ? !!(await this.prisma.metric.findFirst({
             where: {
-              tenantId,
-              date: {
-                gte: currentStartDate,
-                lte: today,
-              },
+              ...buildMetricWhere(tenantId, currentStartDate, today, false, true),
               isMockData: true,
             },
           }))
           : false
         : !!(await this.prisma.metric.findFirst({
           where: {
-            tenantId,
-            date: {
-              gte: currentStartDate,
-              lte: today,
-            },
+            ...buildMetricWhere(tenantId, currentStartDate, today, false, true),
             isMockData: true,
           },
         }))
@@ -326,15 +333,19 @@ export class DashboardService {
     let activeCampaigns = 0;
 
     if (platform === 'ALL') {
-      totalCampaigns = await this.prisma.campaign.count({ where: { tenantId } });
+      totalCampaigns = await this.prisma.campaign.count({
+        where: {
+          tenantId,
+          status: { not: CampaignStatus.DELETED },
+        },
+      });
       activeCampaigns = await this.prisma.campaign.count({ where: { tenantId, status: CampaignStatus.ACTIVE } });
     } else if (platformEnum === ('INSTAGRAM' as any as AdPlatform)) {
       const campaignIds = await this.prisma.metric.groupBy({
         by: ['campaignId'],
         where: {
+          ...buildMetricWhere(tenantId, currentStartDate, today, hideMockData, true, 'INSTAGRAM' as any),
           tenantId,
-          platform: 'INSTAGRAM' as any,
-          date: { gte: currentStartDate, lte: today },
         },
       });
       const ids = campaignIds.map((c) => c.campaignId);
@@ -346,7 +357,11 @@ export class DashboardService {
         : 0;
     } else {
       totalCampaigns = await this.prisma.campaign.count({
-        where: { tenantId, platform: platformEnum },
+        where: {
+          tenantId,
+          platform: platformEnum,
+          status: { not: CampaignStatus.DELETED },
+        },
       });
       activeCampaigns = await this.prisma.campaign.count({
         where: { tenantId, status: CampaignStatus.ACTIVE, platform: platformEnum },
@@ -390,18 +405,14 @@ export class DashboardService {
         ? useMockCurrent
           ? await this.prisma.metric.findFirst({
             where: {
-              tenantId,
-              date: { gte: currentStartDate, lte: today },
-              ...(platform !== 'ALL' ? { platform: platformEnum } : {}),
+              ...buildMetricWhere(tenantId, currentStartDate, today, false, true, platform !== 'ALL' ? platformEnum : undefined),
               isMockData: true,
             },
           })
           : null
         : await this.prisma.metric.findFirst({
           where: {
-            tenantId,
-            date: { gte: currentStartDate, lte: today },
-            ...(platform !== 'ALL' ? { platform: platformEnum } : {}),
+            ...buildMetricWhere(tenantId, currentStartDate, today, false, true, platform !== 'ALL' ? platformEnum : undefined),
             isMockData: true,
           },
         })
@@ -804,7 +815,10 @@ export class DashboardService {
       by: ['campaignId'],
       where: {
         campaignId: { in: campaignIds },
-        campaign: { tenantId },
+        campaign: {
+          tenantId,
+          status: { not: CampaignStatus.DELETED },
+        },
         ...(hideMockData && { isMockData: false }),
       },
       _sum: {
@@ -894,8 +908,7 @@ export class DashboardService {
     // Check if the current response is using mock data for Today
     const hasMockData = !hideMockData && period === PeriodEnum.ONE_DAY && useMockCurrent && !!(await this.prisma.metric.findFirst({
       where: {
-        tenantId,
-        date: { gte: startDate, lte: endDate },
+        ...buildMetricWhere(tenantId, startDate, endDate, false, true),
         isMockData: true,
       },
     }));
