@@ -9,6 +9,7 @@ import { AdsApiLogService } from '../../../common/services/ads-api-log.service';
 export class TikTokAdsService implements MarketingPlatformAdapter {
   private readonly logger = new Logger(TikTokAdsService.name);
   private readonly baseUrl = 'https://business-api.tiktok.com/open_api/v1.3';
+  private readonly requestTimeoutMs = 15000;
 
   constructor(
     private readonly configService: ConfigService,
@@ -51,6 +52,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
           app_id: this.configService.get('TIKTOK_APP_ID'),
           advertiser_ids: JSON.stringify([credentials.accountId]),
         },
+        timeout: this.requestTimeoutMs,
       });
       return response.data?.code === 0;
     } catch (error) {
@@ -78,6 +80,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
           advertiser_id: credentials.accountId,
           page_size: 1000,
         },
+        timeout: this.requestTimeoutMs,
       });
 
       if (response.data?.code !== 0) {
@@ -119,6 +122,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
               filtering: JSON.stringify([{ field_name: 'campaign_ids', filter_type: 'IN', filter_value: JSON.stringify(campaignIds) }]),
               page_size: 1000,
             },
+            timeout: this.requestTimeoutMs,
           });
           if (metricsResponse.data?.code === 0) {
             const lifetimeList = metricsResponse.data.data.list || [];
@@ -254,6 +258,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
             ]),
             page_size: 1000,
           },
+          timeout: this.requestTimeoutMs,
         });
 
         if (resp.data?.code !== 0) {
