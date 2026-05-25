@@ -34,8 +34,9 @@ import {
 const CHECKLIST_PLATFORM_IDS = [
     'google-ads',
     'google-analytics',
-    'facebook-ads',
-    'line-ads',
+    'google-search-console',
+    //'facebook-ads',
+    //'line-ads',
     'tiktok-ads',
 ] as const;
 
@@ -43,6 +44,7 @@ const statusKeyMap: Record<string, keyof IntegrationStatus> = {
     'google-ads': 'googleAds',
     'google-analytics': 'googleAnalytics',
     'facebook-ads': 'facebookAds',
+    'google-search-console': 'googleSearchConsole',
     'line-ads': 'lineAds',
     'tiktok-ads': 'tiktokAds',
 };
@@ -91,6 +93,17 @@ const PLATFORM_STYLES: Record<
             'group-hover:ring-pink-200/80 dark:group-hover:ring-pink-700/50',
         glowColor:
             'group-hover:shadow-pink-100/50 dark:group-hover:shadow-pink-900/30',
+    },
+
+    'google-search-console': {
+        bgGradient:
+            'from-emerald-50/50 to-sky-50/30 dark:from-emerald-950/20 dark:to-sky-950/10',
+        hoverBorder:
+            'hover:border-emerald-200 dark:hover:border-emerald-800',
+        iconRing:
+            'group-hover:ring-emerald-200/80 dark:group-hover:ring-emerald-700/50',
+        glowColor:
+            'group-hover:shadow-emerald-100/50 dark:group-hover:shadow-emerald-900/30',
     },
 
     'line-ads': {

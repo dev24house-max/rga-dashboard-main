@@ -68,6 +68,27 @@ export function BrandLogo({ platformId, className }: BrandLogoProps) {
                     />
                 </svg>
             );
+        case 'google-search-console':
+        case 'search-console':
+            return (
+                <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+                    <rect x="13" y="8" width="38" height="48" rx="8" fill="#E8F5E9" />
+                    <path
+                        d="M21 20h22M21 27h14"
+                        stroke="#4285F4"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                    />
+                    <path
+                        d="M21 42l8-8 7 6 10-13"
+                        stroke="#34A853"
+                        strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                    />
+                </svg>
+            );
         case 'shopee':
             return (
                 <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
