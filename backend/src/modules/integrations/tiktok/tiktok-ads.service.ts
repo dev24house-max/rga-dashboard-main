@@ -10,6 +10,7 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
   private readonly logger = new Logger(TikTokAdsService.name);
   private readonly baseUrl = 'https://business-api.tiktok.com/open_api/v1.3';
   private readonly requestTimeoutMs = 15000;
+  private readonly metricsLookbackDays = 30;
 
   constructor(
     private readonly configService: ConfigService,
@@ -39,6 +40,13 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
     const fallbackDate = new Date(statTimeDay as string);
     this.logger.warn(`[TikTok Date Parse] Invalid stat_time_day: ${String(statTimeDay)}`);
     return fallbackDate;
+  }
+
+  private getBangkokDateString(daysAgo = 0): string {
+    const bangkokOffsetMs = 7 * 60 * 60 * 1000;
+    const bangkokNow = new Date(Date.now() + bangkokOffsetMs);
+    bangkokNow.setUTCDate(bangkokNow.getUTCDate() - daysAgo);
+    return bangkokNow.toISOString().split('T')[0];
   }
 
   async validateCredentials(credentials: PlatformCredentials): Promise<boolean> {
@@ -98,14 +106,20 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
       });
       const campaignIds = campaignList.map((c: any) => c.campaign_id);
 
-      // 2. Fetch Absolute Lifetime Metrics for these campaigns
-      // We use a very wide range to simulate "Lifetime"
+      // 2. Fetch recent summary metrics for these campaigns.
+      // TikTok report endpoints reject very wide ranges, so keep this aligned
+      // with the scheduler lookback instead of querying from account lifetime.
       let lifetimeMetricsMap = new Map();
       if (campaignIds.length > 0) {
-        await this.adsApiLogService.info('TikTokAds', 'Fetching lifetime metrics', {
+        const summaryStartDate = this.getBangkokDateString(this.metricsLookbackDays - 1);
+        const summaryEndDate = this.getBangkokDateString();
+
+        await this.adsApiLogService.info('TikTokAds', 'Fetching 30-day summary metrics', {
           accountId: credentials.accountId,
           endpoint: `${this.baseUrl}/report/integrated/get/`,
           campaignIds: campaignIds.slice(0, 10),
+          startDate: summaryStartDate,
+          endDate: summaryEndDate,
         });
 
         try {
@@ -117,8 +131,8 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
               data_level: 'AUCTION_CAMPAIGN',
               dimensions: JSON.stringify(['campaign_id']),
               metrics: JSON.stringify(['impressions', 'clicks', 'spend']),
-              start_date: '2020-01-01',
-              end_date: new Date().toISOString().split('T')[0],
+              start_date: summaryStartDate,
+              end_date: summaryEndDate,
               filtering: JSON.stringify([{ field_name: 'campaign_ids', filter_type: 'IN', filter_value: JSON.stringify(campaignIds) }]),
               page_size: 1000,
             },
@@ -139,8 +153,8 @@ export class TikTokAdsService implements MarketingPlatformAdapter {
             });
           }
         } catch (e) {
-          this.logger.warn(`Failed to fetch lifetime metrics for TikTok campaigns: ${e.message}`);
-          await this.adsApiLogService.warn('TikTokAds', 'Failed to fetch lifetime metrics', {
+          this.logger.warn(`Failed to fetch 30-day summary metrics for TikTok campaigns: ${e.message}`);
+          await this.adsApiLogService.warn('TikTokAds', 'Failed to fetch 30-day summary metrics', {
             error: e instanceof Error ? e.message : e,
             accountId: credentials.accountId,
           });
