@@ -9,7 +9,7 @@ import { AdsApiLogService } from '../../../common/services/ads-api-log.service';
 export class TikTokAdsService implements MarketingPlatformAdapter {
   private readonly logger = new Logger(TikTokAdsService.name);
   private readonly baseUrl = 'https://business-api.tiktok.com/open_api/v1.3';
-  private readonly requestTimeoutMs = 15000;
+  private readonly requestTimeoutMs = 60000;
   private readonly metricsLookbackDays = 30;
 
   constructor(
