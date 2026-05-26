@@ -78,9 +78,12 @@ export function useTutorialFlow() {
 
   const handleSkip = useCallback(() => {
     setIsActive(false);
+    setIsComplete(true);
     setManualPagePath(null);
-    // Do not mark as completed on skip
-  }, []);
+    if (storageKey) {
+      localStorage.setItem(storageKey, 'true');
+    }
+  }, [storageKey]);
 
   return {
     isActive,
