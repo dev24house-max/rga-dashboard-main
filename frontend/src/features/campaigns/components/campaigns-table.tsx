@@ -455,7 +455,7 @@ export function CampaignsTable({
                                         {/* 2. CAMPAIGN NAME */}
                                         <TableCell className="min-w-0">
                                             <Link href={`/campaigns/${campaign.id}`}>
-                                                <span className="block min-w-0 wrap-break-word font-medium hover:underline text-primary cursor-pointer" title={campaign.name}>{campaign.name}</span>
+                                                <span className="block min-w-0 wrap-break-word font-medium text-primary hover:underline dark:text-blue-300 dark:hover:text-blue-200 cursor-pointer" title={campaign.name}>{campaign.name}</span>
                                             </Link>
                                         </TableCell>
 
