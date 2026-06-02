@@ -1,25 +1,42 @@
 import { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { useFormatter } from '@/hooks/use-formatter';
-import { Calculator, TrendingUp, Users, DollarSign, Target, ArrowLeft } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+    Calculator,
+    TrendingUp,
+    Users,
+    DollarSign,
+    Target,
+    ArrowLeft,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/i18n/use-translation';
 
 interface MarketingToolsProps {
     onBack?: () => void;
 }
 
 export function MarketingTools({ onBack }: MarketingToolsProps) {
+    const { t } = useTranslation('aiInsights');
     const [activeTab, setActiveTab] = useState('conversion');
 
     // State for calculators
-    const [conversion, setConversion] = useState({ actions: '', visitors: '', result: 0 });
+    const [conversion, setConversion] = useState({
+        actions: '',
+        visitors: '',
+        result: 0,
+    });
     const [roi, setRoi] = useState({ revenue: '', cost: '', result: 0 });
     const [cpl, setCpl] = useState({ cost: '', leads: '', result: 0 });
-    const [leads, setLeads] = useState({ traffic: '', conversionRate: '', result: 0 });
+    const [leads, setLeads] = useState({
+        traffic: '',
+        conversionRate: '',
+        result: 0,
+    });
     const [cpa, setCpa] = useState({ cost: '', customers: '', result: 0 });
     const [profit, setProfit] = useState({ revenue: '', cost: '', result: 0 });
 
@@ -30,7 +47,10 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const actions = parseFloat(newData.actions) || 0;
         const visitors = parseFloat(newData.visitors) || 0;
         const result = visitors > 0 ? (actions / visitors) * 100 : 0;
-        setConversion(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
+        setConversion((prev) => ({
+            ...prev,
+            result: parseFloat(result.toFixed(2)),
+        }));
     };
 
     const calculateRoi = (key: string, value: string) => {
@@ -39,7 +59,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const revenue = parseFloat(newData.revenue) || 0;
         const cost = parseFloat(newData.cost) || 0;
         const result = cost > 0 ? ((revenue - cost) / cost) * 100 : 0;
-        setRoi(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
+        setRoi((prev) => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
     };
 
     const calculateCpl = (key: string, value: string) => {
@@ -48,7 +68,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const cost = parseFloat(newData.cost) || 0;
         const leadsCount = parseFloat(newData.leads) || 0;
         const result = leadsCount > 0 ? cost / leadsCount : 0;
-        setCpl(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
+        setCpl((prev) => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
     };
 
     const calculateLeads = (key: string, value: string) => {
@@ -57,7 +77,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const traffic = parseFloat(newData.traffic) || 0;
         const rate = parseFloat(newData.conversionRate) || 0;
         const result = (traffic * rate) / 100;
-        setLeads(prev => ({ ...prev, result: Math.round(result) }));
+        setLeads((prev) => ({ ...prev, result: Math.round(result) }));
     };
 
     const calculateCpa = (key: string, value: string) => {
@@ -66,7 +86,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const cost = parseFloat(newData.cost) || 0;
         const customers = parseFloat(newData.customers) || 0;
         const result = customers > 0 ? cost / customers : 0;
-        setCpa(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
+        setCpa((prev) => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
     };
 
     const calculateProfit = (key: string, value: string) => {
@@ -75,18 +95,21 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
         const revenue = parseFloat(newData.revenue) || 0;
         const cost = parseFloat(newData.cost) || 0;
         const result = revenue - cost;
-        setProfit(prev => ({ ...prev, result: parseFloat(result.toFixed(2)) }));
+        setProfit((prev) => ({
+            ...prev,
+            result: parseFloat(result.toFixed(2)),
+        }));
     };
 
     const { currencyCode, formatCurrency } = useFormatter();
 
     const tabs = [
-        { id: 'conversion', label: 'Conversion Rate', icon: Target },
-        { id: 'lead', label: 'Lead/Traffic', icon: Users },
-        { id: 'roi', label: 'ROI', icon: TrendingUp },
-        { id: 'profit', label: 'Profit', icon: DollarSign },
-        { id: 'cpl', label: 'CPL', icon: DollarSign },
-        { id: 'cpa', label: 'CPA', icon: Calculator },
+        { id: 'conversion', label: t('tools.tabs.conversion'), icon: Target },
+        { id: 'lead', label: t('tools.tabs.lead'), icon: Users },
+        { id: 'roi', label: t('tools.tabs.roi'), icon: TrendingUp },
+        { id: 'profit', label: t('tools.tabs.profit'), icon: DollarSign },
+        { id: 'cpl', label: t('tools.tabs.cpl'), icon: DollarSign },
+        { id: 'cpa', label: t('tools.tabs.cpa'), icon: Calculator },
     ];
 
     return (
@@ -101,7 +124,9 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                             <div className="p-1 sm:p-1.5 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
                                 <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
                             </div>
-                            <span className="hidden sm:inline text-xs sm:text-sm font-bold text-slate-700 group-hover:text-slate-900">Back to AI Assistant</span>
+                            <span className="hidden sm:inline text-xs sm:text-sm font-bold text-slate-700 group-hover:text-slate-900">
+                                {t('tools.backToAssistant')}
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -118,10 +143,10 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                     <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                    Marketing Calculators
+                    {t('tools.title')}
                 </h2>
                 <p className="text-slate-500 text-xs sm:text-base max-w-lg leading-5 sm:leading-6">
-                    Simple calculators for your digital marketing metrics.
+                    {t('tools.subtitle')}
                 </p>
             </motion.div>
 
@@ -142,13 +167,20 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={cn(
-                                        "relative flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-2 text-xs sm:text-sm font-medium transition-colors duration-200",
+                                        'relative flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-2 text-xs sm:text-sm font-medium transition-colors duration-200',
                                         isActive
-                                            ? "text-orange-600"
-                                            : "text-slate-500 hover:text-slate-700"
+                                            ? 'text-orange-600'
+                                            : 'text-slate-500 hover:text-slate-700'
                                     )}
                                 >
-                                    <Icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-orange-600" : "text-slate-400")} />
+                                    <Icon
+                                        className={cn(
+                                            'w-4 h-4 flex-shrink-0',
+                                            isActive
+                                                ? 'text-orange-600'
+                                                : 'text-slate-400'
+                                        )}
+                                    />
                                     <span>{tab.label}</span>
                                     {isActive && (
                                         <motion.span
@@ -171,7 +203,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                         transition={{ delay: 0.3, duration: 0.5 }}
                         className="md:col-span-4 space-y-4 order-2 md:order-1"
                     >
-                        <AnimatePresence mode='wait'>
+                        <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeTab}
                                 initial={{ opacity: 0, y: 10 }}
@@ -181,31 +213,63 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                 className="bg-slate-50 rounded-xl p-4 sm:p-6 border border-slate-100"
                             >
                                 <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                    {activeTab === 'conversion' && <Target className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    {activeTab === 'roi' && <TrendingUp className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    {activeTab === 'profit' && <DollarSign className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    {activeTab === 'cpl' && <DollarSign className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    {activeTab === 'lead' && <Users className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    {activeTab === 'cpa' && <Calculator className="w-5 h-5 text-orange-600 flex-shrink-0" />}
-                                    <span className="truncate">{tabs.find(t => t.id === activeTab)?.label}</span>
+                                    {activeTab === 'conversion' && (
+                                        <Target className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    {activeTab === 'roi' && (
+                                        <TrendingUp className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    {activeTab === 'profit' && (
+                                        <DollarSign className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    {activeTab === 'cpl' && (
+                                        <DollarSign className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    {activeTab === 'lead' && (
+                                        <Users className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    {activeTab === 'cpa' && (
+                                        <Calculator className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                                    )}
+                                    <span className="truncate">
+                                        {
+                                            tabs.find(
+                                                (tab) => tab.id === activeTab
+                                            )?.label
+                                        }
+                                    </span>
                                 </h3>
                                 <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
-                                    {activeTab === 'conversion' && "Calculate the percentage of visitors who complete a desired action."}
-                                    {activeTab === 'roi' && "Determine the profitability of your investment."}
-                                    {activeTab === 'profit' && "Calculate your net profit by subtracting total costs from total revenue."}
-                                    {activeTab === 'cpl' && "Find out how much each lead costs you."}
-                                    {activeTab === 'lead' && "Estimate potential leads based on traffic and conversion rate."}
-                                    {activeTab === 'cpa' && "Calculate the cost to acquire a paying customer."}
+                                    {activeTab === 'conversion' &&
+                                        t('tools.descriptions.conversion')}
+                                    {activeTab === 'roi' &&
+                                        t('tools.descriptions.roi')}
+                                    {activeTab === 'profit' &&
+                                        t('tools.descriptions.profit')}
+                                    {activeTab === 'cpl' &&
+                                        t('tools.descriptions.cpl')}
+                                    {activeTab === 'lead' &&
+                                        t('tools.descriptions.lead')}
+                                    {activeTab === 'cpa' &&
+                                        t('tools.descriptions.cpa')}
                                 </p>
                                 <div className="pt-4 border-t border-slate-200">
-                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Tip</span>
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+                                        {t('tools.tip')}
+                                    </span>
                                     <p className="text-slate-600 text-xs sm:text-sm">
-                                        {activeTab === 'conversion' && "Consider load time and clear CTAs."}
-                                        {activeTab === 'roi' && "Focus on high-value activities."}
-                                        {activeTab === 'profit' && "Keep track of all overhead costs."}
-                                        {activeTab === 'cpl' && "Target your audience more precisely."}
-                                        {activeTab === 'lead' && "Quality traffic converts better."}
-                                        {activeTab === 'cpa' && "Retargeting usually lowers CPA."}
+                                        {activeTab === 'conversion' &&
+                                            t('tools.tips.conversion')}
+                                        {activeTab === 'roi' &&
+                                            t('tools.tips.roi')}
+                                        {activeTab === 'profit' &&
+                                            t('tools.tips.profit')}
+                                        {activeTab === 'cpl' &&
+                                            t('tools.tips.cpl')}
+                                        {activeTab === 'lead' &&
+                                            t('tools.tips.lead')}
+                                        {activeTab === 'cpa' &&
+                                            t('tools.tips.cpa')}
                                     </p>
                                 </div>
                             </motion.div>
@@ -220,7 +284,7 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                         className="md:col-span-8 order-1 md:order-2"
                     >
                         <Card className="border border-slate-200 shadow-sm bg-white rounded-xl overflow-hidden">
-                            <AnimatePresence mode='wait'>
+                            <AnimatePresence mode="wait">
                                 <motion.div
                                     key={activeTab}
                                     initial={{ opacity: 0, x: 20 }}
@@ -234,38 +298,76 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Number of Actions</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.numberOfActions'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={conversion.actions}
-                                                            onChange={(e) => calculateConversion('actions', e.target.value)}
+                                                            value={
+                                                                conversion.actions
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateConversion(
+                                                                    'actions',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Visitors</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalVisitors'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={conversion.visitors}
-                                                            onChange={(e) => calculateConversion('visitors', e.target.value)}
+                                                            value={
+                                                                conversion.visitors
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateConversion(
+                                                                    'visitors',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Conversion Rate</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.conversionRate'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
-                                                            key={conversion.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            key={
+                                                                conversion.result
+                                                            }
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
                                                             {conversion.result}
                                                         </motion.span>
-                                                        <span className="text-base sm:text-lg font-medium text-slate-500">%</span>
+                                                        <span className="text-base sm:text-lg font-medium text-slate-500">
+                                                            %
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -276,38 +378,72 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Revenue ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.revenue',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={roi.revenue}
-                                                            onChange={(e) => calculateRoi('revenue', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateRoi(
+                                                                    'revenue',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Investment Cost ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.investmentCost',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={roi.cost}
-                                                            onChange={(e) => calculateRoi('cost', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateRoi(
+                                                                    'cost',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Return on Investment</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.returnOnInvestment'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
                                                             key={roi.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
                                                             {roi.result}
                                                         </motion.span>
-                                                        <span className="text-base sm:text-lg font-medium text-slate-500">%</span>
+                                                        <span className="text-base sm:text-lg font-medium text-slate-500">
+                                                            %
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -318,39 +454,78 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Revenue ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalRevenue',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={profit.revenue}
-                                                            onChange={(e) => calculateProfit('revenue', e.target.value)}
+                                                            value={
+                                                                profit.revenue
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateProfit(
+                                                                    'revenue',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalCost',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={profit.cost}
-                                                            onChange={(e) => calculateProfit('cost', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateProfit(
+                                                                    'cost',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Net Profit</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.netProfit'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
                                                             key={profit.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className={cn(
-                                                                "text-2xl sm:text-3xl font-bold",
-                                                                profit.result >= 0 ? "text-slate-900" : "text-red-600"
+                                                                'text-2xl sm:text-3xl font-bold',
+                                                                profit.result >=
+                                                                    0
+                                                                    ? 'text-slate-900'
+                                                                    : 'text-red-600'
                                                             )}
                                                         >
-                                                            {formatCurrency(profit.result)}
+                                                            {formatCurrency(
+                                                                profit.result
+                                                            )}
                                                         </motion.span>
                                                     </div>
                                                 </div>
@@ -362,36 +537,72 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Spend ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalSpend',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={cpl.cost}
-                                                            onChange={(e) => calculateCpl('cost', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateCpl(
+                                                                    'cost',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Leads</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalLeads'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={cpl.leads}
-                                                            onChange={(e) => calculateCpl('leads', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateCpl(
+                                                                    'leads',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Cost Per Lead</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.costPerLead'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
                                                             key={cpl.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
-                                                            {formatCurrency(cpl.result, { maximumFractionDigits: 0 })}
+                                                            {formatCurrency(
+                                                                cpl.result,
+                                                                {
+                                                                    maximumFractionDigits: 0,
+                                                                }
+                                                            )}
                                                         </motion.span>
                                                     </div>
                                                 </div>
@@ -403,38 +614,76 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Monthly Traffic</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.monthlyTraffic'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={leads.traffic}
-                                                            onChange={(e) => calculateLeads('traffic', e.target.value)}
+                                                            value={
+                                                                leads.traffic
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateLeads(
+                                                                    'traffic',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Expected Conversion (%)</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.expectedConversion'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={leads.conversionRate}
-                                                            onChange={(e) => calculateLeads('conversionRate', e.target.value)}
+                                                            value={
+                                                                leads.conversionRate
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateLeads(
+                                                                    'conversionRate',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Projected Leads</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.projectedLeads'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
                                                             key={leads.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
                                                             {leads.result}
                                                         </motion.span>
-                                                        <span className="text-sm sm:text-lg font-medium text-slate-500">Leads</span>
+                                                        <span className="text-sm sm:text-lg font-medium text-slate-500">
+                                                            {t(
+                                                                'tools.labels.leadsUnit'
+                                                            )}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -445,36 +694,74 @@ export function MarketingTools({ onBack }: MarketingToolsProps) {
                                             <div className="space-y-4 sm:space-y-6">
                                                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Total Cost Used ({currencyCode})</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.totalCostUsed',
+                                                                { currencyCode }
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
                                                             value={cpa.cost}
-                                                            onChange={(e) => calculateCpa('cost', e.target.value)}
+                                                            onChange={(e) =>
+                                                                calculateCpa(
+                                                                    'cost',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">Number of Customers</Label>
+                                                        <Label className="text-slate-700 font-medium text-xs sm:text-sm">
+                                                            {t(
+                                                                'tools.labels.numberOfCustomers'
+                                                            )}
+                                                        </Label>
                                                         <Input
                                                             type="number"
                                                             className="h-10 rounded-lg border-slate-300 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                                             placeholder="0"
-                                                            value={cpa.customers}
-                                                            onChange={(e) => calculateCpa('customers', e.target.value)}
+                                                            value={
+                                                                cpa.customers
+                                                            }
+                                                            onChange={(e) =>
+                                                                calculateCpa(
+                                                                    'customers',
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <span className="text-slate-700 font-medium text-sm">Cost Per Customer</span>
+                                                    <span className="text-slate-700 font-medium text-sm">
+                                                        {t(
+                                                            'tools.labels.costPerCustomer'
+                                                        )}
+                                                    </span>
                                                     <div className="flex items-baseline gap-1">
                                                         <motion.span
                                                             key={cpa.result}
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
+                                                            initial={{
+                                                                opacity: 0,
+                                                                y: -10,
+                                                            }}
+                                                            animate={{
+                                                                opacity: 1,
+                                                                y: 0,
+                                                            }}
                                                             className="text-2xl sm:text-3xl font-bold text-slate-900"
                                                         >
-                                                            {formatCurrency(cpa.result, { maximumFractionDigits: 0 })}
+                                                            {formatCurrency(
+                                                                cpa.result,
+                                                                {
+                                                                    maximumFractionDigits: 0,
+                                                                }
+                                                            )}
                                                         </motion.span>
                                                     </div>
                                                 </div>

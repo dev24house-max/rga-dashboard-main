@@ -1,8 +1,17 @@
-﻿import { useState, useEffect } from "react";
-import { TrendingUp, Lightbulb, ArrowLeft, ChevronDown, BarChart3, Zap, Loader } from "lucide-react";
-import chatbotImage from "../../chat/chatbot.webp";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAiSummary } from "../hooks/use-ai-summary";
+﻿import { useState, useEffect } from 'react';
+import {
+    TrendingUp,
+    Lightbulb,
+    ArrowLeft,
+    ChevronDown,
+    BarChart3,
+    Zap,
+    Loader,
+} from 'lucide-react';
+import chatbotImage from '../../chat/chatbot.webp';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAiSummary } from '../hooks/use-ai-summary';
+import { useTranslation } from '@/i18n/use-translation';
 
 export interface AiDetailSummaryCard {
     label: string;
@@ -41,10 +50,16 @@ interface AiDetailSummaryProps {
     data?: AiDetailSummaryData;
 }
 
-export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps) {
+export function AiDetailSummary({
+    onBack,
+    data: propData,
+}: AiDetailSummaryProps) {
+    const { t } = useTranslation('aiInsights');
     const [expandedSections, setExpandedSections] = useState<number[]>([]);
     const { data: webhookData, isLoading, error } = useAiSummary(!propData);
-    const [data, setData] = useState<AiDetailSummaryData | null>(propData || null);
+    const [data, setData] = useState<AiDetailSummaryData | null>(
+        propData || null
+    );
 
     // Use webhook data if available, otherwise use prop data
     useEffect(() => {
@@ -55,12 +70,13 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
         }
     }, [webhookData, propData]);
 
-    const hasSummaryData = data && (data.summaryCards.length > 0 || data.sections.length > 0);
+    const hasSummaryData =
+        data && (data.summaryCards.length > 0 || data.sections.length > 0);
 
     const today = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
     });
 
     // Show loading state
@@ -76,14 +92,18 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                             <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
                                 <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                             </div>
-                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
+                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">
+                                {t('detailSummary.backToAssistant')}
+                            </span>
                         </button>
                     </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <Loader className="w-8 h-8 text-indigo-600 dark:text-orange-500 animate-spin mx-auto mb-3" />
-                        <p className="text-slate-600 dark:text-zinc-400 font-medium">Loading summary data...</p>
+                        <p className="text-slate-600 dark:text-zinc-400 font-medium">
+                            {t('detailSummary.loading')}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -103,14 +123,21 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                             <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
                                 <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                             </div>
-                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
+                            <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">
+                                {t('detailSummary.backToAssistant')}
+                            </span>
                         </button>
                     </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center p-8">
                     <div className="max-w-md text-center">
-                        <p className="text-red-600 dark:text-red-400 font-medium mb-2">Failed to Load Data</p>
-                        <p className="text-slate-600 dark:text-zinc-500 text-sm">{error?.message || 'Could not fetch summary data from the server.'}</p>
+                        <p className="text-red-600 dark:text-red-400 font-medium mb-2">
+                            {t('detailSummary.errorTitle')}
+                        </p>
+                        <p className="text-slate-600 dark:text-zinc-500 text-sm">
+                            {error?.message ||
+                                t('detailSummary.errorDescription')}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -129,7 +156,9 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                         <div className="p-1.5 bg-slate-100 dark:bg-zinc-600 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-zinc-500 transition-colors">
                             <ArrowLeft className="w-4 h-4 text-slate-600 dark:text-zinc-200" />
                         </div>
-                        <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">Back to AI Assistant</span>
+                        <span className="hidden md:inline text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-slate-900 dark:group-hover:text-zinc-100">
+                            {t('detailSummary.backToAssistant')}
+                        </span>
                     </button>
                 </div>
             </div>
@@ -137,7 +166,6 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
             {/* Summary Content Body */}
             <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-slate-50/50 dark:bg-zinc-900/50">
                 <div className="max-w-4xl mx-auto space-y-6">
-
                     {/* Hero Banner */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -148,30 +176,50 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                         <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
                             animate={{
-                                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                                backgroundPosition: [
+                                    '0% 50%',
+                                    '100% 50%',
+                                    '0% 50%',
+                                ],
                             }}
                             transition={{
                                 duration: 5,
                                 repeat: Infinity,
-                                ease: "easeInOut",
+                                ease: 'easeInOut',
                             }}
-                            style={{ backgroundSize: "200% 200%" }}
+                            style={{ backgroundSize: '200% 200%' }}
                         />
                         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-3">
-                                <img src={chatbotImage} alt="AI" className="w-5 h-5 object-contain" />
-                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-200">AI-Generated Report</span>
+                                <img
+                                    src={chatbotImage}
+                                    alt={t('assistant.imageAlt')}
+                                    className="w-5 h-5 object-contain"
+                                />
+                                <span className="text-xs font-bold uppercase tracking-widest text-indigo-200">
+                                    {t('detailSummary.heroBadge')}
+                                </span>
                             </div>
-                            <h2 className="text-xl md:text-2xl font-bold mb-1">Daily Strategic Summary</h2>
-                            <p className="text-indigo-200 text-sm">{today} — Auto-generated from all connected data sources</p>
+                            <h2 className="text-xl md:text-2xl font-bold mb-1">
+                                {t('detailSummary.heroTitle')}
+                            </h2>
+                            <p className="text-indigo-200 text-sm">
+                                {t('detailSummary.heroDateLine', {
+                                    date: today,
+                                })}
+                            </p>
                         </div>
                     </motion.div>
 
                     {!hasSummaryData ? (
                         <div className="rounded-3xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 text-center shadow-sm">
-                            <p className="text-base font-semibold text-slate-800 dark:text-zinc-100">No Summary Data Available</p>
-                            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Ask the AI assistant to generate a summary report first, then come back to view it here.</p>
+                            <p className="text-base font-semibold text-slate-800 dark:text-zinc-100">
+                                {t('detailSummary.noDataTitle')}
+                            </p>
+                            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">
+                                {t('detailSummary.noDataDescription')}
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -182,24 +230,33 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                         key={i}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
+                                        transition={{
+                                            duration: 0.5,
+                                            delay: 0.1 + i * 0.1,
+                                        }}
                                         className="bg-white dark:bg-zinc-800 rounded-xl p-4 border border-slate-200 dark:border-zinc-700 shadow-sm hover:border-slate-300 dark:hover:border-zinc-600 hover:shadow-md transition-all duration-300 group cursor-pointer"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className={`text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 transition-colors ${item.bg ?? ''}`}>
+                                            <p
+                                                className={`text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 transition-colors ${item.bg ?? ''}`}
+                                            >
                                                 {item.label}
                                             </p>
-                                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${item.trend === 'up' ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'}`}>
+                                            <span
+                                                className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${item.trend === 'up' ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'}`}
+                                            >
                                                 {item.delta}
                                             </span>
                                         </div>
-                                        <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-zinc-100 mb-1">{item.value}</p>
-                                        <p className="text-[11px] text-slate-400 dark:text-zinc-500">From last period</p>
+                                        <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-zinc-100 mb-1">
+                                            {item.value}
+                                        </p>
+                                        <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+                                            {t('detailSummary.fromLastPeriod')}
+                                        </p>
                                     </motion.div>
                                 ))}
                             </div>
-
-
 
                             {/* Key Insight Card */}
                         </>
@@ -214,10 +271,14 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                             <Lightbulb className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-1">{data!.insight.title}</h3>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-1">
+                                {data!.insight.title}
+                            </h3>
                             <p className="text-slate-600 dark:text-zinc-400 text-sm leading-relaxed">
                                 {data!.insight.message}
-                                <strong className="text-amber-700 dark:text-amber-400 block mt-1">{data!.insight.recommendation}</strong>
+                                <strong className="text-amber-700 dark:text-amber-400 block mt-1">
+                                    {data!.insight.recommendation}
+                                </strong>
                             </p>
                         </div>
                     </motion.div>
@@ -227,19 +288,28 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                         {data!.sections.map((section, idx) => {
                             const isExpanded = expandedSections.includes(idx);
                             const toggleSection = () => {
-                                setExpandedSections(prev =>
-                                    prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+                                setExpandedSections((prev) =>
+                                    prev.includes(idx)
+                                        ? prev.filter((i) => i !== idx)
+                                        : [...prev, idx]
                                 );
                             };
 
-                            const SectionIcon = section.title.toLowerCase().includes('campaign') ? Zap : BarChart3;
+                            const SectionIcon = section.title
+                                .toLowerCase()
+                                .includes('campaign')
+                                ? Zap
+                                : BarChart3;
 
                             return (
                                 <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.4, delay: 0.2 + idx * 0.1 }}
+                                    transition={{
+                                        duration: 0.4,
+                                        delay: 0.2 + idx * 0.1,
+                                    }}
                                     className="bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden col-span-1 h-fit"
                                 >
                                     {/* Premium Header - Compact */}
@@ -247,14 +317,24 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                         onClick={toggleSection}
                                         className="w-full px-4 py-3 flex items-start gap-3 text-left group"
                                     >
-                                        <div className={`w-10 h-10 rounded-lg ${section.headerBg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300`}>
-                                            <SectionIcon className={`w-5 h-5 ${section.iconColor}`} />
+                                        <div
+                                            className={`w-10 h-10 rounded-lg ${section.headerBg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300`}
+                                        >
+                                            <SectionIcon
+                                                className={`w-5 h-5 ${section.iconColor}`}
+                                            />
                                         </div>
                                         <div className="flex-1 pt-0.5">
                                             <div className="flex items-center justify-between">
-                                                <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100">{section.title}</h3>
-                                                <div className={`p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors ${isExpanded ? 'bg-slate-100 dark:bg-zinc-700' : ''}`}>
-                                                    <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-zinc-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                                <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100">
+                                                    {section.title}
+                                                </h3>
+                                                <div
+                                                    className={`p-1 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors ${isExpanded ? 'bg-slate-100 dark:bg-zinc-700' : ''}`}
+                                                >
+                                                    <ChevronDown
+                                                        className={`w-4 h-4 text-slate-400 dark:text-zinc-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                                                    />
                                                 </div>
                                             </div>
                                             {!isExpanded && (
@@ -269,10 +349,19 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                     <AnimatePresence initial={false}>
                                         {isExpanded && (
                                             <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
+                                                initial={{
+                                                    height: 0,
+                                                    opacity: 0,
+                                                }}
+                                                animate={{
+                                                    height: 'auto',
+                                                    opacity: 1,
+                                                }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                                transition={{
+                                                    duration: 0.3,
+                                                    ease: 'easeInOut',
+                                                }}
                                                 className="overflow-hidden"
                                             >
                                                 <div className="px-4 pb-4 pt-0 space-y-4">
@@ -282,15 +371,28 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                                     {/* What Happened */}
                                                     <div>
                                                         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-500 mb-3 flex items-center gap-1.5">
-                                                            KEY EVENTS
+                                                            {t(
+                                                                'detailSummary.keyEvents'
+                                                            )}
                                                         </h4>
                                                         <ul className="space-y-3">
-                                                            {section.events.map((event, i) => (
-                                                                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed group/item">
-                                                                    <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${section.iconColor}`} />
-                                                                    <span className="font-medium group-hover:text-slate-900 dark:group-hover:text-zinc-100 transition-colors">{event}</span>
-                                                                </li>
-                                                            ))}
+                                                            {section.events.map(
+                                                                (event, i) => (
+                                                                    <li
+                                                                        key={i}
+                                                                        className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed group/item"
+                                                                    >
+                                                                        <div
+                                                                            className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${section.iconColor}`}
+                                                                        />
+                                                                        <span className="font-medium group-hover:text-slate-900 dark:group-hover:text-zinc-100 transition-colors">
+                                                                            {
+                                                                                event
+                                                                            }
+                                                                        </span>
+                                                                    </li>
+                                                                )
+                                                            )}
                                                         </ul>
                                                     </div>
 
@@ -300,18 +402,28 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                                         <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-lg p-3 border border-emerald-100 dark:border-emerald-500/20">
                                                             <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
                                                                 <TrendingUp className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
-                                                                Trend
+                                                                {t(
+                                                                    'detailSummary.trend'
+                                                                )}
                                                             </h4>
-                                                            <p className="text-xs text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-medium">{section.trend}</p>
+                                                            <p className="text-xs text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-medium">
+                                                                {section.trend}
+                                                            </p>
                                                         </div>
 
                                                         {/* Prediction */}
                                                         <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-lg p-3 border border-indigo-100 dark:border-indigo-500/20">
                                                             <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
                                                                 <Lightbulb className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
-                                                                AI Forecast
+                                                                {t(
+                                                                    'detailSummary.aiForecast'
+                                                                )}
                                                             </h4>
-                                                            <p className="text-xs text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed font-medium">{section.prediction}</p>
+                                                            <p className="text-xs text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed font-medium">
+                                                                {
+                                                                    section.prediction
+                                                                }
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -321,7 +433,6 @@ export function AiDetailSummary({ onBack, data: propData }: AiDetailSummaryProps
                                 </motion.div>
                             );
                         })}
-
                     </div>
                 </div>
             </div>

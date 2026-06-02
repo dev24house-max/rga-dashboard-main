@@ -4,7 +4,6 @@ import { SeoSummaryCards } from '../components/seo-summary-cards';
 import { TrafficByLocation } from '../components/traffic-by-location';
 import { SeoPerformanceChart } from '../components/seo-performance-chart';
 import { useSeoSummary } from '../hooks';
-import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
 import { SeoMetricSummary } from '../types';
 import { OrganicKeywordsByIntent } from '../components/organic-keywords-by-intent';
 import { AdsConnectionStatus } from '../components/ads-connection-status';
@@ -22,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { integrationService } from '@/services/integration-service';
 import { toast } from 'sonner';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Info Tooltip Component
@@ -39,7 +39,10 @@ function InfoTooltip({ content }: { content: string }) {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
                     {content}
                 </TooltipContent>
             </Tooltip>
@@ -48,8 +51,8 @@ function InfoTooltip({ content }: { content: string }) {
 }
 
 export function SeoPage() {
+    const { t } = useTranslation('seo');
     const { data, isLoading, refetch } = useSeoSummary();
-    const { status: integrationStatus, isLoading: integrationLoading, error: integrationError } = useIntegrationStatus();
     const [isSyncing, setIsSyncing] = useState(false);
 
     const handleSync = async () => {
@@ -58,17 +61,17 @@ export function SeoPage() {
             // Sync GA4
             try {
                 await integrationService.syncGoogleAnalytics();
-                toast.success('Successfully synced Google Analytics data');
+                toast.success(t('page.toasts.syncGaSuccess'));
             } catch (error) {
-                toast.error('Failed to sync Google Analytics data');
+                toast.error(t('page.toasts.syncGaFailed'));
             }
 
             // Sync GSC
             try {
                 await integrationService.syncGoogleSearchConsole(30);
-                toast.success('Successfully synced Google Search Console data');
+                toast.success(t('page.toasts.syncGscSuccess'));
             } catch (error) {
-                toast.error('Failed to sync Google Search Console data');
+                toast.error(t('page.toasts.syncGscFailed'));
             }
 
             await refetch();
@@ -91,22 +94,19 @@ export function SeoPage() {
         backlinks: null,
         referringDomains: null,
         keywords: null,
-        trafficCost: null
+        trafficCost: null,
     };
-
 
     return (
         <DashboardLayout>
             <div className="space-y-6 p-4 sm:p-6 md:p-8">
                 {/* Page Header */}
                 <div data-tutorial="seo-header">
-                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl mb-2">SEO & Web Analytics</h1>
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl mb-2">
+                        {t('page.title')}
+                    </h1>
                     <div className="flex items-center gap-3 mb-3">
-                        <AdsConnectionStatus
-                            data={integrationStatus}
-                            isLoading={integrationLoading}
-                            error={integrationError ?? null}
-                        />
+                        <AdsConnectionStatus />
                         <Button
                             variant="outline"
                             size="sm"
@@ -114,45 +114,79 @@ export function SeoPage() {
                             disabled={isSyncing}
                             className="flex items-center gap-2"
                         >
-                            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                            {isSyncing ? 'Syncing...' : 'Refresh Data'}
+                            <RefreshCw
+                                className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`}
+                            />
+                            {isSyncing
+                                ? t('page.syncing')
+                                : t('page.refreshData')}
                         </Button>
                     </div>
                     <p className="text-sm text-muted-foreground sm:text-base">
-                        Track your organic search performance and website engagement.
+                        {t('page.subtitle')}
                     </p>
                 </div>
 
                 {/* Section 1: Performance Summary */}
                 <section data-tutorial="seo-performance" className="space-y-3">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Performance Summary</h2>
-                        <InfoTooltip content="Key metrics including organic sessions, engagement time, bounce rate, and goal completions from Google Analytics." />
+                        <h2 className="text-lg font-semibold">
+                            {t('page.sections.performanceSummary')}
+                        </h2>
+                        <InfoTooltip
+                            content={t(
+                                'page.sections.performanceSummaryTooltip'
+                            )}
+                        />
                     </div>
                     <SeoSummaryCards data={displayData} isLoading={isLoading} />
                 </section>
 
                 {/* Section 2: Performance Trends */}
-                <section data-tutorial="seo-performance-trends" className="space-y-3">
+                <section
+                    data-tutorial="seo-performance-trends"
+                    className="space-y-3"
+                >
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Performance Trends</h2>
-                        <InfoTooltip content="Track your organic search performance metrics over time including sessions, clicks, and rankings." />
+                        <h2 className="text-lg font-semibold">
+                            {t('page.sections.performanceTrends')}
+                        </h2>
+                        <InfoTooltip
+                            content={t(
+                                'page.sections.performanceTrendsTooltip'
+                            )}
+                        />
                     </div>
                     <SeoPerformanceChart />
                 </section>
 
                 {/* Section 3: Keyword & Traffic Analysis */}
-                <section data-tutorial="seo-keyword-analysis" className="space-y-3">
+                <section
+                    data-tutorial="seo-keyword-analysis"
+                    className="space-y-3"
+                >
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Keyword & Traffic Analysis</h2>
-                        <InfoTooltip content="Comprehensive analysis of your organic keywords, traffic sources, search intent, and anchor text patterns." />
+                        <h2 className="text-lg font-semibold">
+                            {t('page.sections.keywordTrafficAnalysis')}
+                        </h2>
+                        <InfoTooltip
+                            content={t(
+                                'page.sections.keywordTrafficAnalysisTooltip'
+                            )}
+                        />
                     </div>
                     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 auto-rows-max">
                         {/* Top Organic Keywords */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base font-medium">Top Organic Keywords</h3>
-                                <InfoTooltip content="Your highest-performing keywords ranked in organic search results, ranked by traffic and position." />
+                                <h3 className="text-base font-medium">
+                                    {t('page.sections.topOrganicKeywords')}
+                                </h3>
+                                <InfoTooltip
+                                    content={t(
+                                        'page.sections.topOrganicKeywordsTooltip'
+                                    )}
+                                />
                             </div>
                             <div className="w-full">
                                 <TopOrganicKeywords />
@@ -162,8 +196,14 @@ export function SeoPage() {
                         {/* Traffic by Location */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base font-medium">Traffic by Location</h3>
-                                <InfoTooltip content="Geographic distribution of your organic search traffic showing which regions drive the most sessions." />
+                                <h3 className="text-base font-medium">
+                                    {t('page.sections.trafficByLocation')}
+                                </h3>
+                                <InfoTooltip
+                                    content={t(
+                                        'page.sections.trafficByLocationTooltip'
+                                    )}
+                                />
                             </div>
                             <div className="w-full">
                                 <TrafficByLocation isLoading={isLoading} />
@@ -173,19 +213,33 @@ export function SeoPage() {
                         {/* Keywords by Intent */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base font-medium">Keywords by Intent</h3>
-                                <InfoTooltip content="Keywords grouped by search intent type including informational, navigational, and transactional queries." />
+                                <h3 className="text-base font-medium">
+                                    {t('page.sections.keywordsByIntent')}
+                                </h3>
+                                <InfoTooltip
+                                    content={t(
+                                        'page.sections.keywordsByIntentTooltip'
+                                    )}
+                                />
                             </div>
                             <div className="w-full">
-                                <OrganicKeywordsByIntent isLoading={isLoading} />
+                                <OrganicKeywordsByIntent
+                                    isLoading={isLoading}
+                                />
                             </div>
                         </div>
 
                         {/* Anchor Text Analysis */}
                         <div className="space-y-3 w-full">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-base font-medium">Anchor Text Analysis</h3>
-                                <InfoTooltip content="Analysis of anchor text used in backlinks pointing to your site, helping identify linking patterns and opportunities." />
+                                <h3 className="text-base font-medium">
+                                    {t('page.sections.anchorTextAnalysis')}
+                                </h3>
+                                <InfoTooltip
+                                    content={t(
+                                        'page.sections.anchorTextAnalysisTooltip'
+                                    )}
+                                />
                             </div>
                             <div className="w-full">
                                 <SeoAnchorText />
@@ -195,21 +249,35 @@ export function SeoPage() {
                 </section>
 
                 {/* Section 4: Off-Page & Authority */}
-                <section data-tutorial="seo-offpage-metrics" className="space-y-6">
+                <section
+                    data-tutorial="seo-offpage-metrics"
+                    className="space-y-6"
+                >
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-semibold">Off-Page & Authority</h2>
-                        <InfoTooltip content="External SEO factors including domain authority, backlink profile, referring domains, and link quality analysis from Ahrefs data." />
+                        <h2 className="text-lg font-semibold">
+                            {t('page.sections.offPageAuthority')}
+                        </h2>
+                        <InfoTooltip
+                            content={t('page.sections.offPageAuthorityTooltip')}
+                        />
                     </div>
 
                     {/* Advanced SEO Metrics Sub-section */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-medium text-muted-foreground">Authority Metrics</h3>
-                        <SeoPremiumCards data={displayData} isLoading={isLoading} />
+                        <h3 className="text-base font-medium text-muted-foreground">
+                            {t('page.sections.authorityMetrics')}
+                        </h3>
+                        <SeoPremiumCards
+                            data={displayData}
+                            isLoading={isLoading}
+                        />
                     </div>
 
                     {/* Off-Page Metrics Sub-section */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-medium text-muted-foreground">Backlink Profile</h3>
+                        <h3 className="text-base font-medium text-muted-foreground">
+                            {t('page.sections.backlinkProfile')}
+                        </h3>
                         <SeoOffPageMetrics />
                     </div>
                 </section>

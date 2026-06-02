@@ -14,14 +14,15 @@ import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCompactNumber } from '@/lib/formatters';
 import { useQuery } from '@tanstack/react-query';
-import { SeoService } from "../api";
-import { DashboardDateFilter } from "@/features/dashboard/components/dashboard-date-filter";
+import { SeoService } from '../api';
+import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
 import {
     DEFAULT_WEEK_STARTS_ON,
     formatLocalDate,
     getDateRangeFromPeriod,
 } from '@/lib/date-range-utils';
 import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
+import { useTranslation } from '@/i18n/use-translation';
 
 type MetricKey =
     | 'organicTraffic'
@@ -37,58 +38,82 @@ type MetricKey =
     | 'crawledPages';
 
 interface MetricConfig {
-    label: string;
+    labelKey: string;
     color: string;
     gradientId: string;
     formatValue: (value: number) => string;
     isCurrency?: boolean;
-    isComingSoon?: boolean; // Flag for disabled metrics
+    isComingSoon?: boolean;
 }
 
 const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
     organicTraffic: {
-        label: 'Organic Traffic',
-        color: '#f97316', // Orange-500
+        labelKey: 'performanceChart.metrics.organicTraffic',
+        color: '#f97316',
         gradientId: 'gradientTraffic',
         formatValue: formatCompactNumber,
     },
     paidTraffic: {
-        label: 'Paid Traffic',
-        color: '#10b981', // Emerald-500
+        labelKey: 'performanceChart.metrics.paidTraffic',
+        color: '#10b981',
         gradientId: 'gradientPaidTraffic',
         formatValue: formatCompactNumber,
     },
     impressions: {
-        label: 'Impressions',
-        color: '#8b5cf6', // Violet-500
+        labelKey: 'performanceChart.metrics.impressions',
+        color: '#8b5cf6',
         gradientId: 'gradientImpressions',
         formatValue: formatCompactNumber,
     },
     paidTrafficCost: {
-        label: 'Paid Traffic Cost',
-        color: '#ef4444', // Red-500
+        labelKey: 'performanceChart.metrics.paidTrafficCost',
+        color: '#ef4444',
         gradientId: 'gradientCost',
-        formatValue: (v) => `฿${formatCompactNumber(v)}`,
-        isCurrency: true
+        formatValue: (v) => `à¸¿${formatCompactNumber(v)}`,
+        isCurrency: true,
     },
     avgPosition: {
-        label: 'Avg. Position',
-        color: '#f59e0b', // Amber-500
+        labelKey: 'performanceChart.metrics.avgPosition',
+        color: '#f59e0b',
         gradientId: 'gradientAvgPosition',
-        formatValue: (v) => v.toFixed(1)
+        formatValue: (v) => v.toFixed(1),
     },
-    // Additional SEO Metrics
     referringDomains: {
-        label: 'Referring Domains',
-        color: '#3b82f6', // Blue-500
+        labelKey: 'performanceChart.metrics.referringDomains',
+        color: '#3b82f6',
         gradientId: 'gradientRefDomains',
         formatValue: formatCompactNumber,
     },
-    dr: { label: 'Domain Rating', color: '#64748b', gradientId: 'gDr', formatValue: (v) => v.toString() },
-    ur: { label: 'URL Rating', color: '#64748b', gradientId: 'gUr', formatValue: (v) => v.toString() },
-    organicTrafficValue: { label: 'Organic Traffic Value', color: '#f97316', gradientId: 'gOtv', formatValue: (v) => `฿${formatCompactNumber(v)}` },
-    organicPages: { label: 'Organic Pages', color: '#10b981', gradientId: 'gOp', formatValue: formatCompactNumber },
-    crawledPages: { label: 'Crawled Pages', color: '#8b5cf6', gradientId: 'gCp', formatValue: formatCompactNumber },
+    dr: {
+        labelKey: 'performanceChart.metrics.dr',
+        color: '#64748b',
+        gradientId: 'gDr',
+        formatValue: (v) => v.toString(),
+    },
+    ur: {
+        labelKey: 'performanceChart.metrics.ur',
+        color: '#64748b',
+        gradientId: 'gUr',
+        formatValue: (v) => v.toString(),
+    },
+    organicTrafficValue: {
+        labelKey: 'performanceChart.metrics.organicTrafficValue',
+        color: '#f97316',
+        gradientId: 'gOtv',
+        formatValue: (v) => `à¸¿${formatCompactNumber(v)}`,
+    },
+    organicPages: {
+        labelKey: 'performanceChart.metrics.organicPages',
+        color: '#10b981',
+        gradientId: 'gOp',
+        formatValue: formatCompactNumber,
+    },
+    crawledPages: {
+        labelKey: 'performanceChart.metrics.crawledPages',
+        color: '#8b5cf6',
+        gradientId: 'gCp',
+        formatValue: formatCompactNumber,
+    },
 };
 
 interface CustomTooltipProps {
@@ -96,9 +121,15 @@ interface CustomTooltipProps {
     payload?: any[];
     label?: string;
     activeMetrics: MetricKey[];
+    t: (path: string) => string;
 }
 
-function CustomTooltip({ active, payload, activeMetrics }: CustomTooltipProps) {
+function CustomTooltip({
+    active,
+    payload,
+    activeMetrics,
+    t,
+}: CustomTooltipProps) {
     if (!active || !payload || payload.length === 0) {
         return null;
     }
@@ -108,24 +139,32 @@ function CustomTooltip({ active, payload, activeMetrics }: CustomTooltipProps) {
 
     return (
         <div className="rounded-xl border bg-popover/95 backdrop-blur-sm px-4 py-3 shadow-xl">
-            <p className="text-xs font-semibold text-muted-foreground mb-2 pb-2 border-b">{formattedDate}</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-2 pb-2 border-b">
+                {formattedDate}
+            </p>
             <div className="flex flex-col gap-1.5">
-                {activeMetrics.map(metricKey => {
+                {activeMetrics.map((metricKey) => {
                     const config = METRIC_CONFIG[metricKey];
-                    // Skip if metric is not in payload
                     if (data.payload[metricKey] === undefined) return null;
 
-                    const item = payload.find((p: any) => p.dataKey === metricKey);
+                    const item = payload.find(
+                        (p: any) => p.dataKey === metricKey
+                    );
                     const value = item ? item.value : 0;
 
                     return (
-                        <div key={metricKey} className="flex items-center justify-between gap-6 min-w-[140px]">
+                        <div
+                            key={metricKey}
+                            className="flex items-center justify-between gap-6 min-w-[140px]"
+                        >
                             <div className="flex items-center gap-2">
                                 <div
                                     className="h-2 w-2 rounded-full ring-2 ring-transparent"
                                     style={{ backgroundColor: config.color }}
                                 />
-                                <span className="text-sm text-foreground/80">{config.label}</span>
+                                <span className="text-sm text-foreground/80">
+                                    {t(config.labelKey)}
+                                </span>
                             </div>
                             <span className="text-sm font-bold font-mono">
                                 {config.formatValue(value)}
@@ -138,20 +177,28 @@ function CustomTooltip({ active, payload, activeMetrics }: CustomTooltipProps) {
     );
 }
 
-function EmptyState() {
+function EmptyState({ text }: { text: string }) {
     return (
         <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-3 opacity-40" />
-            <p className="text-sm">No data available for the selected period</p>
+            <p className="text-sm">{text}</p>
         </div>
     );
 }
 
 export function SeoPerformanceChart() {
+    const { t } = useTranslation('seo');
     const [period, setPeriod] = useState<PeriodEnum>('this_month');
-    const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
-    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
-    const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>(['organicTraffic', 'avgPosition']);
+    const [customRange, setCustomRange] = useState<
+        { from: Date; to: Date } | undefined
+    >();
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(
+        DEFAULT_WEEK_STARTS_ON
+    );
+    const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>([
+        'organicTraffic',
+        'avgPosition',
+    ]);
 
     const dateRange = useMemo(() => {
         if (period === 'custom' && customRange) {
@@ -166,22 +213,19 @@ export function SeoPerformanceChart() {
 
     const { data, isLoading } = useQuery({
         queryKey: ['seo-history', dateRange.startDate, dateRange.endDate],
-        queryFn: () => SeoService.getHistory(dateRange)
+        queryFn: () => SeoService.getHistory(dateRange),
     });
 
     const toggleMetric = (metric: MetricKey) => {
-        // All metrics are now available - no coming soon check needed
-
         setActiveMetrics((prev) => {
             if (prev.includes(metric)) {
-                if (prev.length === 1) return prev; // Keep at least one active
+                if (prev.length === 1) return prev;
                 return prev.filter((m) => m !== metric);
             }
             return [...prev, metric];
         });
     };
 
-    // Format XAxis tick
     const formatXAxis = (dateStr: string) => {
         try {
             return format(new Date(dateStr), 'dd MMM');
@@ -190,7 +234,6 @@ export function SeoPerformanceChart() {
         }
     };
 
-    // Memoize gradient definitions
     const gradientDefs = useMemo(
         () => (
             <defs>
@@ -203,8 +246,16 @@ export function SeoPerformanceChart() {
                         x2="0"
                         y2="1"
                     >
-                        <stop offset="5%" stopColor={cfg.color} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={cfg.color} stopOpacity={0} />
+                        <stop
+                            offset="5%"
+                            stopColor={cfg.color}
+                            stopOpacity={0.2}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor={cfg.color}
+                            stopOpacity={0}
+                        />
                     </linearGradient>
                 ))}
             </defs>
@@ -223,7 +274,7 @@ export function SeoPerformanceChart() {
             <CardHeader className="flex flex-col gap-4 space-y-0 pb-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-4">
                     <CardTitle className="text-base font-semibold">
-                        Performance Trends
+                        {t('performanceChart.title')}
                     </CardTitle>
                 </div>
                 <DashboardDateFilter
@@ -237,20 +288,25 @@ export function SeoPerformanceChart() {
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-2 min-h-[250px] sm:min-h-0">
                 {!hasData ? (
-                    <EmptyState />
+                    <EmptyState text={t('performanceChart.empty')} />
                 ) : (
                     <div className="h-[250px] sm:h-full w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart
                                 data={data}
-                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                margin={{
+                                    top: 10,
+                                    right: 10,
+                                    left: 0,
+                                    bottom: 0,
+                                }}
                             >
                                 {gradientDefs}
                                 <CartesianGrid
                                     strokeDasharray="3 3"
                                     className="stroke-muted/30"
                                     vertical={false}
-                                    stroke="#ccc" // fallback
+                                    stroke="#ccc"
                                 />
                                 <XAxis
                                     dataKey="date"
@@ -262,7 +318,9 @@ export function SeoPerformanceChart() {
                                     dy={10}
                                 />
                                 <YAxis
-                                    tickFormatter={(v) => formatCompactNumber(v)}
+                                    tickFormatter={(v) =>
+                                        formatCompactNumber(v)
+                                    }
                                     tick={{ fontSize: 11 }}
                                     tickLine={false}
                                     axisLine={false}
@@ -271,11 +329,20 @@ export function SeoPerformanceChart() {
                                     className="text-muted-foreground"
                                 />
                                 <Tooltip
-                                    content={<CustomTooltip activeMetrics={activeMetrics} />}
-                                    cursor={{ stroke: 'var(--muted-foreground)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    content={
+                                        <CustomTooltip
+                                            activeMetrics={activeMetrics}
+                                            t={t}
+                                        />
+                                    }
+                                    cursor={{
+                                        stroke: 'var(--muted-foreground)',
+                                        strokeWidth: 1,
+                                        strokeDasharray: '4 4',
+                                    }}
                                 />
 
-                                {activeMetrics.map(metric => {
+                                {activeMetrics.map((metric) => {
                                     const config = METRIC_CONFIG[metric];
                                     return (
                                         <Area
@@ -295,7 +362,6 @@ export function SeoPerformanceChart() {
                     </div>
                 )}
             </CardContent>
-            {/* Metric Toggles - Responsive Grid */}
             <div className="px-6 pb-6 pt-2">
                 <div className="flex flex-wrap gap-2 max-w-full">
                     {(Object.keys(METRIC_CONFIG) as MetricKey[]).map((key) => {
@@ -308,28 +374,32 @@ export function SeoPerformanceChart() {
                                 onClick={() => toggleMetric(key)}
                                 className={`
                                     flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 border whitespace-nowrap
-                                    ${isActive
-                                        ? 'bg-primary/10 border-primary/20 text-foreground shadow-sm'
-                                        : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    ${
+                                        isActive
+                                            ? 'bg-primary/10 border-primary/20 text-foreground shadow-sm'
+                                            : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
                                     }
                                 `}
-                                style={isActive ? {
-                                    borderColor: config.color,
-                                    backgroundColor: `${config.color}15`,
-                                    color: config.color
-                                } : undefined}
+                                style={
+                                    isActive
+                                        ? {
+                                              borderColor: config.color,
+                                              backgroundColor: `${config.color}15`,
+                                              color: config.color,
+                                          }
+                                        : undefined
+                                }
                             >
                                 <div
                                     className={`h-2 w-2 rounded-full transition-all ${isActive ? 'opacity-100' : 'opacity-40 grayscale'}`}
                                     style={{ backgroundColor: config.color }}
                                 />
-                                {config.label}
+                                {t(config.labelKey)}
                             </button>
                         );
                     })}
                 </div>
             </div>
-            {/* Legend (Optional: Can remove if toggles are sufficient, keeping for clarity on what's shown below chart if desired, but toggles act as legend now) */}
         </Card>
     );
 }
