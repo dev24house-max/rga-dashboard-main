@@ -26,6 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { DashboardDateFilter } from '@/features/dashboard/components/dashboard-date-filter';
 import type { PeriodEnum, WeekStartsOn } from '@/features/dashboard/schemas';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types
@@ -55,9 +56,9 @@ export interface CampaignToolbarProps {
 // =============================================================================
 
 const STATUS_OPTIONS = [
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'PAUSED', label: 'Paused' },
-    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'ACTIVE', labelKey: 'toolbar.statusOptions.active' },
+    { value: 'PAUSED', labelKey: 'toolbar.statusOptions.paused' },
+    { value: 'COMPLETED', labelKey: 'toolbar.statusOptions.completed' },
 ] as const;
 
 const PLATFORM_OPTIONS = [
@@ -109,6 +110,7 @@ function StatusDropdown({
     onStatusChange: (v: Set<string>) => void;
 }) {
     const active = !status.has('ALL');
+    const { t } = useTranslation('campaigns');
 
     return (
         <DropdownMenu>
@@ -122,8 +124,10 @@ function StatusDropdown({
                             : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 dark:border-border dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     }`}
                 >
-                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-blue-500 dark:text-blue-300' : 'opacity-40'}`} />
-                    Status
+                    <ListFilter
+                        className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-blue-500 dark:text-blue-300' : 'opacity-40'}`}
+                    />
+                    {t('toolbar.status')}
                     {active && (
                         <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-blue-500 text-white rounded-full shrink-0">
                             {status.size}
@@ -131,9 +135,12 @@ function StatusDropdown({
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100">
+            <DropdownMenuContent
+                align="start"
+                className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100"
+            >
                 <DropdownMenuLabel className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 pb-1">
-                    Filter by Status
+                    {t('toolbar.filterByStatus')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="-mx-1.5 mb-1" />
                 <DropdownMenuCheckboxItem
@@ -141,16 +148,18 @@ function StatusDropdown({
                     onCheckedChange={() => onStatusChange(new Set(['ALL']))}
                     className="rounded-lg cursor-pointer text-sm"
                 >
-                    All Statuses
+                    {t('toolbar.allStatuses')}
                 </DropdownMenuCheckboxItem>
                 {STATUS_OPTIONS.map((opt) => (
                     <DropdownMenuCheckboxItem
                         key={opt.value}
                         checked={status.has(opt.value)}
-                        onCheckedChange={() => toggleSetItem(status, onStatusChange, opt.value)}
+                        onCheckedChange={() =>
+                            toggleSetItem(status, onStatusChange, opt.value)
+                        }
                         className="rounded-lg cursor-pointer text-sm"
                     >
-                        {opt.label}
+                        {t(opt.labelKey)}
                     </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
@@ -166,6 +175,7 @@ function PlatformDropdown({
     onPlatformChange: (v: Set<string>) => void;
 }) {
     const active = !platform.has('ALL');
+    const { t } = useTranslation('campaigns');
 
     return (
         <DropdownMenu>
@@ -179,8 +189,10 @@ function PlatformDropdown({
                             : 'border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 dark:border-border dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     }`}
                 >
-                    <ListFilter className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-indigo-500 dark:text-indigo-300' : 'opacity-40'}`} />
-                    Platform
+                    <ListFilter
+                        className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-indigo-500 dark:text-indigo-300' : 'opacity-40'}`}
+                    />
+                    {t('toolbar.platform')}
                     {active && (
                         <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-indigo-500 text-white rounded-full shrink-0">
                             {platform.size}
@@ -188,9 +200,12 @@ function PlatformDropdown({
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100">
+            <DropdownMenuContent
+                align="start"
+                className="w-48 p-1.5 rounded-xl shadow-xl border-gray-100"
+            >
                 <DropdownMenuLabel className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 pb-1">
-                    Filter by Platform
+                    {t('toolbar.filterByPlatform')}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="-mx-1.5 mb-1" />
                 <DropdownMenuCheckboxItem
@@ -198,13 +213,15 @@ function PlatformDropdown({
                     onCheckedChange={() => onPlatformChange(new Set(['ALL']))}
                     className="rounded-lg cursor-pointer text-sm"
                 >
-                    All Platforms
+                    {t('toolbar.allPlatforms')}
                 </DropdownMenuCheckboxItem>
                 {PLATFORM_OPTIONS.map((opt) => (
                     <DropdownMenuCheckboxItem
                         key={opt.value}
                         checked={platform.has(opt.value)}
-                        onCheckedChange={() => toggleSetItem(platform, onPlatformChange, opt.value)}
+                        onCheckedChange={() =>
+                            toggleSetItem(platform, onPlatformChange, opt.value)
+                        }
                         className="rounded-lg cursor-pointer text-sm"
                     >
                         {opt.label}
@@ -232,6 +249,8 @@ function MobileFilterSheet({
     onPlatformChange: (v: Set<string>) => void;
     activeCount: number;
 }) {
+    const { t } = useTranslation('campaigns');
+
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -245,7 +264,7 @@ function MobileFilterSheet({
                     }`}
                 >
                     <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Filters
+                    {t('toolbar.filters')}
                     {activeCount > 0 && (
                         <Badge className="h-4 px-1 text-[10px] bg-blue-500 text-white rounded-full">
                             {activeCount}
@@ -255,12 +274,16 @@ function MobileFilterSheet({
             </SheetTrigger>
             <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8">
                 <SheetHeader className="pb-4">
-                    <SheetTitle className="text-left text-base font-semibold">Filters</SheetTitle>
+                    <SheetTitle className="text-left text-base font-semibold">
+                        {t('toolbar.filters')}
+                    </SheetTitle>
                 </SheetHeader>
 
                 {/* Status Section */}
                 <div className="mb-5">
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Status</p>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                        {t('toolbar.status')}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => onStatusChange(new Set(['ALL']))}
@@ -270,19 +293,25 @@ function MobileFilterSheet({
                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                             }`}
                         >
-                            All
+                            {t('toolbar.all')}
                         </button>
                         {STATUS_OPTIONS.map((opt) => (
                             <button
                                 key={opt.value}
-                                onClick={() => toggleSetItem(status, onStatusChange, opt.value)}
+                                onClick={() =>
+                                    toggleSetItem(
+                                        status,
+                                        onStatusChange,
+                                        opt.value
+                                    )
+                                }
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                                     status.has(opt.value)
                                         ? 'bg-blue-500 text-white border-blue-500'
                                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                 }`}
                             >
-                                {opt.label}
+                                {t(opt.labelKey)}
                             </button>
                         ))}
                     </div>
@@ -290,7 +319,9 @@ function MobileFilterSheet({
 
                 {/* Platform Section */}
                 <div className="mb-6">
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Platform</p>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                        {t('toolbar.platform')}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => onPlatformChange(new Set(['ALL']))}
@@ -300,12 +331,18 @@ function MobileFilterSheet({
                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                             }`}
                         >
-                            All
+                            {t('toolbar.all')}
                         </button>
                         {PLATFORM_OPTIONS.map((opt) => (
                             <button
                                 key={opt.value}
-                                onClick={() => toggleSetItem(platform, onPlatformChange, opt.value)}
+                                onClick={() =>
+                                    toggleSetItem(
+                                        platform,
+                                        onPlatformChange,
+                                        opt.value
+                                    )
+                                }
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                                     platform.has(opt.value)
                                         ? 'bg-indigo-500 text-white border-indigo-500'
@@ -327,7 +364,7 @@ function MobileFilterSheet({
                             onPlatformChange(new Set(['ALL']));
                         }}
                     >
-                        Clear All
+                        {t('toolbar.clearAll')}
                     </Button>
                 </SheetFooter>
             </SheetContent>
@@ -358,6 +395,7 @@ export function CampaignToolbar({
     selectedCount,
 }: CampaignToolbarProps) {
     const [query, setQuery] = useState(search);
+    const { t } = useTranslation('campaigns');
 
     useEffect(() => {
         setQuery(search);
@@ -378,7 +416,6 @@ export function CampaignToolbar({
 
     return (
         <div className="p-3 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-3">
-
             {/* ── Row 1: Search + Search Button ── */}
             <div className="flex items-center gap-2">
                 <div
@@ -390,7 +427,7 @@ export function CampaignToolbar({
                     </div>
                     <Input
                         type="text"
-                        placeholder="Search campaigns..."
+                        placeholder={t('toolbar.searchPlaceholder')}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -413,7 +450,7 @@ export function CampaignToolbar({
                     size="sm"
                     className="h-9 rounded-xl px-4 flex-shrink-0 bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-primary/35 hover:bg-primary/90 transition-all active:scale-95 text-sm"
                 >
-                    Search
+                    {t('toolbar.search')}
                 </Button>
             </div>
 
@@ -435,8 +472,14 @@ export function CampaignToolbar({
 
                 {/* Desktop: inline filter dropdowns */}
                 <div className="hidden md:flex items-center gap-2">
-                    <StatusDropdown status={status} onStatusChange={onStatusChange} />
-                    <PlatformDropdown platform={platform} onPlatformChange={onPlatformChange} />
+                    <StatusDropdown
+                        status={status}
+                        onStatusChange={onStatusChange}
+                    />
+                    <PlatformDropdown
+                        platform={platform}
+                        onPlatformChange={onPlatformChange}
+                    />
                     <div className="h-5 w-px bg-gray-200 mx-0.5" />
                 </div>
 
@@ -453,7 +496,7 @@ export function CampaignToolbar({
                             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground'
                     } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                    Selected
+                    {t('toolbar.selected')}
                     {selectedCount > 0 && (
                         <Badge className="ml-1.5 h-4 px-1.5 text-[10px] rounded-full bg-current/20">
                             {selectedCount}
@@ -465,35 +508,53 @@ export function CampaignToolbar({
                 {(!status.has('ALL') || !platform.has('ALL')) && (
                     <div className="flex items-center flex-wrap gap-1.5">
                         {/* Status chips */}
-                        {!status.has('ALL') && STATUS_OPTIONS.filter((o) => status.has(o.value)).map((opt) => (
-                            <span
-                                key={opt.value}
-                                className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700 border border-blue-200"
-                            >
-                                {opt.label}
-                                <button
-                                    onClick={() => toggleSetItem(status, onStatusChange, opt.value)}
-                                    className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-blue-200 transition-colors"
+                        {!status.has('ALL') &&
+                            STATUS_OPTIONS.filter((o) =>
+                                status.has(o.value)
+                            ).map((opt) => (
+                                <span
+                                    key={opt.value}
+                                    className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700 border border-blue-200"
                                 >
-                                    <X className="h-2.5 w-2.5" />
-                                </button>
-                            </span>
-                        ))}
+                                    {t(opt.labelKey)}
+                                    <button
+                                        onClick={() =>
+                                            toggleSetItem(
+                                                status,
+                                                onStatusChange,
+                                                opt.value
+                                            )
+                                        }
+                                        className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-blue-200 transition-colors"
+                                    >
+                                        <X className="h-2.5 w-2.5" />
+                                    </button>
+                                </span>
+                            ))}
                         {/* Platform chips */}
-                        {!platform.has('ALL') && PLATFORM_OPTIONS.filter((o) => platform.has(o.value)).map((opt) => (
-                            <span
-                                key={opt.value}
-                                className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-indigo-100 text-indigo-700 border border-indigo-200"
-                            >
-                                {opt.label}
-                                <button
-                                    onClick={() => toggleSetItem(platform, onPlatformChange, opt.value)}
-                                    className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-indigo-200 transition-colors"
+                        {!platform.has('ALL') &&
+                            PLATFORM_OPTIONS.filter((o) =>
+                                platform.has(o.value)
+                            ).map((opt) => (
+                                <span
+                                    key={opt.value}
+                                    className="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-full text-[11px] font-medium bg-indigo-100 text-indigo-700 border border-indigo-200"
                                 >
-                                    <X className="h-2.5 w-2.5" />
-                                </button>
-                            </span>
-                        ))}
+                                    {opt.label}
+                                    <button
+                                        onClick={() =>
+                                            toggleSetItem(
+                                                platform,
+                                                onPlatformChange,
+                                                opt.value
+                                            )
+                                        }
+                                        className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-indigo-200 transition-colors"
+                                    >
+                                        <X className="h-2.5 w-2.5" />
+                                    </button>
+                                </span>
+                            ))}
                     </div>
                 )}
 

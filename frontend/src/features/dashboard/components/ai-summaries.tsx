@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { GrowthMetrics, SummaryMetrics } from '../schemas';
 import { useFormatter } from '@/hooks/use-formatter';
 import { useAiSummaryCards } from '@/features/ai-insights/hooks/use-ai-summary';
+import { useTranslation } from '@/i18n/use-translation';
 
 type ItemKey = 'cpm' | 'ctr' | 'roas' | 'roi';
 
@@ -19,14 +20,21 @@ function formatDelta(value: number | null | undefined) {
     return `${sign}${value.toFixed(1)}%`;
 }
 
-function deltaBadgeClassName(value: number | null | undefined, lowerIsBetter = false) {
+function deltaBadgeClassName(
+    value: number | null | undefined,
+    lowerIsBetter = false
+) {
     if (value == null) return 'bg-slate-500/10 text-slate-500';
 
     if (lowerIsBetter) {
-        return value <= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500';
+        return value <= 0
+            ? 'bg-emerald-500/10 text-emerald-500'
+            : 'bg-rose-500/10 text-rose-500';
     }
 
-    return value >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500';
+    return value >= 0
+        ? 'bg-emerald-500/10 text-emerald-500'
+        : 'bg-rose-500/10 text-rose-500';
 }
 
 // formatCurrencyTHBDecimal now imported from @/lib/formatters
@@ -37,7 +45,12 @@ export interface AiSummariesProps {
     comparisonLabel?: string;
 }
 
-export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period' }: AiSummariesProps) {
+export function AiSummaries({
+    summary,
+    growth,
+    comparisonLabel,
+}: AiSummariesProps) {
+    const { t } = useTranslation('dashboard');
     const { data: webhookCards, isLoading, error } = useAiSummaryCards();
     const [displayedItems, setDisplayedItems] = useState<SummaryItem[]>([]);
 
@@ -52,7 +65,13 @@ export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period
                 label: card.label,
                 value: card.value,
                 delta: parseFloat(card.delta),
-                accentClassName: ['group-hover:text-blue-500', 'group-hover:text-emerald-500', 'group-hover:text-purple-500', 'group-hover:text-orange-500'][index] || '',
+                accentClassName:
+                    [
+                        'group-hover:text-blue-500',
+                        'group-hover:text-emerald-500',
+                        'group-hover:text-purple-500',
+                        'group-hover:text-orange-500',
+                    ][index] || '',
             }));
             setDisplayedItems(webhookItems);
         } else if (summary || growth) {
@@ -60,28 +79,40 @@ export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period
             const items: SummaryItem[] = [
                 {
                     key: 'cpm',
-                    label: 'CPM',
-                    value: summary ? formatCurrency(summary.averageCpm, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formatCurrency(0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                    label: t('aiSummaries.cpm'),
+                    value: summary
+                        ? formatCurrency(summary.averageCpm, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                          })
+                        : formatCurrency(0, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                          }),
                     delta: growth?.cpmGrowth,
                     accentClassName: 'group-hover:text-blue-500',
                 },
                 {
                     key: 'ctr',
-                    label: 'CTR',
-                    value: summary ? `${summary.averageCtr.toFixed(1)}%` : '0.0%',
+                    label: t('aiSummaries.ctr'),
+                    value: summary
+                        ? `${summary.averageCtr.toFixed(1)}%`
+                        : '0.0%',
                     delta: growth?.ctrGrowth,
                     accentClassName: 'group-hover:text-emerald-500',
                 },
                 {
                     key: 'roas',
-                    label: 'ROAS',
-                    value: summary ? `${summary.averageRoas.toFixed(1)}x` : '0.0x',
+                    label: t('aiSummaries.roas'),
+                    value: summary
+                        ? `${summary.averageRoas.toFixed(1)}x`
+                        : '0.0x',
                     delta: growth?.roasGrowth,
                     accentClassName: 'group-hover:text-purple-500',
                 },
                 {
                     key: 'roi',
-                    label: 'ROI',
+                    label: t('aiSummaries.roi'),
                     value: summary ? `${summary.averageRoi.toFixed(0)}%` : '0%',
                     delta: growth?.roiGrowth,
                     accentClassName: 'group-hover:text-orange-500',
@@ -89,21 +120,31 @@ export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period
             ];
             setDisplayedItems(items);
         }
-    }, [webhookCards, summary, growth]);
+    }, [webhookCards, summary, growth, t]);
+
+    const resolvedComparisonLabel =
+        comparisonLabel ?? t('comparison.lastPeriod');
 
     return (
         <div className="rounded-3xl border border-border bg-card p-4 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h3 className="text-base font-semibold tracking-tight">AI Summaries</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Core metrics efficiency</p>
+                    <h3 className="text-base font-semibold tracking-tight">
+                        {t('aiSummaries.title')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {t('aiSummaries.subtitle')}
+                    </p>
                 </div>
             </div>
 
             {isLoading && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="rounded-xl p-3 border border-border bg-card shadow-sm animate-pulse">
+                        <div
+                            key={i}
+                            className="rounded-xl p-3 border border-border bg-card shadow-sm animate-pulse"
+                        >
                             <div className="h-4 bg-muted rounded w-3/4 mb-2" />
                             <div className="h-6 bg-muted rounded w-1/2 mb-1" />
                             <div className="h-3 bg-muted rounded w-2/3" />
@@ -114,13 +155,13 @@ export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period
 
             {error && displayedItems.length === 0 && (
                 <div className="rounded-xl p-4 bg-slate-50 border border-slate-200 text-slate-700 text-sm">
-                    Unable to load AI summaries at this moment.
+                    {t('aiSummaries.unableToLoad')}
                 </div>
             )}
 
             {error && displayedItems.length > 0 && (
                 <div className="rounded-xl p-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-                    Showing offline data. Refresh to get latest updates.
+                    {t('aiSummaries.offlineData')}
                 </div>
             )}
 
@@ -143,8 +184,12 @@ export function AiSummaries({ summary, growth, comparisonLabel = 'vs last period
                                     {formatDelta(item.delta) ?? '—'}
                                 </span>
                             </div>
-                            <p className="text-lg font-bold tracking-tight leading-none mb-1">{item.value}</p>
-                            <p className="text-[11px] text-muted-foreground">{comparisonLabel}</p>
+                            <p className="text-lg font-bold tracking-tight leading-none mb-1">
+                                {item.value}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                                {resolvedComparisonLabel}
+                            </p>
                         </div>
                     ))}
                 </div>

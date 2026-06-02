@@ -1,6 +1,6 @@
 /**
  * Account Selection Dialog
- * 
+ *
  * Modal for selecting an ad account after OAuth callback.
  * Shows list of available accounts with radio selection.
  */
@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import type { TempAccount } from '../types';
+import { useTranslation } from '@/i18n/use-translation';
 
 interface AccountSelectionDialogProps {
     /** Whether dialog is open */
@@ -41,9 +42,11 @@ export function AccountSelectionDialog({
     accounts,
     onConfirm,
     isPending = false,
-    platformName = 'Ad Platform',
+    platformName,
 }: AccountSelectionDialogProps) {
+    const { t } = useTranslation('dataSources');
     const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+    const displayPlatformName = platformName ?? t('platforms.adPlatform');
 
     const handleConfirm = () => {
         if (selectedAccountId) {
@@ -63,16 +66,20 @@ export function AccountSelectionDialog({
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Select {platformName} Account</DialogTitle>
+                    <DialogTitle>
+                        {t('accountDialog.title', {
+                            platformName: displayPlatformName,
+                        })}
+                    </DialogTitle>
                     <DialogDescription>
-                        Choose the account or property to connect. You can change this later in settings.
+                        {t('accountDialog.description')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-4">
                     {accounts.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
-                            No accounts found. Please check your permissions.
+                            {t('accountDialog.empty')}
                         </div>
                     ) : (
                         <RadioGroup
@@ -84,18 +91,31 @@ export function AccountSelectionDialog({
                                 <div
                                     key={account.id}
                                     className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer"
-                                    onClick={() => setSelectedAccountId(account.id)}
+                                    onClick={() =>
+                                        setSelectedAccountId(account.id)
+                                    }
                                 >
-                                    <RadioGroupItem value={account.id} id={account.id} />
+                                    <RadioGroupItem
+                                        value={account.id}
+                                        id={account.id}
+                                    />
                                     <Label
                                         htmlFor={account.id}
                                         className="flex-1 cursor-pointer"
                                     >
-                                        <div className="font-medium">{account.name}</div>
+                                        <div className="font-medium">
+                                            {account.name}
+                                        </div>
                                         <div className="text-sm text-muted-foreground">
-                                            ID: {account.id}
+                                            {t('accountDialog.idLabel')}{' '}
+                                            {account.id}
                                             {account.status && (
-                                                <span className="ml-2">• {account.status}</span>
+                                                <span className="ml-2">
+                                                    {t(
+                                                        'accountDialog.statusSeparator'
+                                                    )}{' '}
+                                                    {account.status}
+                                                </span>
                                             )}
                                         </div>
                                     </Label>
@@ -111,7 +131,7 @@ export function AccountSelectionDialog({
                         onClick={() => handleOpenChange(false)}
                         disabled={isPending}
                     >
-                        Cancel
+                        {t('accountDialog.cancel')}
                     </Button>
                     <Button
                         onClick={handleConfirm}
@@ -120,10 +140,10 @@ export function AccountSelectionDialog({
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Connecting...
+                                {t('accountDialog.connecting')}
                             </>
                         ) : (
-                            'Connect'
+                            t('accountDialog.connect')
                         )}
                     </Button>
                 </DialogFooter>

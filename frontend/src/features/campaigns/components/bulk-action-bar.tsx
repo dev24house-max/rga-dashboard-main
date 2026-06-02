@@ -5,6 +5,7 @@
 
 import { X, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types
@@ -34,6 +35,8 @@ export function BulkActionBar({
     onEnable,
     onDelete,
 }: BulkActionBarProps) {
+    const { t } = useTranslation('campaigns');
+
     if (selectedCount === 0) {
         return null;
     }
@@ -49,15 +52,21 @@ export function BulkActionBar({
                     onClick={onClearSelection}
                 >
                     <X className="h-4 w-4" />
-                    <span className="sr-only">Clear selection</span>
+                    <span className="sr-only">
+                        {t('bulkActionBar.clearSelection')}
+                    </span>
                 </Button>
                 <span className="text-sm font-medium">
-                    {selectedCount} campaign{selectedCount > 1 ? 's' : ''} selected
+                    {t(
+                        selectedCount > 1
+                            ? 'bulkActionBar.selectedPlural'
+                            : 'bulkActionBar.selectedSingular',
+                        { count: selectedCount }
+                    )}
                 </span>
             </div>
 
             {/* Bulk Actions - Wrap on mobile */}
-
         </div>
     );
 }

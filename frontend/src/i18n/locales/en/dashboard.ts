@@ -1,0 +1,128 @@
+export const dashboardEn = {
+    page: {
+        title: 'Dashboard',
+        subtitle: 'Monitor your advertising performance across all platforms.',
+        sections: {
+            integrationChecklist: 'Integration Checklist',
+            keyPerformanceMetrics: 'Key Performance Metrics',
+            keyPerformanceMetricsTooltip:
+                'Track your essential advertising metrics including total cost, clicks, impressions, conversions, and ROAS across all platforms within the selected period.',
+            aiSummaries: 'AI Summaries',
+            aiSummariesTooltip:
+                'AI-generated insights and analysis of your advertising performance, providing actionable recommendations to optimize your campaigns.',
+            performanceTrendsAndRecentCampaigns:
+                'Performance Trends & Recent Campaigns',
+            financialOverviewAndConversionFunnel:
+                'Financial Overview & Conversion Funnel',
+            financialOverviewAndConversionFunnelTooltip:
+                'Analyze your advertising spend by platform, view financial metrics including revenue and profit estimations based on ROAS, and track the conversion funnel from impressions through to conversions.',
+        },
+        errors: {
+            loadDashboardData: 'Failed to load dashboard data',
+            unexpected: 'An unexpected error occurred. Please try again.',
+            retry: 'Retry',
+        },
+    },
+    comparison: {
+        previousDay: 'vs previous day',
+        previousDays: 'vs previous {days} days',
+        yesterday: 'vs yesterday',
+        lastWeek: 'vs last week',
+        previousWeek: 'vs previous week',
+        previous7Days: 'vs previous 7 days',
+        previous14Days: 'vs previous 14 days',
+        previous30Days: 'vs previous 30 days',
+        previous90Days: 'vs previous 90 days',
+        previous365Days: 'vs previous 365 days',
+        lastMonth: 'vs last month',
+        previousMonth: 'vs previous month',
+        previous3Months: 'vs previous 3 months',
+        previousPeriod: 'vs previous period',
+        lastPeriod: 'vs last period',
+    },
+    metrics: {
+        totalSpend: 'Total Spend',
+        impressions: 'Impressions',
+        clicks: 'Clicks',
+        conversions: 'Conversions',
+    },
+    aiSummaries: {
+        title: 'AI Summaries',
+        subtitle: 'Core metrics efficiency',
+        unableToLoad: 'Unable to load AI summaries at this moment.',
+        offlineData: 'Showing offline data. Refresh to get latest updates.',
+        cpm: 'CPM',
+        ctr: 'CTR',
+        roas: 'ROAS',
+        roi: 'ROI',
+    },
+    trendChart: {
+        title: 'Performance Trends',
+        empty: 'No data available for the selected period',
+        infoTitle: 'Performance Trends',
+        infoDescription:
+            'This chart displays trend data over time for important campaign metrics including Cost, Impressions, Clicks, and Conversions. It helps track performance movement, compare metric growth, and identify optimization opportunities.',
+        cost: 'Cost',
+        impressions: 'Impressions',
+        clicks: 'Clicks',
+        conversions: 'Conversions',
+    },
+    recentCampaigns: {
+        title: 'Recent Campaigns',
+        infoTitle: 'Recent Campaigns',
+        infoDescription:
+            'This section displays the 5 most recent campaigns. It helps monitor campaign status, advertising platform, spending amount, and budget utilization so you can quickly review current campaign performance.',
+        countSingular: '{count} most recent campaign',
+        countPlural: '{count} most recent campaigns',
+        emptyDescription: 'No campaigns found',
+        empty: 'No campaign data available',
+        budgetUsedSuffix: '% used',
+        status: {
+            active: 'Active',
+            paused: 'Paused',
+            pending: 'Pending',
+            completed: 'Completed',
+            ended: 'Ended',
+            deleted: 'Deleted',
+        },
+    },
+    conversionFunnel: {
+        title: 'Conversion Funnel',
+        description: 'User journey effectiveness',
+        infoTitle: 'Conversion Funnel',
+        infoDescription:
+            'This chart shows how users move through each stage of the customer journey, from impressions to clicks and conversions. It helps identify drop-off points, measure conversion efficiency, and optimize campaign performance.',
+        conversionSuffix: 'conversion',
+        platformPerformance: 'Platform Performance',
+        impressionsShort: 'Impr.',
+        clicks: 'Clicks',
+        conversionsShort: 'Conv.',
+        noDataTitle: 'No funnel data yet',
+        noDataDescription:
+            'Connect a data source to start seeing funnel metrics.',
+    },
+    financialOverview: {
+        title: 'Financial Overview',
+        subtitle: 'ROI',
+        roasSubtitle: 'ROAS',
+        total: 'TOTAL',
+        noData: 'No Data',
+        paid: 'Paid',
+        organic: 'Organic',
+        referral: 'Referral',
+        revenue: 'Revenue',
+        profit: 'Profit',
+        cost: 'Cost',
+    },
+    integrationChecklist: {
+        loading: 'Loading integration status...',
+        title: 'Integration Checklist',
+        description: 'Connect data sources for real-time insights',
+        infoTitle: 'Integration Checklist',
+        infoDescription:
+            'This section shows the connection status of each ad platform. Connected platforms provide real-time data syncing for dashboards, analytics, campaign tracking, and reporting insights.',
+        open: 'Open',
+        close: 'Close',
+        ads: 'ADS',
+    },
+} as const;

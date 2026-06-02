@@ -10,7 +10,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { DataSourceCard } from '../components/data-source-card';
 import { AccountSelectionDialog } from '../components/account-selection-dialog';
 import { useIntegrationAuth } from '../hooks/use-integration-auth';
-import { PLATFORM_CONFIGS, type PlatformId } from '../types';
+import type { PlatformId } from '../types';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Info Tooltip Component
@@ -46,7 +47,10 @@ function InfoTooltip({ content }: { content: string }) {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
                     {content}
                 </TooltipContent>
             </Tooltip>
@@ -56,14 +60,16 @@ function InfoTooltip({ content }: { content: string }) {
 
 // Platforms to display (in order)
 const DISPLAY_PLATFORMS: PlatformId[] = [
-    'google', 
-    'google-analytics', 
-    'search-console', 
-    //'facebook', 
-    //'line', 
-    'tiktok'];
+    'google',
+    'google-analytics',
+    'search-console',
+    //'facebook',
+    //'line',
+    'tiktok',
+];
 
 export default function DataSourcesPage() {
+    const { t } = useTranslation('dataSources');
     const {
         statuses,
         isLoadingStatuses,
@@ -102,11 +108,16 @@ export default function DataSourcesPage() {
         <DashboardLayout>
             <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
                 {/* Page Header */}
-                <div data-tutorial="data-sources-header" className="flex items-center justify-between">
+                <div
+                    data-tutorial="data-sources-header"
+                    className="flex items-center justify-between"
+                >
                     <div className="space-y-1">
-                        <h2 className="text-3xl font-bold tracking-tight">Data Sources</h2>
+                        <h2 className="text-3xl font-bold tracking-tight">
+                            {t('page.title')}
+                        </h2>
                         <p className="text-muted-foreground">
-                            Connect your advertising platforms to sync campaigns and metrics.
+                            {t('page.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -114,22 +125,31 @@ export default function DataSourcesPage() {
                 {/* Platform Cards Grid */}
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                        <h3 className="text-base font-semibold sm:text-lg">Connected Platforms</h3>
-                        <InfoTooltip content="Connect ad platforms to automatically import your campaigns, spending data, and performance metrics. You can manage and disconnect platforms anytime." />
-                    </div>
-                    <div data-tutorial="data-sources-grid" className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {DISPLAY_PLATFORMS.map((platform) => (
-                        <DataSourceCard
-                            key={platform}
-                            platform={platform}
-                            status={getStatus(platform)}
-                            isLoading={isLoadingStatuses}
-                            onConnect={() => handleConnect(platform)}
-                            onDisconnect={() => openDisconnectConfirm(platform)}
-                            isPending={isPending(platform)}
+                        <h3 className="text-base font-semibold sm:text-lg">
+                            {t('page.connectedPlatforms')}
+                        </h3>
+                        <InfoTooltip
+                            content={t('page.connectedPlatformsTooltip')}
                         />
-                    ))}
-                </div>
+                    </div>
+                    <div
+                        data-tutorial="data-sources-grid"
+                        className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    >
+                        {DISPLAY_PLATFORMS.map((platform) => (
+                            <DataSourceCard
+                                key={platform}
+                                platform={platform}
+                                status={getStatus(platform)}
+                                isLoading={isLoadingStatuses}
+                                onConnect={() => handleConnect(platform)}
+                                onDisconnect={() =>
+                                    openDisconnectConfirm(platform)
+                                }
+                                isPending={isPending(platform)}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -142,8 +162,8 @@ export default function DataSourcesPage() {
                 isPending={accountSelectionDialog.isPending}
                 platformName={
                     accountSelectionDialog.platform
-                        ? PLATFORM_CONFIGS[accountSelectionDialog.platform].name
-                        : 'Ad Platform'
+                        ? t(`platforms.${accountSelectionDialog.platform}.name`)
+                        : t('platforms.adPlatform')
                 }
             />
 
@@ -156,29 +176,34 @@ export default function DataSourcesPage() {
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Disconnect Integration?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {t('page.disconnectDialog.title')}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will remove the connection to{' '}
-                            {disconnectConfirm.platform
-                                ? PLATFORM_CONFIGS[disconnectConfirm.platform].name
-                                : 'this platform'}
-                            . Any synced data will remain, but new data will no longer be imported.
+                            {t('page.disconnectDialog.description', {
+                                platformName: disconnectConfirm.platform
+                                    ? t(
+                                          `platforms.${disconnectConfirm.platform}.name`
+                                      )
+                                    : t(
+                                          'page.disconnectDialog.fallbackPlatform'
+                                      ),
+                            })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={closeDisconnectConfirm}>
-                            Cancel
+                            {t('page.disconnectDialog.cancel')}
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmDisconnect}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            Disconnect
+                            {t('page.disconnectDialog.disconnect')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
         </DashboardLayout>
     );
 }

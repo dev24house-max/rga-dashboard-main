@@ -1,11 +1,18 @@
 /**
  * Data Source Card Component
- * 
+ *
  * Displays integration status for a single platform.
  * Shows connection state, connected account, and action buttons.
  */
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,27 +25,67 @@ import {
 } from 'lucide-react';
 import type { PlatformId, IntegrationStatusResponse } from '../types';
 import { PLATFORM_CONFIGS } from '../types';
+import { useTranslation } from '@/i18n/use-translation';
 
 // Platform-specific icons (inline SVGs for better control)
 const PlatformIcons: Record<PlatformId, React.ReactNode> = {
     google: (
         <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+            />
+            <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+            />
+            <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+            />
+            <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+            />
         </svg>
     ),
     'google-analytics': (
-        <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2.25c-5.38 0-9.75 4.37-9.75 9.75S6.62 21.75 12 21.75 21.75 17.38 21.75 12 17.38 2.25 12 2.25zm0 2.25a7.5 7.5 0 0 1 7.5 7.5h-3.75a3.75 3.75 0 0 0-7.5 0H4.5a7.5 7.5 0 0 1 7.5-7.5zm0 15a7.5 7.5 0 0 1-7.5-7.5h3.75a3.75 3.75 0 0 0 7.5 0h3.75a7.5 7.5 0 0 1-7.5 7.5z" fill="#F9AB00" />
+        <svg
+            viewBox="0 0 24 24"
+            className="h-8 w-8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                d="M12 2.25c-5.38 0-9.75 4.37-9.75 9.75S6.62 21.75 12 21.75 21.75 17.38 21.75 12 17.38 2.25 12 2.25zm0 2.25a7.5 7.5 0 0 1 7.5 7.5h-3.75a3.75 3.75 0 0 0-7.5 0H4.5a7.5 7.5 0 0 1 7.5-7.5zm0 15a7.5 7.5 0 0 1-7.5-7.5h3.75a3.75 3.75 0 0 0 7.5 0h3.75a7.5 7.5 0 0 1-7.5 7.5z"
+                fill="#F9AB00"
+            />
         </svg>
     ),
     'search-console': (
-        <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v13A2.5 2.5 0 0 1 16.5 21h-9A2.5 2.5 0 0 1 5 18.5v-13Z" fill="#E8F5E9" />
-            <path d="M8 15.5 10.6 13l2 1.8L16.5 10" stroke="#34A853" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M8 7.5h8M8 10h4" stroke="#4285F4" strokeWidth="1.6" strokeLinecap="round" />
+        <svg
+            viewBox="0 0 24 24"
+            className="h-8 w-8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v13A2.5 2.5 0 0 1 16.5 21h-9A2.5 2.5 0 0 1 5 18.5v-13Z"
+                fill="#E8F5E9"
+            />
+            <path
+                d="M8 15.5 10.6 13l2 1.8L16.5 10"
+                stroke="#34A853"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8 7.5h8M8 10h4"
+                stroke="#4285F4"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+            />
         </svg>
     ),
     facebook: (
@@ -48,7 +95,10 @@ const PlatformIcons: Record<PlatformId, React.ReactNode> = {
     ),
     tiktok: (
         <svg viewBox="0 0 24 24" className="h-8 w-8">
-            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" fill="currentColor" />
+            <path
+                d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                fill="currentColor"
+            />
         </svg>
     ),
     line: (
@@ -81,13 +131,16 @@ export function DataSourceCard({
     onDisconnect,
     isPending = false,
 }: DataSourceCardProps) {
+    const { t } = useTranslation('dataSources');
     const config = PLATFORM_CONFIGS[platform];
+    const platformName = t(`platforms.${platform}.name`);
+    const platformDescription = t(`platforms.${platform}.description`);
     const isConnected = status?.isConnected ?? false;
     const primaryAccount = status?.accounts?.[0];
 
     // Format last sync date
     const formatLastSync = (dateStr: string | null) => {
-        if (!dateStr) return 'Never';
+        if (!dateStr) return t('card.never');
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', {
             month: 'short',
@@ -123,8 +176,11 @@ export function DataSourceCard({
         <Card className="relative overflow-hidden">
             {/* Status indicator stripe */}
             <div
-                className={`absolute top-0 left-0 right-0 h-1 ${isConnected ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-700/80'
-                    }`}
+                className={`absolute top-0 left-0 right-0 h-1 ${
+                    isConnected
+                        ? 'bg-green-500'
+                        : 'bg-slate-300 dark:bg-slate-700/80'
+                }`}
             />
 
             <CardHeader className="pb-3">
@@ -137,14 +193,21 @@ export function DataSourceCard({
                             {PlatformIcons[platform]}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <CardTitle className="text-base sm:text-lg truncate">{config.name}</CardTitle>
+                            <CardTitle className="text-base sm:text-lg truncate">
+                                {platformName}
+                            </CardTitle>
                             <CardDescription className="text-xs sm:text-sm line-clamp-2">
-                                {config.description}
+                                {platformDescription}
                             </CardDescription>
                         </div>
                     </div>
-                    <Badge variant={isConnected ? 'default' : 'secondary'} className="flex-shrink-0">
-                        {isConnected ? 'Connected' : 'Not Connected'}
+                    <Badge
+                        variant={isConnected ? 'default' : 'secondary'}
+                        className="flex-shrink-0"
+                    >
+                        {isConnected
+                            ? t('card.connected')
+                            : t('card.notConnected')}
                     </Badge>
                 </div>
             </CardHeader>
@@ -154,24 +217,34 @@ export function DataSourceCard({
                     <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2">
                             <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{primaryAccount.name}</span>
+                            <span className="font-medium">
+                                {primaryAccount.name}
+                            </span>
                             <span className="text-muted-foreground">
                                 ({primaryAccount.externalId})
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <RefreshCw className="h-4 w-4" />
-                            <span>Last sync: {formatLastSync(status?.lastSyncAt ?? null)}</span>
+                            <span>
+                                {t('card.lastSync', {
+                                    date: formatLastSync(
+                                        status?.lastSyncAt ?? null
+                                    ),
+                                })}
+                            </span>
                         </div>
                         {status?.accounts && status.accounts.length > 1 && (
                             <div className="text-muted-foreground">
-                                +{status.accounts.length - 1} more account(s)
+                                {t('card.moreAccounts', {
+                                    count: status.accounts.length - 1,
+                                })}
                             </div>
                         )}
                     </div>
                 ) : (
                     <div className="text-sm text-muted-foreground">
-                        Connect your {config.name} account to sync campaigns and metrics.
+                        {t('card.connectDescription', { platformName })}
                     </div>
                 )}
             </CardContent>
@@ -190,7 +263,7 @@ export function DataSourceCard({
                             ) : (
                                 <Unlink className="mr-2 h-4 w-4" />
                             )}
-                            Disconnect
+                            {t('card.disconnect')}
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
                             <a
@@ -198,18 +271,29 @@ export function DataSourceCard({
                                     platform === 'google'
                                         ? 'https://ads.google.com'
                                         : platform === 'facebook'
-                                        ? 'https://business.facebook.com'
-                                        : platform === 'tiktok'
-                                        ? 'https://ads.tiktok.com'
-                                        : (platform === 'google-analytics' || platform === 'search-console')
-                                        ? '/seo-web-analytics'
-                                        : 'https://manager.line.biz'
+                                          ? 'https://business.facebook.com'
+                                          : platform === 'tiktok'
+                                            ? 'https://ads.tiktok.com'
+                                            : platform === 'google-analytics' ||
+                                                platform === 'search-console'
+                                              ? '/seo-web-analytics'
+                                              : 'https://manager.line.biz'
                                 }
-                                target={(platform === 'google-analytics' || platform === 'search-console') ? '_self' : '_blank'}
-                                rel={(platform === 'google-analytics' || platform === 'search-console') ? undefined : 'noopener noreferrer'}
+                                target={
+                                    platform === 'google-analytics' ||
+                                    platform === 'search-console'
+                                        ? '_self'
+                                        : '_blank'
+                                }
+                                rel={
+                                    platform === 'google-analytics' ||
+                                    platform === 'search-console'
+                                        ? undefined
+                                        : 'noopener noreferrer'
+                                }
                             >
                                 <ExternalLink className="mr-2 h-4 w-4" />
-                                Open Dashboard
+                                {t('card.openDashboard')}
                             </a>
                         </Button>
                     </>
@@ -220,7 +304,7 @@ export function DataSourceCard({
                         ) : (
                             <LinkIcon className="mr-2 h-4 w-4" />
                         )}
-                        Connect {config.name}
+                        {t('card.connectPlatform', { platformName })}
                     </Button>
                 )}
             </CardFooter>

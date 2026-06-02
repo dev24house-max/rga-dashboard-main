@@ -21,6 +21,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from '@/i18n/use-translation';
 
 import type { RecentCampaign, CampaignStatus, AdPlatform } from '../../schemas';
 
@@ -32,15 +33,21 @@ const STATUS_STYLES: Record<
     CampaignStatus,
     {
         variant: 'default' | 'secondary' | 'destructive' | 'outline';
-        label: string;
+        labelKey: string;
     }
 > = {
-    ACTIVE: { variant: 'default', label: 'Active' },
-    PAUSED: { variant: 'secondary', label: 'Paused' },
-    PENDING: { variant: 'outline', label: 'Pending' },
-    COMPLETED: { variant: 'outline', label: 'Completed' },
-    ENDED: { variant: 'secondary', label: 'Ended' },
-    DELETED: { variant: 'destructive', label: 'Deleted' },
+    ACTIVE: { variant: 'default', labelKey: 'recentCampaigns.status.active' },
+    PAUSED: { variant: 'secondary', labelKey: 'recentCampaigns.status.paused' },
+    PENDING: { variant: 'outline', labelKey: 'recentCampaigns.status.pending' },
+    COMPLETED: {
+        variant: 'outline',
+        labelKey: 'recentCampaigns.status.completed',
+    },
+    ENDED: { variant: 'secondary', labelKey: 'recentCampaigns.status.ended' },
+    DELETED: {
+        variant: 'destructive',
+        labelKey: 'recentCampaigns.status.deleted',
+    },
 };
 
 // =============================================================================
@@ -74,6 +81,8 @@ interface RecentCampaignsProps {
 // =============================================================================
 
 function RecentCampaignsInfoTooltip() {
+    const { t } = useTranslation('dashboard');
+
     return (
         <TooltipProvider>
             <UiTooltip>
@@ -85,13 +94,14 @@ function RecentCampaignsInfoTooltip() {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
-                    <p className="font-semibold mb-1">Recent Campaigns</p>
-                    <p>
-                        This section displays the 5 most recent campaigns.
-                        It helps monitor campaign status, advertising platform, spending amount,
-                        and budget utilization so you can quickly review current campaign performance.
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
+                    <p className="font-semibold mb-1">
+                        {t('recentCampaigns.infoTitle')}
                     </p>
+                    <p>{t('recentCampaigns.infoDescription')}</p>
                 </TooltipContent>
             </UiTooltip>
         </TooltipProvider>
@@ -104,33 +114,42 @@ function RecentCampaignsInfoTooltip() {
 
 export function RecentCampaigns({
     campaigns,
-    className
+    className,
 }: RecentCampaignsProps) {
+    const { t } = useTranslation('dashboard');
     const { formatCurrency } = useFormatter();
     const hasData = campaigns && campaigns.length > 0;
 
     return (
-        <Card className={`min-h-[360px] sm:h-[400px] flex flex-col ${className ?? ''}`}>
+        <Card
+            className={`min-h-[360px] sm:h-[400px] flex flex-col ${className ?? ''}`}
+        >
             <CardHeader>
                 <div className="flex items-center gap-2">
                     <CardTitle className="text-base font-semibold">
-                        Recent Campaigns
+                        {t('recentCampaigns.title')}
                     </CardTitle>
                     <RecentCampaignsInfoTooltip />
                 </div>
 
                 <CardDescription>
                     {hasData
-                        ? `${campaigns.length} most recent campaign${campaigns.length > 1 ? 's' : ''
-                        }`
-                        : 'No campaigns found'}
+                        ? t(
+                              campaigns.length > 1
+                                  ? 'recentCampaigns.countPlural'
+                                  : 'recentCampaigns.countSingular',
+                              {
+                                  count: campaigns.length,
+                              }
+                          )
+                        : t('recentCampaigns.emptyDescription')}
                 </CardDescription>
             </CardHeader>
 
             <CardContent className="flex-1 min-h-0">
                 {!hasData ? (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
-                        <p className="text-sm">No campaign data available</p>
+                        <p className="text-sm">{t('recentCampaigns.empty')}</p>
                     </div>
                 ) : (
                     <ScrollArea className="h-full pr-4">
@@ -161,8 +180,8 @@ export function RecentCampaigns({
                                                 platformId: campaign.platform,
                                                 className: 'h-6 w-6',
                                             }) && (
-                                                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                                                )}
+                                                <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                                            )}
                                         </div>
 
                                         {/* Center-Left: Campaign Info */}
@@ -180,24 +199,28 @@ export function RecentCampaigns({
                                             variant={statusStyle.variant}
                                             className="text-xs shrink-0"
                                         >
-                                            {statusStyle.label}
+                                            {t(statusStyle.labelKey)}
                                         </Badge>
 
                                         {/* Right: Spending Info */}
                                         <div className="text-right shrink-0 min-w-20 sm:w-28">
                                             <p className="text-sm font-medium leading-tight">
-                                                {formatCurrency(campaign.spending)}
+                                                {formatCurrency(
+                                                    campaign.spending
+                                                )}
                                             </p>
 
                                             {campaign.budgetUtilization !==
                                                 undefined && (
-                                                    <p className="text-xs text-muted-foreground leading-tight">
-                                                        {campaign.budgetUtilization.toFixed(
-                                                            0
-                                                        )}
-                                                        % used
-                                                    </p>
-                                                )}
+                                                <p className="text-xs text-muted-foreground leading-tight">
+                                                    {campaign.budgetUtilization.toFixed(
+                                                        0
+                                                    )}
+                                                    {t(
+                                                        'recentCampaigns.budgetUsedSuffix'
+                                                    )}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 );

@@ -27,7 +27,13 @@ import { ConversionFunnel } from '../components/widgets/conversion-funnel';
 import { FinancialOverview } from '../components/widgets/financial-overview';
 import { useDashboardOverview } from '../hooks/use-dashboard';
 import { DEFAULT_WEEK_STARTS_ON, isWeekPeriod } from '@/lib/date-range-utils';
-import type { AdPlatform, PeriodEnum, RecentCampaign, WeekStartsOn } from '../schemas';
+import type {
+    AdPlatform,
+    PeriodEnum,
+    RecentCampaign,
+    WeekStartsOn,
+} from '../schemas';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Info Tooltip Components
@@ -45,7 +51,10 @@ function InfoTooltip({ content }: { content: string }) {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
                     {content}
                 </TooltipContent>
             </Tooltip>
@@ -63,15 +72,17 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ error, onRetry }: ErrorStateProps) {
+    const { t } = useTranslation('dashboard');
+
     return (
         <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Failed to load dashboard data</AlertTitle>
+            <AlertTitle>{t('page.errors.loadDashboardData')}</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
-                <span>{error.message || 'An unexpected error occurred. Please try again.'}</span>
+                <span>{error.message || t('page.errors.unexpected')}</span>
                 {onRetry && (
                     <Button variant="outline" size="sm" onClick={onRetry}>
-                        Retry
+                        {t('page.errors.retry')}
                     </Button>
                 )}
             </AlertDescription>
@@ -97,35 +108,48 @@ function lowerIsBetterDeltaClassName(value: number | null | undefined) {
 
 function getInclusiveDayCount(from: Date, to: Date) {
     const msPerDay = 1000 * 60 * 60 * 24;
-    const fromDay = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const fromDay = new Date(
+        from.getFullYear(),
+        from.getMonth(),
+        from.getDate()
+    );
     const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
 
-    return Math.max(1, Math.floor((toDay.getTime() - fromDay.getTime()) / msPerDay) + 1);
+    return Math.max(
+        1,
+        Math.floor((toDay.getTime() - fromDay.getTime()) / msPerDay) + 1
+    );
 }
 
-function getComparisonLabel(period: PeriodEnum, customRange?: { from: Date; to: Date }) {
+function getComparisonLabel(
+    period: PeriodEnum,
+    t: (path: string, params?: Record<string, string | number>) => string,
+    customRange?: { from: Date; to: Date }
+) {
     if (period === 'custom' && customRange) {
         const days = getInclusiveDayCount(customRange.from, customRange.to);
-        return days === 1 ? 'vs previous day' : `vs previous ${days} days`;
+        return days === 1
+            ? t('comparison.previousDay')
+            : t('comparison.previousDays', { days });
     }
 
-    const labels: Record<PeriodEnum, string> = {
-        '1d': 'vs yesterday',
-        yesterday: 'vs previous day',
-        this_week: 'vs last week',
-        last_week: 'vs previous week',
-        '7d': 'vs previous 7 days',
-        '14d': 'vs previous 14 days',
-        '30d': 'vs previous 30 days',
-        '90d': 'vs previous 90 days',
-        '365d': 'vs previous 365 days',
-        this_month: 'vs last month',
-        last_month: 'vs previous month',
-        last_3_months: 'vs previous 3 months',
-        custom: 'vs previous period',
+    const labelKeys: Record<PeriodEnum, string> = {
+        '1d': 'comparison.yesterday',
+        yesterday: 'comparison.previousDay',
+        this_week: 'comparison.lastWeek',
+        last_week: 'comparison.previousWeek',
+        '7d': 'comparison.previous7Days',
+        '14d': 'comparison.previous14Days',
+        '30d': 'comparison.previous30Days',
+        '90d': 'comparison.previous90Days',
+        '365d': 'comparison.previous365Days',
+        this_month: 'comparison.lastMonth',
+        last_month: 'comparison.previousMonth',
+        last_3_months: 'comparison.previous3Months',
+        custom: 'comparison.previousPeriod',
     };
 
-    return labels[period];
+    return t(labelKeys[period]);
 }
 
 const PLATFORM_LABELS: Partial<Record<AdPlatform, string>> = {
@@ -171,19 +195,26 @@ function buildPlatformBreakdown(platformDataArray: any[] | undefined) {
         name: PLATFORM_LABELS[platform] ?? platform,
         value: sums.get(platform) ?? 0,
         color: PLATFORM_COLORS[platform] ?? '#94a3b8',
-    })).filter(p => p.value > 0);
+    })).filter((p) => p.value > 0);
 }
 
 function buildPlatformFunnelStages(platformDataArray: any[] | undefined) {
-    const platformDataMap = new Map<AdPlatform, {
-        impressions: number;
-        clicks: number;
-        conversions: number;
-    }>();
+    const platformDataMap = new Map<
+        AdPlatform,
+        {
+            impressions: number;
+            clicks: number;
+            conversions: number;
+        }
+    >();
 
     // Initialize
     for (const platform of PLATFORM_ORDER) {
-        platformDataMap.set(platform, { impressions: 0, clicks: 0, conversions: 0 });
+        platformDataMap.set(platform, {
+            impressions: 0,
+            clicks: 0,
+            conversions: 0,
+        });
     }
 
     // Aggregate by platform
@@ -208,7 +239,7 @@ function buildPlatformFunnelStages(platformDataArray: any[] | undefined) {
             conversions: data.conversions,
             color: PLATFORM_COLORS[platform] ?? '#94a3b8',
         };
-    }).filter(p => p.impressions > 0);
+    }).filter((p) => p.impressions > 0);
 }
 
 // =============================================================================
@@ -216,30 +247,46 @@ function buildPlatformFunnelStages(platformDataArray: any[] | undefined) {
 // =============================================================================
 
 export function DashboardPage() {
+    const { t } = useTranslation('dashboard');
     // Period state for date filtering
     const [period, setPeriod] = useState<PeriodEnum>('1d');
-    const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | undefined>();
-    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
+    const [customRange, setCustomRange] = useState<
+        { from: Date; to: Date } | undefined
+    >();
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(
+        DEFAULT_WEEK_STARTS_ON
+    );
 
     // Fetch dashboard data with selected period or custom range
-    const isCustomRange = period === 'custom' && customRange?.from && customRange?.to;
+    const isCustomRange =
+        period === 'custom' && customRange?.from && customRange?.to;
     const currentWeekStartsOn = isWeekPeriod(period) ? weekStartsOn : undefined;
 
     const { data, isLoading, error, refetch } = useDashboardOverview({
         period: isCustomRange ? undefined : period,
         weekStartsOn: isCustomRange ? undefined : currentWeekStartsOn,
-        startDate: isCustomRange ? format(customRange.from, 'yyyy-MM-dd') : undefined,
-        endDate: isCustomRange ? format(customRange.to, 'yyyy-MM-dd') : undefined,
+        startDate: isCustomRange
+            ? format(customRange.from, 'yyyy-MM-dd')
+            : undefined,
+        endDate: isCustomRange
+            ? format(customRange.to, 'yyyy-MM-dd')
+            : undefined,
     });
 
     const financialBreakdown = useMemo(
-        () => buildPlatformBreakdown(data?.platformBreakdown ?? data?.recentCampaigns),
+        () =>
+            buildPlatformBreakdown(
+                data?.platformBreakdown ?? data?.recentCampaigns
+            ),
         [data?.platformBreakdown, data?.recentCampaigns]
     );
 
     // Calculate platform funnel stages from campaigns
     const platformFunnelStages = useMemo(
-        () => buildPlatformFunnelStages(data?.platformBreakdown ?? data?.recentCampaigns),
+        () =>
+            buildPlatformFunnelStages(
+                data?.platformBreakdown ?? data?.recentCampaigns
+            ),
         [data?.platformBreakdown, data?.recentCampaigns]
     );
 
@@ -261,31 +308,31 @@ export function DashboardPage() {
 
         return [
             {
-                label: 'Impressions',
+                label: t('metrics.impressions'),
                 value: impressions,
                 barClassName: 'bg-linear-to-r from-blue-400 to-blue-500',
                 dotClassName: 'bg-blue-500',
             },
             {
-                label: 'Clicks',
+                label: t('metrics.clicks'),
                 value: clicks,
                 barClassName: 'bg-linear-to-r from-emerald-400 to-emerald-500',
                 dotClassName: 'bg-emerald-500',
             },
             {
-                label: 'Conversions',
+                label: t('metrics.conversions'),
                 value: conversions,
                 barClassName: 'bg-linear-to-r from-violet-400 to-violet-500',
                 dotClassName: 'bg-violet-500',
             },
         ];
-    }, [data]);
+    }, [data, t]);
 
     const totalCost = data?.summary.totalCost ?? 0;
     const roas = data?.summary.averageRoas ?? 0;
     const estimatedRevenue = totalCost * roas;
     const estimatedProfit = Math.max(estimatedRevenue - totalCost, 0);
-    const comparisonLabel = getComparisonLabel(period, customRange);
+    const comparisonLabel = getComparisonLabel(period, t, customRange);
 
     return (
         <DashboardLayout>
@@ -293,15 +340,22 @@ export function DashboardPage() {
                 {/* Page Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between dashboard-header">
                     <div className="space-y-1">
-                        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h2>
+                        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                            {t('page.title')}
+                        </h2>
                         <p className="text-sm text-muted-foreground sm:text-base">
-                            Monitor your advertising performance across all platforms.
+                            {t('page.subtitle')}
                         </p>
                     </div>
                 </div>
 
-                <section id="integration-checklist" className="w-full quick-actions">
-                    <h3 className="sr-only">Integration Checklist</h3>
+                <section
+                    id="integration-checklist"
+                    className="w-full quick-actions"
+                >
+                    <h3 className="sr-only">
+                        {t('page.sections.integrationChecklist')}
+                    </h3>
                     <IntegrationChecklist />
                 </section>
 
@@ -311,8 +365,14 @@ export function DashboardPage() {
                 {/* Metrics Grid */}
                 <section className="w-full dashboard-metrics">
                     <div className="flex items-center gap-2 mb-4">
-                        <h3 className="text-base font-semibold sm:text-lg">Key Performance Metrics</h3>
-                        <InfoTooltip content="Track your essential advertising metrics including total cost, clicks, impressions, conversions, and ROAS across all platforms within the selected period." />
+                        <h3 className="text-base font-semibold sm:text-lg">
+                            {t('page.sections.keyPerformanceMetrics')}
+                        </h3>
+                        <InfoTooltip
+                            content={t(
+                                'page.sections.keyPerformanceMetricsTooltip'
+                            )}
+                        />
                     </div>
                     <DashboardMetrics
                         summary={data?.summary}
@@ -325,8 +385,12 @@ export function DashboardPage() {
                 {/* AI Summaries */}
                 <section className="w-full">
                     <div className="flex items-center gap-2 mb-4">
-                        <h3 className="text-base font-semibold sm:text-lg">AI Summaries</h3>
-                        <InfoTooltip content="AI-generated insights and analysis of your advertising performance, providing actionable recommendations to optimize your campaigns." />
+                        <h3 className="text-base font-semibold sm:text-lg">
+                            {t('page.sections.aiSummaries')}
+                        </h3>
+                        <InfoTooltip
+                            content={t('page.sections.aiSummariesTooltip')}
+                        />
                     </div>
                     {isLoading ? (
                         <Skeleton className="h-[180px] w-full rounded-3xl sm:h-[220px]" />
@@ -341,7 +405,9 @@ export function DashboardPage() {
 
                 {/* Charts & Campaigns Grid - Responsive Layout */}
                 <section id="performance-trends" className="w-full">
-                    <h3 className="sr-only">Performance Trends & Recent Campaigns</h3>
+                    <h3 className="sr-only">
+                        {t('page.sections.performanceTrendsAndRecentCampaigns')}
+                    </h3>
                     <div className="grid gap-4 grid-cols-1 2xl:grid-cols-7 2xl:gap-6 items-stretch">
                         {/* Trend Chart - 4/7 on desktop */}
                         <div className="col-span-1 2xl:col-span-4 flex h-full flex-col">
@@ -366,7 +432,9 @@ export function DashboardPage() {
                             {isLoading ? (
                                 <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                             ) : (
-                                <RecentCampaigns campaigns={data?.recentCampaigns ?? []} />
+                                <RecentCampaigns
+                                    campaigns={data?.recentCampaigns ?? []}
+                                />
                             )}
                         </div>
                     </div>
@@ -375,15 +443,23 @@ export function DashboardPage() {
                 {/* Financial Overview & Conversion Funnel */}
                 <section id="conversion-funnel" className="w-full">
                     <div className="flex items-center gap-2 mb-4">
-                        <h3 className="text-base font-semibold sm:text-lg">Financial Overview & Conversion Funnel</h3>
-                        <InfoTooltip content="Analyze your advertising spend by platform, view financial metrics including revenue and profit estimations based on ROAS, and track the conversion funnel from impressions through to conversions." />
+                        <h3 className="text-base font-semibold sm:text-lg">
+                            {t(
+                                'page.sections.financialOverviewAndConversionFunnel'
+                            )}
+                        </h3>
+                        <InfoTooltip
+                            content={t(
+                                'page.sections.financialOverviewAndConversionFunnelTooltip'
+                            )}
+                        />
                     </div>
                     <div className="grid gap-4 grid-cols-1 2xl:grid-cols-2 2xl:gap-6">
                         {isLoading ? (
                             <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                         ) : (
                             <FinancialOverview
-                                subtitle="ROAS"
+                                subtitle={t('financialOverview.roasSubtitle')}
                                 roi={data?.summary.averageRoas ?? 0}
                                 roiDelta={data?.growth.roasGrowth ?? 0}
                                 roiComparisonLabel={comparisonLabel}
@@ -391,22 +467,35 @@ export function DashboardPage() {
                                 breakdown={financialBreakdown}
                                 summary={[
                                     {
-                                        label: 'Revenue',
+                                        label: t('financialOverview.revenue'),
                                         value: estimatedRevenue,
-                                        deltaLabel: formatPercentDelta(data?.growth.revenueGrowth),
-                                        deltaClassName: deltaClassName(data?.growth.revenueGrowth),
+                                        deltaLabel: formatPercentDelta(
+                                            data?.growth.revenueGrowth
+                                        ),
+                                        deltaClassName: deltaClassName(
+                                            data?.growth.revenueGrowth
+                                        ),
                                     },
                                     {
-                                        label: 'Profit',
+                                        label: t('financialOverview.profit'),
                                         value: estimatedProfit,
-                                        deltaLabel: formatPercentDelta(data?.growth.profitGrowth),
-                                        deltaClassName: deltaClassName(data?.growth.profitGrowth),
+                                        deltaLabel: formatPercentDelta(
+                                            data?.growth.profitGrowth
+                                        ),
+                                        deltaClassName: deltaClassName(
+                                            data?.growth.profitGrowth
+                                        ),
                                     },
                                     {
-                                        label: 'Cost',
+                                        label: t('financialOverview.cost'),
                                         value: totalCost,
-                                        deltaLabel: formatPercentDelta(data?.growth.costGrowth),
-                                        deltaClassName: lowerIsBetterDeltaClassName(data?.growth.costGrowth),
+                                        deltaLabel: formatPercentDelta(
+                                            data?.growth.costGrowth
+                                        ),
+                                        deltaClassName:
+                                            lowerIsBetterDeltaClassName(
+                                                data?.growth.costGrowth
+                                            ),
                                     },
                                 ]}
                             />
@@ -415,7 +504,10 @@ export function DashboardPage() {
                         {isLoading ? (
                             <Skeleton className="h-[320px] w-full rounded-3xl sm:h-[360px] lg:h-[400px]" />
                         ) : (
-                            <ConversionFunnel stages={funnelStages} platformStages={platformFunnelStages} />
+                            <ConversionFunnel
+                                stages={funnelStages}
+                                platformStages={platformFunnelStages}
+                            />
                         )}
                     </div>
                 </section>

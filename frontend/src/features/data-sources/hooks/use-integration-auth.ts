@@ -1,6 +1,6 @@
 /**
  * Integration Auth Hook
- * 
+ *
  * Manages OAuth flow, connection status, and account selection.
  * Handles:
  * - Fetching status for all platforms
@@ -14,7 +14,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { integrationService, parseOAuthCallback, isOAuthCallback } from '../api/integration-service';
+import {
+    integrationService,
+    parseOAuthCallback,
+    isOAuthCallback,
+} from '../api/integration-service';
 import { dashboardKeys } from '@/features/dashboard/hooks/use-dashboard';
 import { campaignKeys } from '@/features/campaigns/hooks/use-campaigns';
 import { useAuthStore, selectUser } from '@/stores/auth-store';
@@ -23,7 +27,7 @@ import type {
     IntegrationStatusResponse,
     TempAccount,
 } from '../types';
-import { PLATFORM_CONFIGS } from '../types';
+import { useTranslation } from '@/i18n/use-translation';
 
 // ============================================
 // Query Keys
@@ -31,8 +35,10 @@ import { PLATFORM_CONFIGS } from '../types';
 
 export const integrationQueryKeys = {
     all: ['integrations'] as const,
-    status: (tenantId: string | undefined, platform: PlatformId) => ['integrations', tenantId, 'status', platform] as const,
-    allStatuses: (tenantId: string | undefined) => ['integrations', tenantId, 'statuses', 'all'] as const,
+    status: (tenantId: string | undefined, platform: PlatformId) =>
+        ['integrations', tenantId, 'status', platform] as const,
+    allStatuses: (tenantId: string | undefined) =>
+        ['integrations', tenantId, 'statuses', 'all'] as const,
 };
 
 // ============================================
@@ -40,10 +46,13 @@ export const integrationQueryKeys = {
 // ============================================
 
 export function useIntegrationAuth() {
+    const { t } = useTranslation('dataSources');
     const [, setLocation] = useLocation();
     const queryClient = useQueryClient();
     const user = useAuthStore(selectUser);
     const tenantId = user?.tenantId;
+    const getPlatformName = (platform: PlatformId) =>
+        t(`platforms.${platform}.name`);
 
     // ============================================
     // OAuth Callback State
@@ -61,7 +70,9 @@ export function useIntegrationAuth() {
     });
 
     // Track pending operations
-    const [pendingPlatform, setPendingPlatform] = useState<PlatformId | null>(null);
+    const [pendingPlatform, setPendingPlatform] = useState<PlatformId | null>(
+        null
+    );
 
     // ============================================
     // Fetch All Statuses
@@ -91,25 +102,45 @@ export function useIntegrationAuth() {
 
         // Handle error
         if (params.error) {
-            toast.error(`Integration error: ${decodeURIComponent(params.error)}`);
+            toast.error(
+                t('toasts.integrationError', {
+                    error: decodeURIComponent(params.error),
+                })
+            );
             window.history.replaceState({}, '', '/data-sources');
             return;
         }
 
         // Handle LINE success callback
         if (params.status === 'success' && params.platform === 'line') {
-            toast.success('LINE Ads connected successfully!');
-            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
-            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            toast.success(
+                t('toasts.platformConnected', {
+                    platformName: getPlatformName('line'),
+                })
+            );
+            queryClient.invalidateQueries({
+                queryKey: integrationQueryKeys.allStatuses(tenantId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: dashboardKeys.overview(),
+            });
             window.history.replaceState({}, '', '/data-sources');
             return;
         }
 
         // Handle TikTok success callback (sandbox or auto-connect mode)
         if (params.status === 'success' && params.platform === 'tiktok') {
-            toast.success('TikTok Ads connected successfully!');
-            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
-            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            toast.success(
+                t('toasts.platformConnected', {
+                    platformName: getPlatformName('tiktok'),
+                })
+            );
+            queryClient.invalidateQueries({
+                queryKey: integrationQueryKeys.allStatuses(tenantId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: dashboardKeys.overview(),
+            });
             window.history.replaceState({}, '', '/data-sources');
             return;
         }
@@ -119,7 +150,7 @@ export function useIntegrationAuth() {
             const platform = normalizePlatformId(params.platform);
 
             if (!platform) {
-                toast.error('Unknown platform in callback');
+                toast.error(t('toasts.unknownPlatform'));
                 window.history.replaceState({}, '', '/data-sources');
                 return;
             }
@@ -137,10 +168,13 @@ export function useIntegrationAuth() {
         tempToken: string
     ) => {
         try {
-            const accounts = await integrationService.getTempAccounts(platform, tempToken);
+            const accounts = await integrationService.getTempAccounts(
+                platform,
+                tempToken
+            );
 
             if (accounts.length === 0) {
-                toast.error('No accounts found. Please check your permissions.');
+                toast.error(t('toasts.noAccountsFound'));
                 return;
             }
 
@@ -152,8 +186,11 @@ export function useIntegrationAuth() {
                 isDialogOpen: true,
             });
         } catch (error) {
-            console.error('[useIntegrationAuth] Failed to fetch temp accounts:', error);
-            toast.error('Failed to fetch accounts. Please try again.');
+            console.error(
+                '[useIntegrationAuth] Failed to fetch temp accounts:',
+                error
+            );
+            toast.error(t('toasts.fetchAccountsFailed'));
         }
     };
 
@@ -170,11 +207,15 @@ export function useIntegrationAuth() {
             tempToken: string;
             externalId: string;
         }) => {
-            return integrationService.completeConnection(platform, tempToken, externalId);
+            return integrationService.completeConnection(
+                platform,
+                tempToken,
+                externalId
+            );
         },
         onSuccess: (data, variables) => {
-            const platformName = PLATFORM_CONFIGS[variables.platform].name;
-            toast.success(`${platformName} connected successfully!`);
+            const platformName = getPlatformName(variables.platform);
+            toast.success(t('toasts.platformConnected', { platformName }));
 
             // Close dialog and reset state
             setCallbackState({
@@ -185,16 +226,26 @@ export function useIntegrationAuth() {
             });
 
             // Refresh statuses
-            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
+            queryClient.invalidateQueries({
+                queryKey: integrationQueryKeys.allStatuses(tenantId),
+            });
 
             // Refresh dashboard data (demo -> live switch)
-            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
+            queryClient.invalidateQueries({
+                queryKey: dashboardKeys.overview(),
+            });
             queryClient.invalidateQueries({ queryKey: ['seo'] });
         },
         onError: (error: any, variables) => {
-            const platformName = PLATFORM_CONFIGS[variables.platform].name;
-            const backendMessage = error.response?.data?.message || error.message;
-            toast.error(`Failed to connect ${platformName}: ${backendMessage}`);
+            const platformName = getPlatformName(variables.platform);
+            const backendMessage =
+                error.response?.data?.message || error.message;
+            toast.error(
+                t('toasts.connectionFailed', {
+                    platformName,
+                    message: backendMessage,
+                })
+            );
         },
     });
 
@@ -203,60 +254,83 @@ export function useIntegrationAuth() {
         tempToken: string,
         externalId: string
     ) => {
-        await completeConnectionMutation.mutateAsync({ platform, tempToken, externalId });
+        await completeConnectionMutation.mutateAsync({
+            platform,
+            tempToken,
+            externalId,
+        });
     };
 
     // ============================================
     // Connect (Initiate OAuth)
     // ============================================
-    const handleConnect = useCallback(async (platform: PlatformId) => {
-        setPendingPlatform(platform);
+    const handleConnect = useCallback(
+        async (platform: PlatformId) => {
+            setPendingPlatform(platform);
 
-        try {
-            // Special handling for TikTok sandbox
-            if (platform === 'tiktok') {
-                const authResponse = await integrationService.getAuthUrl(platform);
+            try {
+                // Special handling for TikTok sandbox
+                if (platform === 'tiktok') {
+                    const authResponse =
+                        await integrationService.getAuthUrl(platform);
 
-                if (authResponse.isSandbox) {
-                    // Sandbox mode - direct connect
-                    const result = await integrationService.connectTikTokSandbox();
-                    toast.success('TikTok Sandbox connected successfully!');
-                    queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
-                    setPendingPlatform(null);
+                    if (authResponse.isSandbox) {
+                        // Sandbox mode - direct connect
+                        const result =
+                            await integrationService.connectTikTokSandbox();
+                        toast.success(t('toasts.tiktokSandboxConnected'));
+                        queryClient.invalidateQueries({
+                            queryKey:
+                                integrationQueryKeys.allStatuses(tenantId),
+                        });
+                        setPendingPlatform(null);
+                        return;
+                    }
+
+                    // Production mode - redirect
+                    const url = authResponse.url || authResponse.authUrl;
+                    if (url) {
+                        window.location.href = url;
+                    } else {
+                        throw new Error(t('toasts.noAuthUrl'));
+                    }
                     return;
                 }
 
-                // Production mode - redirect
-                const url = authResponse.url || authResponse.authUrl;
+                // Standard OAuth redirect
+                const url = await integrationService.getAuthUrlString(platform);
                 if (url) {
                     window.location.href = url;
                 } else {
-                    throw new Error('No auth URL received');
+                    throw new Error(t('toasts.noAuthUrl'));
                 }
-                return;
-            }
+            } catch (error) {
+                console.error('[useIntegrationAuth] Connect error:', error);
 
-            // Standard OAuth redirect
-            const url = await integrationService.getAuthUrlString(platform);
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error('No auth URL received');
-            }
-        } catch (error) {
-            console.error('[useIntegrationAuth] Connect error:', error);
+                // Handle specific Facebook configuration errors
+                if (
+                    platform === 'facebook' &&
+                    (error as any)?.response?.status === 400
+                ) {
+                    toast.error(t('toasts.facebookNotConfigured'));
+                } else {
+                    const errorMessage =
+                        (error as any)?.response?.data?.message ||
+                        (error as any)?.message ||
+                        t('toasts.unknownError');
+                    toast.error(
+                        t('toasts.startConnectionFailed', {
+                            platformName: getPlatformName(platform),
+                            message: errorMessage,
+                        })
+                    );
+                }
 
-            // Handle specific Facebook configuration errors
-            if (platform === 'facebook' && (error as any)?.response?.status === 400) {
-                toast.error('Facebook integration is not configured. Please contact administrator to set up Facebook App credentials.');
-            } else {
-                const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error';
-                toast.error(`Failed to start ${PLATFORM_CONFIGS[platform].name} connection: ${errorMessage}`);
+                setPendingPlatform(null);
             }
-
-            setPendingPlatform(null);
-        }
-    }, [queryClient]);
+        },
+        [queryClient, tenantId, t]
+    );
 
     // ============================================
     // Disconnect Mutation
@@ -266,33 +340,48 @@ export function useIntegrationAuth() {
             return integrationService.disconnect(platform);
         },
         onSuccess: (data, platform) => {
-            toast.success(`${PLATFORM_CONFIGS[platform].name} disconnected`);
-            
+            toast.success(
+                t('toasts.platformDisconnected', {
+                    platformName: getPlatformName(platform),
+                })
+            );
+
             // Invalidate all integration-related queries
-            queryClient.invalidateQueries({ queryKey: integrationQueryKeys.allStatuses(tenantId) });
-            
+            queryClient.invalidateQueries({
+                queryKey: integrationQueryKeys.allStatuses(tenantId),
+            });
+
             // Invalidate campaigns to hide deleted campaigns
             queryClient.invalidateQueries({ queryKey: campaignKeys.all });
-            
+
             // Refresh dashboard data
-            queryClient.invalidateQueries({ queryKey: dashboardKeys.overview() });
-            
+            queryClient.invalidateQueries({
+                queryKey: dashboardKeys.overview(),
+            });
+
             // Reload page to ensure clean state
             setTimeout(() => window.location.reload(), 500);
         },
         onError: (error, platform) => {
-            toast.error(`Failed to disconnect ${PLATFORM_CONFIGS[platform].name}`);
+            toast.error(
+                t('toasts.disconnectFailed', {
+                    platformName: getPlatformName(platform),
+                })
+            );
         },
     });
 
-    const handleDisconnect = useCallback(async (platform: PlatformId) => {
-        setPendingPlatform(platform);
-        try {
-            await disconnectMutation.mutateAsync(platform);
-        } finally {
-            setPendingPlatform(null);
-        }
-    }, [disconnectMutation]);
+    const handleDisconnect = useCallback(
+        async (platform: PlatformId) => {
+            setPendingPlatform(platform);
+            try {
+                await disconnectMutation.mutateAsync(platform);
+            } finally {
+                setPendingPlatform(null);
+            }
+        },
+        [disconnectMutation]
+    );
 
     // ============================================
     // Dialog Controls
@@ -306,15 +395,18 @@ export function useIntegrationAuth() {
         });
     }, []);
 
-    const confirmAccountSelection = useCallback((accountId: string) => {
-        if (callbackState.platform && callbackState.tempToken) {
-            handleCompleteConnection(
-                callbackState.platform,
-                callbackState.tempToken,
-                accountId
-            );
-        }
-    }, [callbackState.platform, callbackState.tempToken]);
+    const confirmAccountSelection = useCallback(
+        (accountId: string) => {
+            if (callbackState.platform && callbackState.tempToken) {
+                handleCompleteConnection(
+                    callbackState.platform,
+                    callbackState.tempToken,
+                    accountId
+                );
+            }
+        },
+        [callbackState.platform, callbackState.tempToken]
+    );
 
     // ============================================
     // Return Values
@@ -361,15 +453,15 @@ export function useIntegrationAuth() {
  */
 function normalizePlatformId(platform: string): PlatformId | null {
     const map: Record<string, PlatformId> = {
-        'google': 'google',
-        'ads': 'google', // Legacy: platform=ads means Google Ads
+        google: 'google',
+        ads: 'google', // Legacy: platform=ads means Google Ads
         'google-analytics': 'google-analytics',
-        'ga4': 'google-analytics',
+        ga4: 'google-analytics',
         'search-console': 'search-console',
-        'gsc': 'search-console',
-        'facebook': 'facebook',
-        'tiktok': 'tiktok',
-        'line': 'line',
+        gsc: 'search-console',
+        facebook: 'facebook',
+        tiktok: 'tiktok',
+        line: 'line',
     };
     return map[platform.toLowerCase()] ?? null;
 }

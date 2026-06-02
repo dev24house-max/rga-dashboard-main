@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { formatPercentage } from '@/lib/formatters';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types
@@ -40,25 +41,29 @@ const ACCENT_STYLES = {
         iconBg: 'bg-indigo-50 dark:bg-indigo-950/30',
         iconColor: 'text-indigo-500 dark:text-indigo-400',
         hoverBorder: 'hover:border-indigo-200 dark:hover:border-indigo-800',
-        gradient: 'from-indigo-50/50 via-transparent to-transparent dark:from-indigo-950/20',
+        gradient:
+            'from-indigo-50/50 via-transparent to-transparent dark:from-indigo-950/20',
     },
     violet: {
         iconBg: 'bg-violet-50 dark:bg-violet-950/30',
         iconColor: 'text-violet-500 dark:text-violet-400',
         hoverBorder: 'hover:border-violet-200 dark:hover:border-violet-800',
-        gradient: 'from-violet-50/50 via-transparent to-transparent dark:from-violet-950/20',
+        gradient:
+            'from-violet-50/50 via-transparent to-transparent dark:from-violet-950/20',
     },
     cyan: {
         iconBg: 'bg-cyan-50 dark:bg-cyan-950/30',
         iconColor: 'text-cyan-500 dark:text-cyan-400',
         hoverBorder: 'hover:border-cyan-200 dark:hover:border-cyan-800',
-        gradient: 'from-cyan-50/50 via-transparent to-transparent dark:from-cyan-950/20',
+        gradient:
+            'from-cyan-50/50 via-transparent to-transparent dark:from-cyan-950/20',
     },
     amber: {
         iconBg: 'bg-amber-50 dark:bg-amber-950/30',
         iconColor: 'text-amber-500 dark:text-amber-400',
         hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-800',
-        gradient: 'from-amber-50/50 via-transparent to-transparent dark:from-amber-950/20',
+        gradient:
+            'from-amber-50/50 via-transparent to-transparent dark:from-amber-950/20',
     },
 };
 
@@ -90,12 +95,15 @@ export function SummaryCard({
     value,
     icon: Icon,
     trend,
-    trendLabel = 'vs last period',
+    trendLabel,
     lowerIsBetter = false,
     loading = false,
     className,
     accentColor = 'indigo',
 }: SummaryCardProps) {
+    const { t } = useTranslation('dashboard');
+    const resolvedTrendLabel = trendLabel ?? t('comparison.lastPeriod');
+
     // Show skeleton when loading
     if (loading) {
         return <SummaryCardSkeleton className={className} />;
@@ -120,20 +128,24 @@ export function SummaryCard({
             )}
         >
             {/* Gradient overlay */}
-            <div className={cn(
-                'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
-                accent.gradient
-            )} />
+            <div
+                className={cn(
+                    'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+                    accent.gradient
+                )}
+            />
 
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
                 </CardTitle>
-                <div className={cn(
-                    'h-8 w-8 rounded-lg flex items-center justify-center',
-                    'transition-all duration-300 group-hover:scale-110',
-                    accent.iconBg
-                )}>
+                <div
+                    className={cn(
+                        'h-8 w-8 rounded-lg flex items-center justify-center',
+                        'transition-all duration-300 group-hover:scale-110',
+                        accent.iconBg
+                    )}
+                >
                     <Icon className={cn('h-4 w-4', accent.iconColor)} />
                 </div>
             </CardHeader>
@@ -160,7 +172,9 @@ export function SummaryCard({
                         >
                             {formatPercentage(trend)}
                         </span>
-                        <span className="text-muted-foreground">{trendLabel}</span>
+                        <span className="text-muted-foreground">
+                            {resolvedTrendLabel}
+                        </span>
                     </div>
                 )}
             </CardContent>

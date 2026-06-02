@@ -29,6 +29,7 @@ import { useFormatter } from '@/hooks/use-formatter';
 import { formatCompactNumber } from '@/lib/formatters';
 import type { TrendDataPoint, PeriodEnum, WeekStartsOn } from '../../schemas';
 import { DashboardDateFilter } from '../../components/dashboard-date-filter';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types & Constants
@@ -43,19 +44,22 @@ interface MetricConfig {
     formatValue: (value: number) => string;
 }
 
-const METRIC_CONFIG_BASE: Record<Exclude<MetricKey, 'cost'>, Omit<MetricConfig, 'formatValue'>> = {
+const METRIC_CONFIG_BASE: Record<
+    Exclude<MetricKey, 'cost'>,
+    Omit<MetricConfig, 'formatValue'>
+> = {
     impressions: {
-        label: 'Impressions',
+        label: 'trendChart.impressions',
         color: '#3b82f6',
         gradientId: 'gradientImpressions',
     },
     clicks: {
-        label: 'Clicks',
+        label: 'trendChart.clicks',
         color: '#f59e0b',
         gradientId: 'gradientClicks',
     },
     conversions: {
-        label: 'Conversions',
+        label: 'trendChart.conversions',
         color: '#8b5cf6',
         gradientId: 'gradientConversions',
     },
@@ -85,10 +89,12 @@ interface TrendChartProps {
 // =============================================================================
 
 function EmptyState() {
+    const { t } = useTranslation('dashboard');
+
     return (
         <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-3 opacity-40" />
-            <p className="text-sm">No data available for the selected period</p>
+            <p className="text-sm">{t('trendChart.empty')}</p>
         </div>
     );
 }
@@ -98,6 +104,8 @@ function EmptyState() {
 // =============================================================================
 
 function TrendInfoTooltip() {
+    const { t } = useTranslation('dashboard');
+
     return (
         <TooltipProvider>
             <UiTooltip>
@@ -109,14 +117,14 @@ function TrendInfoTooltip() {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
-                    <p className="font-semibold mb-1">Performance Trends</p>
-                    <p>
-                        This chart displays trend data over time for important campaign metrics
-                        including Cost, Impressions, Clicks, and Conversions.
-                        It helps track performance movement, compare metric growth,
-                        and identify optimization opportunities.
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
+                    <p className="font-semibold mb-1">
+                        {t('trendChart.infoTitle')}
                     </p>
+                    <p>{t('trendChart.infoDescription')}</p>
                 </TooltipContent>
             </UiTooltip>
         </TooltipProvider>
@@ -140,7 +148,12 @@ interface CustomTooltipProps {
     metricConfig: Record<MetricKey, MetricConfig>;
 }
 
-function CustomTooltip({ active, payload, activeMetrics, metricConfig }: CustomTooltipProps) {
+function CustomTooltip({
+    active,
+    payload,
+    activeMetrics,
+    metricConfig,
+}: CustomTooltipProps) {
     if (!active || !payload || payload.length === 0) {
         return null;
     }
@@ -154,9 +167,9 @@ function CustomTooltip({ active, payload, activeMetrics, metricConfig }: CustomT
                 {formattedDate}
             </p>
             <div className="flex flex-col gap-1.5">
-                {activeMetrics.map(metricKey => {
+                {activeMetrics.map((metricKey) => {
                     const config = metricConfig[metricKey];
-                    const item = payload.find(p => p.dataKey === metricKey);
+                    const item = payload.find((p) => p.dataKey === metricKey);
                     if (!item) return null;
 
                     return (
@@ -198,30 +211,34 @@ export function TrendChart({
     weekStartsOn,
     onWeekStartsOnChange,
 }: TrendChartProps) {
+    const { t } = useTranslation('dashboard');
     const { formatCurrency } = useFormatter();
     const [activeMetrics, setActiveMetrics] = useState<MetricKey[]>([
         'cost',
         'impressions',
-        'clicks'
+        'clicks',
     ]);
 
     const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
         cost: {
-            label: 'Cost',
+            label: t('trendChart.cost'),
             color: '#10b981',
             gradientId: 'gradientCost',
             formatValue: formatCurrency,
         },
         impressions: {
             ...METRIC_CONFIG_BASE.impressions,
+            label: t(METRIC_CONFIG_BASE.impressions.label),
             formatValue: formatCompactNumber,
         },
         clicks: {
             ...METRIC_CONFIG_BASE.clicks,
+            label: t(METRIC_CONFIG_BASE.clicks.label),
             formatValue: formatCompactNumber,
         },
         conversions: {
             ...METRIC_CONFIG_BASE.conversions,
+            label: t(METRIC_CONFIG_BASE.conversions.label),
             formatValue: formatCompactNumber,
         },
     };
@@ -259,8 +276,16 @@ export function TrendChart({
                         x2="0"
                         y2="1"
                     >
-                        <stop offset="5%" stopColor={cfg.color} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={cfg.color} stopOpacity={0} />
+                        <stop
+                            offset="5%"
+                            stopColor={cfg.color}
+                            stopOpacity={0.2}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor={cfg.color}
+                            stopOpacity={0}
+                        />
                     </linearGradient>
                 ))}
             </defs>
@@ -276,7 +301,7 @@ export function TrendChart({
                 <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
                         <CardTitle className="text-base font-semibold">
-                            Performance Trends
+                            {t('trendChart.title')}
                         </CardTitle>
                         <TrendInfoTooltip />
                     </div>
@@ -303,20 +328,28 @@ export function TrendChart({
                                 onClick={() => toggleMetric(key)}
                                 className={`
                                     flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 border
-                                    ${isActive
-                                        ? 'bg-primary/10 border-primary/20 text-foreground shadow-sm'
-                                        : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    ${
+                                        isActive
+                                            ? 'bg-primary/10 border-primary/20 text-foreground shadow-sm'
+                                            : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
                                     }
                                 `}
-                                style={isActive ? {
-                                    borderColor: config.color,
-                                    backgroundColor: `${config.color}15`,
-                                    color: config.color
-                                } : undefined}
+                                style={
+                                    isActive
+                                        ? {
+                                              borderColor: config.color,
+                                              backgroundColor: `${config.color}15`,
+                                              color: config.color,
+                                          }
+                                        : undefined
+                                }
                             >
                                 <div
-                                    className={`h-2 w-2 rounded-full transition-all ${isActive ? 'opacity-100' : 'opacity-40 grayscale'
-                                        }`}
+                                    className={`h-2 w-2 rounded-full transition-all ${
+                                        isActive
+                                            ? 'opacity-100'
+                                            : 'opacity-40 grayscale'
+                                    }`}
                                     style={{ backgroundColor: config.color }}
                                 />
                                 {config.label}
@@ -364,33 +397,39 @@ export function TrendChart({
 
                             <Tooltip
                                 content={
-                                    <CustomTooltip activeMetrics={activeMetrics} metricConfig={METRIC_CONFIG} />
+                                    <CustomTooltip
+                                        activeMetrics={activeMetrics}
+                                        metricConfig={METRIC_CONFIG}
+                                    />
                                 }
                                 cursor={{
                                     stroke: 'var(--muted-foreground)',
                                     strokeWidth: 1,
-                                    strokeDasharray: '4 4'
+                                    strokeDasharray: '4 4',
                                 }}
                             />
 
-                            {(Object.keys(METRIC_CONFIG) as MetricKey[]).map((key) => {
-                                if (!activeMetrics.includes(key)) return null;
+                            {(Object.keys(METRIC_CONFIG) as MetricKey[]).map(
+                                (key) => {
+                                    if (!activeMetrics.includes(key))
+                                        return null;
 
-                                const config = METRIC_CONFIG[key];
+                                    const config = METRIC_CONFIG[key];
 
-                                return (
-                                    <Area
-                                        key={key}
-                                        type="monotone"
-                                        dataKey={key}
-                                        stroke={config.color}
-                                        strokeWidth={2}
-                                        fill={`url(#${config.gradientId})`}
-                                        animationDuration={500}
-                                        activeDot={{ r: 4, strokeWidth: 0 }}
-                                    />
-                                );
-                            })}
+                                    return (
+                                        <Area
+                                            key={key}
+                                            type="monotone"
+                                            dataKey={key}
+                                            stroke={config.color}
+                                            strokeWidth={2}
+                                            fill={`url(#${config.gradientId})`}
+                                            animationDuration={500}
+                                            activeDot={{ r: 4, strokeWidth: 0 }}
+                                        />
+                                    );
+                                }
+                            )}
                         </AreaChart>
                     </ResponsiveContainer>
                 )}

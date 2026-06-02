@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatter } from '@/hooks/use-formatter';
+import { useTranslation } from '@/i18n/use-translation';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,23 @@ import { Campaign, STATUS_STYLES, PLATFORM_LABELS } from '../types';
 // Types
 // =============================================================================
 
-export type SortableColumn = 'name' | 'status' | 'platform' | 'objective' | 'budget' | 'spend' | 'revenue' | 'impressions' | 'clicks' | 'createdAt' | 'ctr' | 'cpc' | 'cpm' | 'roas' | 'roi' | 'date';
+export type SortableColumn =
+    | 'name'
+    | 'status'
+    | 'platform'
+    | 'objective'
+    | 'budget'
+    | 'spend'
+    | 'revenue'
+    | 'impressions'
+    | 'clicks'
+    | 'createdAt'
+    | 'ctr'
+    | 'cpc'
+    | 'cpm'
+    | 'roas'
+    | 'roi'
+    | 'date';
 
 export interface CampaignsTableProps {
     campaigns: Campaign[];
@@ -72,28 +89,6 @@ export interface CampaignsTableProps {
     pageSize?: number;
     onPageChange?: (page: number) => void;
 }
-
-// =============================================================================
-// Formatters
-// =============================================================================
-
-const COLUMN_LABELS: Record<string, string> = {
-    platform: 'Platform',
-    objective: 'Type',
-    budget: 'Budget',
-    spend: 'Spent',
-    revenue: 'Revenue',
-    impressions: 'Impressions',
-    clicks: 'Clicks',
-    ctr: 'CTR',
-    cpc: 'CPC',
-    cpm: 'CPM',
-    roas: 'ROAS',
-    roi: 'ROI',
-    date: 'Date',
-};
-
-
 
 // =============================================================================
 // Sortable Header Component
@@ -128,12 +123,19 @@ function SortableHeader({
         <Button
             variant="ghost"
             size="sm"
-            className={`h-8 flex items-center gap-1 hover:bg-muted/50 ${align === 'center' ? 'mx-auto' : align === 'right' ? 'ml-auto justify-end' : '-ml-3'
-                }`}
+            className={`h-8 flex items-center gap-1 hover:bg-muted/50 ${
+                align === 'center'
+                    ? 'mx-auto'
+                    : align === 'right'
+                      ? 'ml-auto justify-end'
+                      : '-ml-3'
+            }`}
             onClick={() => onSort(column)}
         >
             {label}
-            <SortIcon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+            <SortIcon
+                className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+            />
         </Button>
     );
 }
@@ -162,49 +164,119 @@ export function CampaignsTable({
     onPageChange,
 }: CampaignsTableProps) {
     const { formatCurrency, formatNumber, formatDate } = useFormatter();
-    
+    const { t } = useTranslation('campaigns');
+    const columnLabels: Record<string, string> = {
+        name: t('table.columns.campaign'),
+        status: t('table.columns.status'),
+        platform: t('table.columns.platform'),
+        objective: t('table.columns.objective'),
+        budget: t('table.columns.budget'),
+        spend: t('table.columns.spend'),
+        revenue: t('table.columns.revenue'),
+        impressions: t('table.columns.impressions'),
+        clicks: t('table.columns.clicks'),
+        ctr: t('table.columns.ctr'),
+        cpc: t('table.columns.cpc'),
+        cpm: t('table.columns.cpm'),
+        roas: t('table.columns.roas'),
+        roi: t('table.columns.roi'),
+        date: t('table.columns.date'),
+    };
+    const statusLabels: Record<string, string> = {
+        active: t('table.status.active'),
+        paused: t('table.status.paused'),
+        completed: t('table.status.completed'),
+        pending: t('table.status.pending'),
+        ended: t('table.status.ended'),
+        deleted: t('table.status.deleted'),
+    };
+    const formatStatusLabel = (status: string) =>
+        statusLabels[status.toLowerCase()] ??
+        (status ? status.charAt(0).toUpperCase() + status.slice(1) : status);
+
     // =========================================================================
     // Column Reordering Logic
     // =========================================================================
-    const [reorderableColumns, setReorderableColumns] = useState<SortableColumn[]>([
-        'platform', 'objective', 'budget', 'spend', 'revenue', 'impressions', 'clicks', 'ctr', 'cpc', 'cpm', 'roas', 'roi', 'date'
+    const [reorderableColumns, setReorderableColumns] = useState<
+        SortableColumn[]
+    >([
+        'platform',
+        'objective',
+        'budget',
+        'spend',
+        'revenue',
+        'impressions',
+        'clicks',
+        'ctr',
+        'cpc',
+        'cpm',
+        'roas',
+        'roi',
+        'date',
     ]);
-    const [draggedColumn, setDraggedColumn] = useState<SortableColumn | null>(null);
+    const [draggedColumn, setDraggedColumn] = useState<SortableColumn | null>(
+        null
+    );
 
     // Column Visibility State with localStorage persistence
     const STORAGE_KEY = 'campaigns-table-visible-columns';
-    const [visibleColumns, setVisibleColumns] = useState<Set<SortableColumn>>(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                return new Set(JSON.parse(saved) as SortableColumn[]);
+    const [visibleColumns, setVisibleColumns] = useState<Set<SortableColumn>>(
+        () => {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    return new Set(JSON.parse(saved) as SortableColumn[]);
+                }
+            } catch {
+                // Ignore errors, use default
             }
-        } catch {
-            // Ignore errors, use default
+            return new Set([
+                'platform',
+                'objective',
+                'budget',
+                'spend',
+                'revenue',
+                'impressions',
+                'roi',
+            ] as SortableColumn[]);
         }
-        return new Set(['platform', 'objective', 'budget', 'spend', 'revenue', 'impressions', 'roi'] as SortableColumn[]);
-    });
+    );
 
     // Check if all items on this page are selected
-    const allSelected = campaigns.length > 0 && campaigns.every((c) => selectedIds.has(c.id));
+    const allSelected =
+        campaigns.length > 0 && campaigns.every((c) => selectedIds.has(c.id));
     // Data check for empty state
     if (campaigns.length === 0 && !isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-12 text-center border rounded-md">
                 <div className="rounded-full bg-muted p-4 mb-4">
-                    <svg className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                        className="h-8 w-8 text-muted-foreground"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                     </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">No campaigns found</h3>
-                <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a new campaign.</p>
+                <h3 className="text-lg font-semibold text-foreground">
+                    {t('table.empty.title')}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                    {t('table.empty.description')}
+                </p>
             </div>
         );
     }
 
     // Persist column visibility to localStorage
     const toggleColumn = (column: SortableColumn) => {
-        setVisibleColumns(prev => {
+        setVisibleColumns((prev) => {
             const next = new Set(prev);
             if (next.has(column)) {
                 next.delete(column);
@@ -213,7 +285,10 @@ export function CampaignsTable({
             }
             // Save to localStorage
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)));
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify(Array.from(next))
+                );
             } catch {
                 // Ignore storage errors
             }
@@ -225,7 +300,7 @@ export function CampaignsTable({
         setDraggedColumn(col);
         // Set drag effect
         e.dataTransfer.effectAllowed = 'move';
-        // HTML5 Drag ghost image transparency usually handled by browser, 
+        // HTML5 Drag ghost image transparency usually handled by browser,
         // but we can set a dummy image if needed. Default is fine.
     };
 
@@ -261,59 +336,132 @@ export function CampaignsTable({
             case 'platform':
                 // Platform Brand Colors
                 const pName = campaign.platform.toLowerCase();
-                const pColor = pName.includes('facebook') ? 'text-blue-600' :
-                    pName.includes('google') ? 'text-red-600' :
-                        pName.includes('line') ? 'text-emerald-600' :
-                            pName.includes('tiktok') ? 'text-foreground' : 'text-muted-foreground';
+                const pColor = pName.includes('facebook')
+                    ? 'text-blue-600'
+                    : pName.includes('google')
+                      ? 'text-red-600'
+                      : pName.includes('line')
+                        ? 'text-emerald-600'
+                        : pName.includes('tiktok')
+                          ? 'text-foreground'
+                          : 'text-muted-foreground';
 
-                return <span className={cn("font-semibold", pColor)}>{PLATFORM_LABELS[campaign.platform]}</span>;
+                return (
+                    <span className={cn('font-semibold', pColor)}>
+                        {PLATFORM_LABELS[campaign.platform]}
+                    </span>
+                );
             case 'budget':
                 // Show 'ALL' for TikTok campaigns with infinite budget mode and 0 budget
-                const platformName = String(campaign.platform || '').toLowerCase();
-                const isTikTokInfinite = platformName.includes('tiktok') && (campaign.budgetType === 'BUDGET_MODE_INFINITE' || campaign.budgetType === 'INFINITE') && Number(campaign.budget) === 0;
-                return <span className="font-medium tabular-nums">{isTikTokInfinite ? 'ALL' : formatCurrency(campaign.budget)}</span>;
+                const platformName = String(
+                    campaign.platform || ''
+                ).toLowerCase();
+                const isTikTokInfinite =
+                    platformName.includes('tiktok') &&
+                    (campaign.budgetType === 'BUDGET_MODE_INFINITE' ||
+                        campaign.budgetType === 'INFINITE') &&
+                    Number(campaign.budget) === 0;
+                return (
+                    <span className="font-medium tabular-nums">
+                        {isTikTokInfinite
+                            ? 'ALL'
+                            : formatCurrency(campaign.budget)}
+                    </span>
+                );
             case 'spend':
-                return <span className="font-medium tabular-nums">{formatCurrency(campaign.spent)}</span>;
+                return (
+                    <span className="font-medium tabular-nums">
+                        {formatCurrency(campaign.spent)}
+                    </span>
+                );
             case 'revenue':
-                return <span className="font-medium text-emerald-600 tabular-nums">{formatCurrency(campaign.revenue || 0)}</span>;
+                return (
+                    <span className="font-medium text-emerald-600 tabular-nums">
+                        {formatCurrency(campaign.revenue || 0)}
+                    </span>
+                );
             case 'impressions':
-                return <span className="tabular-nums text-muted-foreground">{formatNumber(campaign.impressions)}</span>;
+                return (
+                    <span className="tabular-nums text-muted-foreground">
+                        {formatNumber(campaign.impressions)}
+                    </span>
+                );
             case 'clicks':
-                return <span className="tabular-nums text-muted-foreground">{formatNumber(campaign.clicks)}</span>;
+                return (
+                    <span className="tabular-nums text-muted-foreground">
+                        {formatNumber(campaign.clicks)}
+                    </span>
+                );
             case 'ctr':
-                return <span className="whitespace-nowrap tabular-nums">{campaign.ctr}%</span>;
+                return (
+                    <span className="whitespace-nowrap tabular-nums">
+                        {campaign.ctr}%
+                    </span>
+                );
             case 'cpc':
-                return <span className="whitespace-nowrap tabular-nums">{formatCurrency(campaign.cpc || 0)}</span>;
+                return (
+                    <span className="whitespace-nowrap tabular-nums">
+                        {formatCurrency(campaign.cpc || 0)}
+                    </span>
+                );
             case 'cpm':
-                return <span className="whitespace-nowrap tabular-nums">{formatCurrency(campaign.cpm || 0)}</span>;
+                return (
+                    <span className="whitespace-nowrap tabular-nums">
+                        {formatCurrency(campaign.cpm || 0)}
+                    </span>
+                );
             case 'roas':
                 return (
-                    <div className={`flex items-center justify-center gap-1 whitespace-nowrap tabular-nums ${campaign.roas && campaign.roas >= 1 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}`}>
-                        {campaign.roas && campaign.roas >= 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    <div
+                        className={`flex items-center justify-center gap-1 whitespace-nowrap tabular-nums ${campaign.roas && campaign.roas >= 1 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}`}
+                    >
+                        {campaign.roas && campaign.roas >= 1 ? (
+                            <ArrowUp className="h-3 w-3" />
+                        ) : (
+                            <ArrowDown className="h-3 w-3" />
+                        )}
                         {campaign.roas}
                     </div>
                 );
             case 'roi':
                 return (
-                    <div className={`flex items-center justify-center gap-1 whitespace-nowrap tabular-nums ${campaign.roi && campaign.roi >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}`}>
-                        {campaign.roi && campaign.roi >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    <div
+                        className={`flex items-center justify-center gap-1 whitespace-nowrap tabular-nums ${campaign.roi && campaign.roi >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}`}
+                    >
+                        {campaign.roi && campaign.roi >= 0 ? (
+                            <ArrowUp className="h-3 w-3" />
+                        ) : (
+                            <ArrowDown className="h-3 w-3" />
+                        )}
                         {campaign.roi}%
                     </div>
                 );
             case 'date':
                 return (
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
-                        {campaign.startDate ? formatDate(campaign.startDate) : (campaign.createdAt ? formatDate(campaign.createdAt) : '-')}
+                        {campaign.startDate
+                            ? formatDate(campaign.startDate)
+                            : campaign.createdAt
+                              ? formatDate(campaign.createdAt)
+                              : '-'}
                     </div>
                 );
             case 'objective':
-                return <span className="capitalize text-sm">{(campaign as any).objective_type || (campaign as any).objective || '-'}</span>;
+                return (
+                    <span className="capitalize text-sm">
+                        {(campaign as any).objective_type ||
+                            (campaign as any).objective ||
+                            '-'}
+                    </span>
+                );
             default:
                 return null;
         }
     };
 
-    const visibleReorderableColumns = reorderableColumns.filter(col => visibleColumns.has(col));
+    const visibleReorderableColumns = reorderableColumns.filter((col) =>
+        visibleColumns.has(col)
+    );
 
     return (
         <div className="space-y-4">
@@ -325,10 +473,22 @@ export function CampaignsTable({
                     <div className="text-xs text-muted-foreground font-medium">
                         {totalItems > 0 ? (
                             <>
-                                Showing <span className="text-foreground">{(page - 1) * pageSize + 1}</span> to <span className="text-foreground">{Math.min(page * pageSize, totalItems)}</span> of <span className="text-foreground">{totalItems}</span> entries
+                                {t('table.pagination.showing')}{' '}
+                                <span className="text-foreground">
+                                    {(page - 1) * pageSize + 1}
+                                </span>{' '}
+                                {t('table.pagination.to')}{' '}
+                                <span className="text-foreground">
+                                    {Math.min(page * pageSize, totalItems)}
+                                </span>{' '}
+                                {t('table.pagination.of')}{' '}
+                                <span className="text-foreground">
+                                    {totalItems}
+                                </span>{' '}
+                                {t('table.pagination.entries')}
                             </>
                         ) : (
-                            "No campaigns found"
+                            t('table.empty.title')
                         )}
                     </div>
 
@@ -338,12 +498,18 @@ export function CampaignsTable({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => onPageChange?.(Math.max(1, page - 1))}
+                                onClick={() =>
+                                    onPageChange?.(Math.max(1, page - 1))
+                                }
                                 disabled={page === 1 || isLoading}
                                 className="h-8 px-2 sm:px-3"
                             >
-                                <span className="hidden sm:inline">&lt; Prev</span>
-                                <span className="sm:hidden">&lt;</span>
+                                <span className="hidden sm:inline">
+                                    {t('table.pagination.prev')}
+                                </span>
+                                <span className="sm:hidden">
+                                    {t('table.pagination.prevShort')}
+                                </span>
                             </Button>
                             <div className="text-xs sm:text-sm font-medium whitespace-nowrap">
                                 {page}/{totalPages}
@@ -351,32 +517,51 @@ export function CampaignsTable({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
+                                onClick={() =>
+                                    onPageChange?.(
+                                        Math.min(totalPages, page + 1)
+                                    )
+                                }
                                 disabled={page === totalPages || isLoading}
                                 className="h-8 px-2 sm:px-3"
                             >
-                                <span className="hidden sm:inline">Next &gt;</span>
-                                <span className="sm:hidden">&gt;</span>
+                                <span className="hidden sm:inline">
+                                    {t('table.pagination.next')}
+                                </span>
+                                <span className="sm:hidden">
+                                    {t('table.pagination.nextShort')}
+                                </span>
                             </Button>
                         </div>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8"
+                                >
                                     <Columns className="h-4 w-4" />
-                                    <span className="hidden sm:inline ml-2">Columns</span>
+                                    <span className="hidden sm:inline ml-2">
+                                        {t('table.columnsToggle')}
+                                    </span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[150px]">
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-[150px]"
+                            >
                                 {reorderableColumns.map((col) => (
                                     <DropdownMenuCheckboxItem
                                         key={col}
                                         className="capitalize"
                                         checked={visibleColumns.has(col)}
-                                        onCheckedChange={() => toggleColumn(col)}
+                                        onCheckedChange={() =>
+                                            toggleColumn(col)
+                                        }
                                         onSelect={(e) => e.preventDefault()}
                                     >
-                                        {COLUMN_LABELS[col] || col}
+                                        {columnLabels[col] || col}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -392,20 +577,39 @@ export function CampaignsTable({
                             <TableRow>
                                 {/* 1. SELECTION (Fixed) */}
                                 <TableHead className="w-[50px]">
-                                    <Switch checked={allSelected} onCheckedChange={(checked) => onToggleAll(!!checked)} aria-label="Select all" />
+                                    <Switch
+                                        checked={allSelected}
+                                        onCheckedChange={(checked) =>
+                                            onToggleAll(!!checked)
+                                        }
+                                        aria-label={t('table.selectAll')}
+                                    />
                                 </TableHead>
 
                                 {/* 2. CAMPAIGN NAME (Fixed) */}
                                 <TableHead className="w-[250px]">
                                     <span className="uppercase text-[11px] font-bold tracking-wider text-muted-foreground dark:text-white">
-                                        <SortableHeader column="name" label="Campaign" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={onSort} />
+                                        <SortableHeader
+                                            column="name"
+                                            label={columnLabels.name}
+                                            currentSortBy={sortBy}
+                                            currentSortOrder={sortOrder}
+                                            onSort={onSort}
+                                        />
                                     </span>
                                 </TableHead>
 
                                 {/* 3. STATUS (Fixed) */}
                                 <TableHead className="text-center">
                                     <span className="uppercase text-[11px] font-bold tracking-wider text-muted-foreground dark:text-white">
-                                        <SortableHeader column="status" label="Status" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={onSort} align="center" />
+                                        <SortableHeader
+                                            column="status"
+                                            label={columnLabels.status}
+                                            currentSortBy={sortBy}
+                                            currentSortOrder={sortOrder}
+                                            onSort={onSort}
+                                            align="center"
+                                        />
                                     </span>
                                 </TableHead>
 
@@ -415,15 +619,17 @@ export function CampaignsTable({
                                         key={col}
                                         className="text-center cursor-move transition-colors hover:bg-muted/30"
                                         draggable
-                                        onDragStart={(e) => handleDragStart(e, col)}
+                                        onDragStart={(e) =>
+                                            handleDragStart(e, col)
+                                        }
                                         onDragOver={handleDragOver}
                                         onDrop={(e) => handleDrop(e, col)}
-                                        title="Drag to reorder"
+                                        title={t('table.dragToReorder')}
                                     >
                                         <span className="uppercase text-[11px] font-bold tracking-wider text-gray-500 dark:text-white">
                                             <SortableHeader
                                                 column={col}
-                                                label={COLUMN_LABELS[col] || col}
+                                                label={columnLabels[col] || col}
                                                 currentSortBy={sortBy}
                                                 currentSortOrder={sortOrder}
                                                 onSort={onSort}
@@ -432,8 +638,6 @@ export function CampaignsTable({
                                         </span>
                                     </TableHead>
                                 ))}
-
-
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -443,37 +647,62 @@ export function CampaignsTable({
                                     <TableRow
                                         key={campaign.id}
                                         className={cn(
-                                            "transition-colors hover:bg-gray-50/80 dark:hover:bg-[#232426] dark:hover:text-white",
-                                            isSelected && "bg-blue-50/50 hover:bg-blue-50/70 dark:bg-[#232426] dark:text-white"
+                                            'transition-colors hover:bg-gray-50/80 dark:hover:bg-[#232426] dark:hover:text-white',
+                                            isSelected &&
+                                                'bg-blue-50/50 hover:bg-blue-50/70 dark:bg-[#232426] dark:text-white'
                                         )}
                                     >
                                         {/* 1. SELECTION */}
                                         <TableCell>
-                                            <Switch checked={isSelected} onCheckedChange={() => onToggleSelect(campaign.id)} />
+                                            <Switch
+                                                checked={isSelected}
+                                                onCheckedChange={() =>
+                                                    onToggleSelect(campaign.id)
+                                                }
+                                            />
                                         </TableCell>
 
                                         {/* 2. CAMPAIGN NAME */}
                                         <TableCell className="min-w-0">
-                                            <Link href={`/campaigns/${campaign.id}`}>
-                                                <span className="block min-w-0 wrap-break-word font-medium text-primary hover:underline dark:text-blue-300 dark:hover:text-blue-200 cursor-pointer" title={campaign.name}>{campaign.name}</span>
+                                            <Link
+                                                href={`/campaigns/${campaign.id}`}
+                                            >
+                                                <span
+                                                    className="block min-w-0 wrap-break-word font-medium text-primary hover:underline dark:text-blue-300 dark:hover:text-blue-200 cursor-pointer"
+                                                    title={campaign.name}
+                                                >
+                                                    {campaign.name}
+                                                </span>
                                             </Link>
                                         </TableCell>
 
                                         {/* 3. STATUS */}
                                         <TableCell className="text-center">
-                                            <Badge variant="secondary" className={STATUS_STYLES[campaign.status]}>
-                                                {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                                            <Badge
+                                                variant="secondary"
+                                                className={
+                                                    STATUS_STYLES[
+                                                        campaign.status
+                                                    ]
+                                                }
+                                            >
+                                                {formatStatusLabel(
+                                                    campaign.status
+                                                )}
                                             </Badge>
                                         </TableCell>
 
                                         {/* 4. DYNAMIC COLUMNS */}
-                                        {visibleReorderableColumns.map((col) => (
-                                            <TableCell key={col} className="text-center">
-                                                {renderCell(campaign, col)}
-                                            </TableCell>
-                                        ))}
-
-
+                                        {visibleReorderableColumns.map(
+                                            (col) => (
+                                                <TableCell
+                                                    key={col}
+                                                    className="text-center"
+                                                >
+                                                    {renderCell(campaign, col)}
+                                                </TableCell>
+                                            )
+                                        )}
                                     </TableRow>
                                 );
                             })}

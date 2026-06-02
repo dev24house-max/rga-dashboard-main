@@ -6,7 +6,7 @@ import {
     CardContent,
     CardDescription,
     CardHeader,
-    CardTitle
+    CardTitle,
 } from '@/components/ui/card';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from '@/i18n/use-translation';
 
 export interface FunnelStage {
     label: string;
@@ -62,6 +63,8 @@ function buildFunnelCsv(stages: FunnelStage[]) {
 // =============================================================================
 
 function ConversionFunnelInfoTooltip() {
+    const { t } = useTranslation('dashboard');
+
     return (
         <TooltipProvider>
             <UiTooltip>
@@ -73,13 +76,14 @@ function ConversionFunnelInfoTooltip() {
                         <Info className="h-4 w-4" />
                     </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-sm leading-relaxed">
-                    <p className="font-semibold mb-1">Conversion Funnel</p>
-                    <p>
-                        This chart shows how users move through each stage of the customer journey,
-                        from impressions to clicks and conversions. It helps identify drop-off points,
-                        measure conversion efficiency, and optimize campaign performance.
+                <TooltipContent
+                    side="top"
+                    className="max-w-xs text-sm leading-relaxed"
+                >
+                    <p className="font-semibold mb-1">
+                        {t('conversionFunnel.infoTitle')}
                     </p>
+                    <p>{t('conversionFunnel.infoDescription')}</p>
                 </TooltipContent>
             </UiTooltip>
         </TooltipProvider>
@@ -90,16 +94,22 @@ export function ConversionFunnel({
     stages = [],
     platformStages = [],
     className,
-    title = 'Conversion Funnel',
-    description = 'User journey effectiveness',
+    title,
+    description,
 }: ConversionFunnelProps) {
+    const { t } = useTranslation('dashboard');
     const displayStages = stages;
     const hasData = displayStages.length > 0;
     const hasPlatformData = platformStages.length > 0;
     const max = Math.max(1, ...displayStages.map((s) => s.value));
+    const resolvedTitle = title ?? t('conversionFunnel.title');
+    const resolvedDescription =
+        description ?? t('conversionFunnel.description');
 
     const cardRef = useRef<HTMLDivElement>(null);
-    const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(null);
+    const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(
+        null
+    );
 
     useEffect(() => {
         if (cardRef.current) {
@@ -108,10 +118,7 @@ export function ConversionFunnel({
     }, []);
 
     const handleExportCsv = () => {
-        downloadCsv(
-            'conversion-funnel.csv',
-            buildFunnelCsv(displayStages)
-        );
+        downloadCsv('conversion-funnel.csv', buildFunnelCsv(displayStages));
     };
 
     return (
@@ -127,11 +134,11 @@ export function ConversionFunnel({
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <CardTitle className="text-lg font-bold">
-                                {title}
+                                {resolvedTitle}
                             </CardTitle>
                             <ConversionFunnelInfoTooltip />
                         </div>
-                        <CardDescription>{description}</CardDescription>
+                        <CardDescription>{resolvedDescription}</CardDescription>
                     </div>
 
                     <ExportDropdown
@@ -159,9 +166,9 @@ export function ConversionFunnel({
                             const conversionRate =
                                 nextStage && stage.value > 0
                                     ? (
-                                        (nextStage.value / stage.value) *
-                                        100
-                                    ).toFixed(1)
+                                          (nextStage.value / stage.value) *
+                                          100
+                                      ).toFixed(1)
                                     : null;
 
                             return (
@@ -203,7 +210,10 @@ export function ConversionFunnel({
                                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-md">
                                                 <span>↓</span>
                                                 <span className="font-medium">
-                                                    {conversionRate}% conversion
+                                                    {conversionRate}%{' '}
+                                                    {t(
+                                                        'conversionFunnel.conversionSuffix'
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
@@ -217,7 +227,7 @@ export function ConversionFunnel({
                     {hasPlatformData && (
                         <div className="pt-4 border-t border-border/60">
                             <h4 className="text-sm font-semibold mb-4 text-foreground/80">
-                                Platform Performance
+                                {t('conversionFunnel.platformPerformance')}
                             </h4>
 
                             <div className="grid gap-3 md:grid-cols-2">
@@ -244,7 +254,9 @@ export function ConversionFunnel({
                                         <div className="flex flex-1 items-center justify-end gap-x-6 gap-y-2 flex-wrap text-sm">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] text-muted-foreground uppercase">
-                                                    Impr.
+                                                    {t(
+                                                        'conversionFunnel.impressionsShort'
+                                                    )}
                                                 </span>
                                                 <span className="font-medium tabular-nums">
                                                     <span className="md:hidden">
@@ -262,7 +274,9 @@ export function ConversionFunnel({
 
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] text-muted-foreground uppercase">
-                                                    Clicks
+                                                    {t(
+                                                        'conversionFunnel.clicks'
+                                                    )}
                                                 </span>
                                                 <span className="font-medium tabular-nums">
                                                     <span className="md:hidden">
@@ -280,7 +294,9 @@ export function ConversionFunnel({
 
                                             <div className="flex flex-col items-end min-w-[60px]">
                                                 <span className="text-[10px] text-muted-foreground uppercase">
-                                                    Conv.
+                                                    {t(
+                                                        'conversionFunnel.conversionsShort'
+                                                    )}
                                                 </span>
                                                 <span className="font-bold tabular-nums text-foreground">
                                                     <span className="md:hidden">
@@ -306,10 +322,10 @@ export function ConversionFunnel({
                 <CardContent className="flex h-[280px] items-center justify-center">
                     <div className="text-center">
                         <p className="text-sm font-medium text-foreground">
-                            No funnel data yet
+                            {t('conversionFunnel.noDataTitle')}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Connect a data source to start seeing funnel metrics.
+                            {t('conversionFunnel.noDataDescription')}
                         </p>
                     </div>
                 </CardContent>

@@ -1,12 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Download } from 'lucide-react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from 'recharts';
+import {
+    Cell,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Sector,
+    Tooltip,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useFormatter } from '@/hooks/use-formatter';
 import { downloadCsv } from '@/lib/download-utils';
 import { ExportDropdown } from '@/components/ui/export-dropdown';
+import { useTranslation } from '@/i18n/use-translation';
 
 export interface FinancialBreakdownItem {
     name: string;
@@ -33,27 +47,27 @@ export interface FinancialOverviewProps {
     summary?: FinancialSummaryItem[];
 }
 
-const DEFAULT_BREAKDOWN: FinancialBreakdownItem[] = [
-    { name: 'Paid', value: 1_176_000, color: '#60a5fa' },
-    { name: 'Organic', value: 784_000, color: '#22c55e' },
-    { name: 'Referral', value: 490_000, color: '#f97316' },
+const DEFAULT_BREAKDOWN = [
+    { nameKey: 'financialOverview.paid', value: 1_176_000, color: '#60a5fa' },
+    { nameKey: 'financialOverview.organic', value: 784_000, color: '#22c55e' },
+    { nameKey: 'financialOverview.referral', value: 490_000, color: '#f97316' },
 ];
 
-const DEFAULT_SUMMARY: FinancialSummaryItem[] = [
+const DEFAULT_SUMMARY = [
     {
-        label: 'Revenue',
+        labelKey: 'financialOverview.revenue',
         value: 2_450_000,
         deltaLabel: '+15.3%',
         deltaClassName: 'text-emerald-500/70',
     },
     {
-        label: 'Profit',
+        labelKey: 'financialOverview.profit',
         value: 2_180_000,
         deltaLabel: '+12.1%',
         deltaClassName: 'text-blue-500/70',
     },
     {
-        label: 'Cost',
+        labelKey: 'financialOverview.cost',
         value: 720_000,
         deltaLabel: '+6.8%',
         deltaClassName: 'text-rose-400/70',
@@ -83,7 +97,9 @@ function buildFinancialCsv(
 
     lines.push('summary_label,summary_value,summary_delta');
     for (const item of summary) {
-        lines.push([item.label, String(item.value), item.deltaLabel ?? ''].join(','));
+        lines.push(
+            [item.label, String(item.value), item.deltaLabel ?? ''].join(',')
+        );
     }
 
     return lines.join('\n');
@@ -93,20 +109,47 @@ function buildFinancialCsv(
 
 export function FinancialOverview({
     className,
-    title = 'Financial Overview',
-    subtitle = 'ROI',
+    title,
+    subtitle,
     roi = 3.4,
     roiDelta = 0.2,
-    roiComparisonLabel = 'vs last period',
+    roiComparisonLabel,
     total,
-    breakdown = DEFAULT_BREAKDOWN,
-    summary = DEFAULT_SUMMARY,
+    breakdown,
+    summary,
 }: FinancialOverviewProps) {
+    const { t } = useTranslation('dashboard');
     const { formatCurrency } = useFormatter();
     const cardRef = useRef<HTMLDivElement>(null);
-    const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(null);
+    const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(
+        null
+    );
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    const computedTotal = total ?? breakdown.reduce((acc, cur) => acc + cur.value, 0);
+    const resolvedTitle = title ?? t('financialOverview.title');
+    const resolvedSubtitle = subtitle ?? t('financialOverview.subtitle');
+    const resolvedRoiComparisonLabel =
+        roiComparisonLabel ?? t('comparison.lastPeriod');
+    const noDataLabel = t('financialOverview.noData');
+    const defaultBreakdown = useMemo(
+        () =>
+            DEFAULT_BREAKDOWN.map((item) => ({
+                ...item,
+                name: t(item.nameKey),
+            })),
+        [t]
+    );
+    const defaultSummary = useMemo(
+        () =>
+            DEFAULT_SUMMARY.map((item) => ({
+                ...item,
+                label: t(item.labelKey),
+            })),
+        [t]
+    );
+    const resolvedBreakdown = breakdown ?? defaultBreakdown;
+    const resolvedSummary = summary ?? defaultSummary;
+    const computedTotal =
+        total ?? resolvedBreakdown.reduce((acc, cur) => acc + cur.value, 0);
     const formattedRoiDelta = `${roiDelta >= 0 ? '+' : ''}${roiDelta.toFixed(1)}%`;
 
     useEffect(() => {
@@ -114,16 +157,28 @@ export function FinancialOverview({
             setTargetElement(cardRef.current);
         }
     }, []);
-    const hasData = breakdown.some(item => item.value > 0);
+    const hasData = resolvedBreakdown.some((item) => item.value > 0);
 
     const chartData = hasData
-        ? breakdown
-        : [{ name: 'No Data', value: 1, color: 'var(--chart-empty, #cbd5e1)' }];
+        ? resolvedBreakdown
+        : [
+              {
+                  name: noDataLabel,
+                  value: 1,
+                  color: 'var(--chart-empty, #cbd5e1)',
+              },
+          ];
 
     const handleExportCsv = () => {
         downloadCsv(
             'financial-overview.csv',
-            buildFinancialCsv(breakdown, summary, roi, roiDelta, computedTotal)
+            buildFinancialCsv(
+                resolvedBreakdown,
+                resolvedSummary,
+                roi,
+                roiDelta,
+                computedTotal
+            )
         );
     };
 
@@ -148,12 +203,17 @@ export function FinancialOverview({
                     <div className="space-y-1">
                         <CardTitle className="text-base font-bold flex items-center gap-2">
                             <span className="w-1.5 h-6 bg-indigo-500 rounded-full inline-block" />
-                            {title}
+                            {resolvedTitle}
                         </CardTitle>
                         <CardDescription className="text-xs font-medium pl-3.5">
-                            {subtitle}{' '}
-                            <span className="text-indigo-500">{roi.toFixed(1)}x</span>{' '}
-                            <span className="text-xs text-muted-foreground">({formattedRoiDelta} {roiComparisonLabel})</span>
+                            {resolvedSubtitle}{' '}
+                            <span className="text-indigo-500">
+                                {roi.toFixed(1)}x
+                            </span>{' '}
+                            <span className="text-xs text-muted-foreground">
+                                ({formattedRoiDelta}{' '}
+                                {resolvedRoiComparisonLabel})
+                            </span>
                         </CardDescription>
                     </div>
 
@@ -169,7 +229,13 @@ export function FinancialOverview({
                 <div className="flex items-center justify-center w-full flex-1">
                     <div className="flex flex-col md:flex-row items-center gap-6 md:gap-5 w-full">
                         <div className="relative w-full max-w-[320px]">
-                            <div style={{ width: '100%', height: 280, minWidth: 0 }}>
+                            <div
+                                style={{
+                                    width: '100%',
+                                    height: 280,
+                                    minWidth: 0,
+                                }}
+                            >
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -183,41 +249,78 @@ export function FinancialOverview({
                                             paddingAngle={2}
                                             stroke="var(--background)"
                                             strokeWidth={3}
-                                            activeIndex={activeIndex ?? undefined}
+                                            activeIndex={
+                                                activeIndex ?? undefined
+                                            }
                                             activeShape={(props: any) => (
                                                 <Sector
                                                     {...props}
-                                                    outerRadius={(props.outerRadius ?? 0) + 6}
+                                                    outerRadius={
+                                                        (props.outerRadius ??
+                                                            0) + 6
+                                                    }
                                                 />
                                             )}
-                                            onMouseLeave={() => setActiveIndex(null)}
+                                            onMouseLeave={() =>
+                                                setActiveIndex(null)
+                                            }
                                         >
                                             {chartData.map((entry, index) => (
                                                 <Cell
                                                     key={entry.name}
                                                     fill={entry.color}
-                                                    onMouseEnter={() => setActiveIndex(index)}
+                                                    onMouseEnter={() =>
+                                                        setActiveIndex(index)
+                                                    }
                                                     className="transition-opacity duration-200"
-                                                    opacity={activeIndex === null || activeIndex === index ? 1 : 0.35}
+                                                    opacity={
+                                                        activeIndex === null ||
+                                                        activeIndex === index
+                                                            ? 1
+                                                            : 0.35
+                                                    }
                                                 />
                                             ))}
                                         </Pie>
                                         <Tooltip
                                             position={{ x: 8, y: 8 }}
-                                            formatter={(value: number | string, name: string | number) => {
-                                                const label = typeof name === 'string' ? name : String(name ?? '');
-                                                if (label === 'No Data') return ['0', label];
-                                                return [formatCurrency(Number(value), { maximumFractionDigits: 0, minimumFractionDigits: 0 }), label];
+                                            formatter={(
+                                                value: number | string,
+                                                name: string | number
+                                            ) => {
+                                                const label =
+                                                    typeof name === 'string'
+                                                        ? name
+                                                        : String(name ?? '');
+                                                if (label === noDataLabel)
+                                                    return ['0', label];
+                                                return [
+                                                    formatCurrency(
+                                                        Number(value),
+                                                        {
+                                                            maximumFractionDigits: 0,
+                                                            minimumFractionDigits: 0,
+                                                        }
+                                                    ),
+                                                    label,
+                                                ];
                                             }}
                                             contentStyle={{
-                                                backgroundColor: 'var(--popover)',
+                                                backgroundColor:
+                                                    'var(--popover)',
                                                 border: '1px solid var(--border)',
                                                 borderRadius: '0.75rem',
                                                 color: 'var(--popover-foreground)',
-                                                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.28)',
+                                                boxShadow:
+                                                    '0 12px 28px rgba(0, 0, 0, 0.28)',
                                             }}
-                                            itemStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
-                                            labelStyle={{ color: 'var(--muted-foreground)' }}
+                                            itemStyle={{
+                                                color: 'var(--popover-foreground)',
+                                                fontWeight: 600,
+                                            }}
+                                            labelStyle={{
+                                                color: 'var(--muted-foreground)',
+                                            }}
                                             separator=" : "
                                         />
                                     </PieChart>
@@ -225,10 +328,16 @@ export function FinancialOverview({
                             </div>
 
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
-                                <p className="text-[10px] uppercase text-gray-400 tracking-wide">TOTAL</p>
+                                <p className="text-[10px] uppercase text-gray-400 tracking-wide">
+                                    {t('financialOverview.total')}
+                                </p>
                                 <div className="max-w-[200px]">
                                     <p className="text-lg md:text-xl font-semibold text-gray-900 leading-none whitespace-nowrap">
-                                        {formatCurrency(computedTotal, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}
+                                        {formatCurrency(computedTotal, {
+                                            notation: 'compact',
+                                            maximumFractionDigits: 1,
+                                            minimumFractionDigits: 0,
+                                        })}
                                     </p>
                                 </div>
                             </div>
@@ -243,9 +352,12 @@ export function FinancialOverview({
                                         activeIndex === index && 'shadow-sm'
                                     )}
                                     style={{
-                                        backgroundColor: 'var(--theme-surface, var(--background))',
-                                        borderColor: 'var(--theme-border, var(--border))',
-                                        boxShadow: 'var(--theme-card-shadow, none)',
+                                        backgroundColor:
+                                            'var(--theme-surface, var(--background))',
+                                        borderColor:
+                                            'var(--theme-border, var(--border))',
+                                        boxShadow:
+                                            'var(--theme-card-shadow, none)',
                                     }}
                                     onMouseEnter={() => setActiveIndex(index)}
                                     onMouseLeave={() => setActiveIndex(null)}
@@ -253,21 +365,42 @@ export function FinancialOverview({
                                     <div className="flex items-center gap-3 min-w-0">
                                         <span
                                             className="h-4 w-4 rounded-full flex-shrink-0"
-                                            style={{ backgroundColor: item.color }}
+                                            style={{
+                                                backgroundColor: item.color,
+                                            }}
                                         />
                                         <span
                                             className="font-semibold theme-text truncate text-xs"
-                                            style={{ color: 'var(--theme-text, var(--foreground))' }}
+                                            style={{
+                                                color: 'var(--theme-text, var(--foreground))',
+                                            }}
                                         >
                                             {item.name}
                                         </span>
                                     </div>
                                     <span
                                         className="font-semibold theme-text whitespace-nowrap text-xs"
-                                        style={{ color: 'var(--theme-text, var(--foreground))' }}
+                                        style={{
+                                            color: 'var(--theme-text, var(--foreground))',
+                                        }}
                                     >
-                                        <span className="md:hidden">{item.name === 'No Data' ? '0' : formatCurrency(item.value, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}</span>
-                                        <span className="hidden md:inline">{item.name === 'No Data' ? '0' : formatCurrency(item.value, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}</span>
+                                        <span className="md:hidden">
+                                            {item.name === noDataLabel
+                                                ? '0'
+                                                : formatCurrency(item.value, {
+                                                      notation: 'compact',
+                                                      maximumFractionDigits: 1,
+                                                      minimumFractionDigits: 0,
+                                                  })}
+                                        </span>
+                                        <span className="hidden md:inline">
+                                            {item.name === noDataLabel
+                                                ? '0'
+                                                : formatCurrency(item.value, {
+                                                      maximumFractionDigits: 0,
+                                                      minimumFractionDigits: 0,
+                                                  })}
+                                        </span>
                                     </span>
                                 </div>
                             ))}
@@ -276,25 +409,45 @@ export function FinancialOverview({
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 pt-4 text-center sm:grid-cols-3">
-                    {summary.map((item) => (
+                    {resolvedSummary.map((item) => (
                         <div key={item.label} className="space-y-1">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                                 {item.label}
                             </p>
                             <p className="text-base font-bold text-foreground tracking-tight">
-                                <span className="md:hidden">{formatCurrency(item.value, { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 })}</span>
-                                <span className="hidden md:inline">{formatCurrency(item.value, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}</span>
+                                <span className="md:hidden">
+                                    {formatCurrency(item.value, {
+                                        notation: 'compact',
+                                        maximumFractionDigits: 1,
+                                        minimumFractionDigits: 0,
+                                    })}
+                                </span>
+                                <span className="hidden md:inline">
+                                    {formatCurrency(item.value, {
+                                        maximumFractionDigits: 0,
+                                        minimumFractionDigits: 0,
+                                    })}
+                                </span>
                             </p>
                             {item.deltaLabel ? (
-                                <p className={cn('text-xs font-medium', item.deltaClassName)}>{item.deltaLabel}</p>
+                                <p
+                                    className={cn(
+                                        'text-xs font-medium',
+                                        item.deltaClassName
+                                    )}
+                                >
+                                    {item.deltaLabel}
+                                </p>
                             ) : (
-                                <p className="text-xs font-medium text-muted-foreground">—</p>
+                                <p className="text-xs font-medium text-muted-foreground">
+                                    —
+                                </p>
                             )}
                         </div>
                     ))}
                 </div>
             </CardContent>
-        </Card >
+        </Card>
     );
 }
 

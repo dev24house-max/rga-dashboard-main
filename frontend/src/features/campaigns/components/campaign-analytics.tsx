@@ -16,17 +16,24 @@ import { cn } from '@/lib/utils';
 import type { Campaign } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useFormatter } from '@/hooks/use-formatter';
+import { useTranslation } from '@/i18n/use-translation';
 
 interface CampaignAnalyticsProps {
     campaigns: Campaign[];
     tenantId?: string | null;
 }
 
-export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProps) {
-    const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+export function CampaignAnalytics({
+    campaigns,
+    tenantId,
+}: CampaignAnalyticsProps) {
+    const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
+        null
+    );
     const [loadingAnalyze, setLoadingAnalyze] = useState(false);
     const [aiResult, setAiResult] = useState<any | null>(null);
     const { formatCurrency } = useFormatter();
+    const { t } = useTranslation('campaigns');
 
     const ai = aiResult;
     const aiInsight = ai?.insight ?? null;
@@ -34,17 +41,18 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
     const aiActions = ai?.recommended_actions ?? null;
 
     // Helper: call analyze endpoint (n8n or backend). VITE_ANALYZE_URL can override.
-    const analyzeUrl = (import.meta as any).env?.VITE_ANALYZE_URL || '/api/ai/analyze';
+    const analyzeUrl =
+        (import.meta as any).env?.VITE_ANALYZE_URL || '/api/ai/analyze';
 
     const handleSelectCampaign = async (id: string) => {
         setSelectedCampaignId(id);
-        const campaign = campaigns.find(c => c.id === id);
+        const campaign = campaigns.find((c) => c.id === id);
         const payload = {
             campaignId: id,
             dateFrom: null,
             dateTo: null,
             tenantId: tenantId ?? (campaign as any)?.tenantId ?? null,
-            source: 'frontend'
+            source: 'frontend',
         };
 
         setLoadingAnalyze(true);
@@ -52,7 +60,7 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             const res = await fetch(analyzeUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
                 const data = await res.json();
@@ -73,7 +81,8 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
         setSelectedCampaignId(campaigns[0].id);
     }
 
-    const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
+    const selectedCampaign =
+        campaigns.find((c) => c.id === selectedCampaignId) || campaigns[0];
 
     // Helper: Calculate Conversion Rate
     const getConversionRate = (c: Campaign) => {
@@ -94,8 +103,12 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
         const avgRate = allRates.reduce((a, b) => a + b, 0) / allRates.length;
 
         // Find Benchmark Campaigns
-        const bestCampaign = campaigns.find(c => getConversionRate(c) === maxRate);
-        const worstCampaign = campaigns.find(c => getConversionRate(c) === minRate);
+        const bestCampaign = campaigns.find(
+            (c) => getConversionRate(c) === maxRate
+        );
+        const worstCampaign = campaigns.find(
+            (c) => getConversionRate(c) === minRate
+        );
 
         // Insight Logic
         const diffFromAvg = currentRate - avgRate;
@@ -123,37 +136,53 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             worstCampaign,
             diffFromAvg,
             isAboveAvg,
-            performanceTier
+            performanceTier,
         };
-
     }, [campaigns, selectedCampaign]);
 
     // Calculate Platform Metrics
     const platformMetrics = useMemo(() => {
         const platforms = ['facebook', 'google', 'tiktok', 'line'] as const;
-        const metrics = platforms.map(platform => {
-            const platformCampaigns = campaigns.filter(c => c.platform.toLowerCase().includes(platform));
-            const totalSpend = platformCampaigns.reduce((sum, c) => sum + (c.spent || 0), 0);
-            const totalConversions = platformCampaigns.reduce((sum, c) => sum + (c.conversions || 0), 0);
-            const cpa = totalConversions > 0 ? totalSpend / totalConversions : 0;
+        const metrics = platforms
+            .map((platform) => {
+                const platformCampaigns = campaigns.filter((c) =>
+                    c.platform.toLowerCase().includes(platform)
+                );
+                const totalSpend = platformCampaigns.reduce(
+                    (sum, c) => sum + (c.spent || 0),
+                    0
+                );
+                const totalConversions = platformCampaigns.reduce(
+                    (sum, c) => sum + (c.conversions || 0),
+                    0
+                );
+                const cpa =
+                    totalConversions > 0 ? totalSpend / totalConversions : 0;
 
-            return {
-                name: platform.charAt(0).toUpperCase() + platform.slice(1),
-                spend: totalSpend,
-                conversions: totalConversions,
-                cpa
-            };
-        }).sort((a, b) => b.spend - a.spend); // Sort by spend descending
+                return {
+                    name: platform.charAt(0).toUpperCase() + platform.slice(1),
+                    spend: totalSpend,
+                    conversions: totalConversions,
+                    cpa,
+                };
+            })
+            .sort((a, b) => b.spend - a.spend); // Sort by spend descending
 
         const totalSpendAll = metrics.reduce((sum, m) => sum + m.spend, 0);
-        const bestCpaPlatform = [...metrics].sort((a, b) => (a.cpa || Infinity) - (b.cpa || Infinity)).find(m => m.cpa > 0);
+        const bestCpaPlatform = [...metrics]
+            .sort((a, b) => (a.cpa || Infinity) - (b.cpa || Infinity))
+            .find((m) => m.cpa > 0);
 
         return { data: metrics, totalSpendAll, bestCpaPlatform };
     }, [campaigns]);
 
     // Generate Optimization Tips
     const tips = useMemo(() => {
-        const generatedTips: { platform: string; type: 'opportunity' | 'warning' | 'info'; message: React.ReactNode }[] = [];
+        const generatedTips: {
+            platform: string;
+            type: 'opportunity' | 'warning' | 'info';
+            message: React.ReactNode;
+        }[] = [];
 
         const getPlatformColor = (name: string) => {
             const n = name.toLowerCase();
@@ -164,11 +193,17 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             return 'text-gray-900';
         };
 
-        const totalConversions = campaigns.reduce((sum, c) => sum + (c.conversions || 0), 0);
-        const avgCpa = totalConversions > 0 ? platformMetrics.totalSpendAll / totalConversions : 0;
+        const totalConversions = campaigns.reduce(
+            (sum, c) => sum + (c.conversions || 0),
+            0
+        );
+        const avgCpa =
+            totalConversions > 0
+                ? platformMetrics.totalSpendAll / totalConversions
+                : 0;
 
         // Generate a tip for EVERY active platform
-        platformMetrics.data.forEach(p => {
+        platformMetrics.data.forEach((p) => {
             if (p.spend === 0) return; // Skip inactive platforms
 
             const colorClass = getPlatformColor(p.name);
@@ -181,10 +216,12 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     type: 'warning',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is spending without results. Is tracking working?
-                            Consider pausing to review ad setup or audience targeting immediately.
+                            <span className={cn('font-bold', colorClass)}>
+                                {p.name}
+                            </span>
+                            {t('analytics.tips.zeroConversions')}
                         </>
-                    )
+                    ),
                 });
                 return;
             }
@@ -196,10 +233,14 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     type: 'opportunity',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is highly efficient (CPA {formatCurrency(pCpa)}).
-                            Increase daily budget by 15-20% to scale up these cheap conversions.
+                            <span className={cn('font-bold', colorClass)}>
+                                {p.name}
+                            </span>
+                            {t('analytics.tips.highEfficiency', {
+                                amount: formatCurrency(pCpa),
+                            })}
                         </>
-                    )
+                    ),
                 });
                 return;
             }
@@ -211,10 +252,14 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     type: 'warning',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> is expensive (CPA {formatCurrency(pCpa)}).
-                            Refine targeting or refresh creatives to bring costs down closer to the average.
+                            <span className={cn('font-bold', colorClass)}>
+                                {p.name}
+                            </span>
+                            {t('analytics.tips.highCpa', {
+                                amount: formatCurrency(pCpa),
+                            })}
                         </>
-                    )
+                    ),
                 });
                 return;
             }
@@ -226,10 +271,12 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     type: 'info',
                     message: (
                         <>
-                            <span className={cn("font-bold", colorClass)}>{p.name}</span> has potential.
-                            It's contributing conversions with low spend. Consider giving it more budget to test volume.
+                            <span className={cn('font-bold', colorClass)}>
+                                {p.name}
+                            </span>
+                            {t('analytics.tips.lowSpend')}
                         </>
-                    )
+                    ),
                 });
                 return;
             }
@@ -240,10 +287,12 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                 type: 'info',
                 message: (
                     <>
-                        <span className={cn("font-bold", colorClass)}>{p.name}</span> is performing steadily.
-                        Maintain current strategy but monitor frequency to avoid ad fatigue.
+                        <span className={cn('font-bold', colorClass)}>
+                            {p.name}
+                        </span>
+                        {t('analytics.tips.stable')}
                     </>
-                )
+                ),
             });
         });
 
@@ -252,12 +301,12 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             generatedTips.push({
                 platform: 'General',
                 type: 'info',
-                message: "Launch campaigns across multiple platforms to see AI-driven comparative insights here."
+                message: t('analytics.tips.fallback'),
             });
         }
 
         return generatedTips;
-    }, [platformMetrics, campaigns]);
+    }, [platformMetrics, campaigns, formatCurrency, t]);
 
     const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
@@ -274,11 +323,9 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
         setCurrentTipIndex((prev) => (prev - 1 + tips.length) % tips.length);
     };
 
-
     if (!campaigns.length || !selectedCampaign || !insights) return null;
 
     return (
-
         <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4 2xl:gap-6 mt-6 items-start">
             {/* LEFT COLUMN: Conversion Rate Insights (2/3 width) */}
             <div className="col-span-1 2xl:col-span-2 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 shadow-sm flex flex-col dark:bg-[#18191b] dark:border-gray-700">
@@ -286,7 +333,9 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     <div className="flex items-start gap-3 flex-1">
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
-                                <p className="text-2xl font-bold tracking-tight">Conversion Rate</p>
+                                <p className="text-2xl font-bold tracking-tight">
+                                    {t('analytics.conversionRate')}
+                                </p>
                                 <TooltipProvider>
                                     <Tooltip delayDuration={300}>
                                         <TooltipTrigger asChild>
@@ -302,22 +351,58 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <div
                                                             className="w-0.5 h-3.5 rounded-full shrink-0"
-                                                            style={{ background: '#F97316' }}
+                                                            style={{
+                                                                background:
+                                                                    '#F97316',
+                                                            }}
                                                         />
                                                         <span
                                                             className="text-[10px] font-medium uppercase tracking-wider"
-                                                            style={{ color: '#FB923C' }}
+                                                            style={{
+                                                                color: '#FB923C',
+                                                            }}
                                                         >
-                                                            Conversion Rate
+                                                            {t(
+                                                                'analytics.conversionRate'
+                                                            )}
                                                         </span>
                                                     </div>
                                                     <p className="text-[12.5px] text-slate-100 leading-relaxed m-0 mb-2.5">
-                                                        Percentage of users who completed a desired action (purchase, signup, etc.) after clicking your ad.
+                                                        {t(
+                                                            'analytics.tooltip.conversionRate.description'
+                                                        )}
                                                     </p>
                                                     <div className="space-y-1.5 text-[11px] text-slate-300">
-                                                        <p><span className="text-amber-400 font-semibold">Formula:</span> (Conversions / Clicks) × 100</p>
-                                                        <p><span className="font-semibold text-emerald-400">Good Range:</span> 2-5% for most industries</p>
-                                                        <p><span className="font-semibold text-blue-400">Insight:</span> Higher conversion rates mean better ad relevance and landing page optimization.</p>
+                                                        <p>
+                                                            <span className="text-amber-400 font-semibold">
+                                                                {t(
+                                                                    'analytics.tooltip.conversionRate.formulaLabel'
+                                                                )}
+                                                            </span>{' '}
+                                                            {t(
+                                                                'analytics.tooltip.conversionRate.formula'
+                                                            )}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-semibold text-emerald-400">
+                                                                {t(
+                                                                    'analytics.tooltip.conversionRate.goodRangeLabel'
+                                                                )}
+                                                            </span>{' '}
+                                                            {t(
+                                                                'analytics.tooltip.conversionRate.goodRange'
+                                                            )}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-semibold text-blue-400">
+                                                                {t(
+                                                                    'analytics.tooltip.conversionRate.insightLabel'
+                                                                )}
+                                                            </span>{' '}
+                                                            {t(
+                                                                'analytics.tooltip.conversionRate.insight'
+                                                            )}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -325,7 +410,9 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
-                            <p className="text-sm text-muted-foreground">Channel-by-channel AI insights</p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('analytics.subtitle')}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -333,15 +420,17 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                 <div className="space-y-6 flex-1 flex flex-col">
                     {/* Campaign Selector Carousel */}
                     <div className="flex flex-wrap gap-2 pb-2">
-                        {campaigns.slice(0, 10).map(campaign => (
+                        {campaigns.slice(0, 10).map((campaign) => (
                             <button
                                 key={campaign.id}
-                                onClick={() => handleSelectCampaign(campaign.id)}
+                                onClick={() =>
+                                    handleSelectCampaign(campaign.id)
+                                }
                                 className={cn(
-                                    "rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 border",
+                                    'rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 border',
                                     selectedCampaignId === campaign.id
-                                        ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20 transform scale-105 dark:bg-blue-500/20 dark:text-blue-100 dark:border-blue-400/50 dark:ring-1 dark:ring-blue-400/20 dark:shadow-blue-950/30"
-                                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50 dark:bg-card dark:text-muted-foreground dark:border-border dark:hover:bg-muted dark:hover:text-foreground dark:hover:border-slate-600"
+                                        ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20 transform scale-105 dark:bg-blue-500/20 dark:text-blue-100 dark:border-blue-400/50 dark:ring-1 dark:ring-blue-400/20 dark:shadow-blue-950/30'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50 dark:bg-card dark:text-muted-foreground dark:border-border dark:hover:bg-muted dark:hover:text-foreground dark:hover:border-slate-600'
                                 )}
                             >
                                 {campaign.name}
@@ -361,28 +450,49 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                         >
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div>
-                                    <p className="text-xs uppercase text-gray-200 font-medium tracking-wider dark:text-white">Active Channel</p>
+                                    <p className="text-xs uppercase text-gray-200 font-medium tracking-wider dark:text-white">
+                                        {t('analytics.activeChannel')}
+                                    </p>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-lg font-semibold text-gray-900 mt-1 dark:text-white">{selectedCampaign.name}</p>
-                                        {loadingAnalyze && selectedCampaignId === selectedCampaign.id && (
-                                            <span className="text-sm text-gray-500 ml-2">Analyzing...</span>
-                                        )}
+                                        <p className="text-lg font-semibold text-gray-900 mt-1 dark:text-white">
+                                            {selectedCampaign.name}
+                                        </p>
+                                        {loadingAnalyze &&
+                                            selectedCampaignId ===
+                                                selectedCampaign.id && (
+                                                <span className="text-sm text-gray-500 ml-2">
+                                                    {t('analytics.analyzing')}
+                                                </span>
+                                            )}
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs uppercase text-gray-500 font-medium tracking-wider dark:text-white">Conversion Rate</p>
+                                    <p className="text-xs uppercase text-gray-500 font-medium tracking-wider dark:text-white">
+                                        {t('analytics.conversionRate')}
+                                    </p>
                                     <div className="flex items-center justify-end gap-2 mt-1">
                                         {insights.performanceTier === 'high' ? (
-                                            <span className="text-emerald-500 text-2xl">↗</span>
-                                        ) : insights.performanceTier === 'low' ? (
-                                            <span className="text-rose-500 text-2xl">↘</span>
+                                            <span className="text-emerald-500 text-2xl">
+                                                ↗
+                                            </span>
+                                        ) : insights.performanceTier ===
+                                          'low' ? (
+                                            <span className="text-rose-500 text-2xl">
+                                                ↘
+                                            </span>
                                         ) : (
-                                            <span className="text-blue-500 text-2xl">→</span>
+                                            <span className="text-blue-500 text-2xl">
+                                                →
+                                            </span>
                                         )}
                                         <motion.p
                                             initial={{ opacity: 0, scale: 0.8 }}
                                             animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                            transition={{
+                                                type: 'spring',
+                                                stiffness: 300,
+                                                damping: 15,
+                                            }}
                                             className="text-4xl font-bold text-gray-900 tracking-tight dark:text-white"
                                         >
                                             {insights.currentRate.toFixed(2)}%
@@ -399,37 +509,97 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.05, duration: 0.25 }}
                                     className={cn(
-                                        "rounded-2xl p-5 border hover:shadow-sm transition-shadow",
-                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60" :
-                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60" :
-                                                "bg-orange-50/50 border-orange-200/60 dark:bg-orange-900/40 dark:border-orange-700/60"
+                                        'rounded-2xl p-5 border hover:shadow-sm transition-shadow',
+                                        insights.performanceTier === 'high'
+                                            ? 'bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60'
+                                            : insights.performanceTier ===
+                                                'medium'
+                                              ? 'bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60'
+                                              : 'bg-orange-50/50 border-orange-200/60 dark:bg-orange-900/40 dark:border-orange-700/60'
                                     )}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Lightbulb className={cn("h-4 w-4",
-                                            insights.performanceTier === 'high' ? "text-emerald-500" :
-                                                insights.performanceTier === 'medium' ? "text-blue-500" :
-                                                    "text-orange-500"
-                                        )} />
-                                        <p className={cn("text-xs uppercase font-bold tracking-wide",
-                                            insights.performanceTier === 'high' ? "text-emerald-600" :
-                                                insights.performanceTier === 'medium' ? "text-blue-600" :
-                                                    "text-orange-600"
-                                        )}>Insight</p>
+                                        <Lightbulb
+                                            className={cn(
+                                                'h-4 w-4',
+                                                insights.performanceTier ===
+                                                    'high'
+                                                    ? 'text-emerald-500'
+                                                    : insights.performanceTier ===
+                                                        'medium'
+                                                      ? 'text-blue-500'
+                                                      : 'text-orange-500'
+                                            )}
+                                        />
+                                        <p
+                                            className={cn(
+                                                'text-xs uppercase font-bold tracking-wide',
+                                                insights.performanceTier ===
+                                                    'high'
+                                                    ? 'text-emerald-600'
+                                                    : insights.performanceTier ===
+                                                        'medium'
+                                                      ? 'text-blue-600'
+                                                      : 'text-orange-600'
+                                            )}
+                                        >
+                                            {t('analytics.insight')}
+                                        </p>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
                                         {aiInsight ? (
                                             <span>{aiInsight}</span>
                                         ) : (
                                             <>
-                                                {selectedCampaign.name} is performing
-                                                <span className="font-semibold text-gray-900 dark:text-white"> {insights.performanceTier === 'medium' ? 'steadily' : (Math.abs(insights.diffFromAvg).toFixed(2) + '% ' + (insights.isAboveAvg ? 'higher' : 'lower'))}</span>
-                                                {insights.performanceTier === 'medium' ? ' around the average.' : ' than average.'}
-                                                {insights.performanceTier === 'high'
-                                                    ? ' This campaign is performing exceptionally well driven by optimized targeting.'
-                                                    : insights.performanceTier === 'medium'
-                                                        ? ' Performance is stable. Look for opportunities to optimize incrementally.'
-                                                        : ' Consider reviewing ad creatives or landing page relevance to improve performance.'}
+                                                {selectedCampaign.name}{' '}
+                                                {t(
+                                                    'analytics.performance.prefix'
+                                                )}
+                                                <span className="font-semibold text-gray-900 dark:text-white">
+                                                    {' '}
+                                                    {insights.performanceTier ===
+                                                    'medium'
+                                                        ? t(
+                                                              'analytics.performance.steadily'
+                                                          )
+                                                        : t(
+                                                              'analytics.performance.diff',
+                                                              {
+                                                                  diff: Math.abs(
+                                                                      insights.diffFromAvg
+                                                                  ).toFixed(2),
+                                                                  direction:
+                                                                      insights.isAboveAvg
+                                                                          ? t(
+                                                                                'analytics.performance.higher'
+                                                                            )
+                                                                          : t(
+                                                                                'analytics.performance.lower'
+                                                                            ),
+                                                              }
+                                                          )}
+                                                </span>
+                                                {insights.performanceTier ===
+                                                'medium'
+                                                    ? t(
+                                                          'analytics.performance.aroundAverage'
+                                                      )
+                                                    : t(
+                                                          'analytics.performance.thanAverage'
+                                                      )}
+                                                {insights.performanceTier ===
+                                                'high'
+                                                    ? t(
+                                                          'analytics.performance.high'
+                                                      )
+                                                    : insights.performanceTier ===
+                                                        'medium'
+                                                      ? t(
+                                                            'analytics.performance.medium'
+                                                        )
+                                                      : t(
+                                                            'analytics.performance.low'
+                                                        )}
                                             </>
                                         )}
                                     </p>
@@ -444,21 +614,76 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                 >
                                     <div className="flex items-center gap-2 mb-2">
                                         <Target className="h-4 w-4 text-gray-500 dark:text-white" />
-                                        <p className="text-xs uppercase text-gray-500 font-bold tracking-wide dark:text-white">Benchmark</p>
+                                        <p className="text-xs uppercase text-gray-500 font-bold tracking-wide dark:text-white">
+                                            {t('analytics.benchmark')}
+                                        </p>
                                     </div>
                                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-100">
                                         <div className="flex justify-between">
-                                            <span>Top:</span>
-                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.bestCampaign?.name}>{aiBenchmark?.comparison_to === 'channel_avg' && aiBenchmark?.relative ? `${aiBenchmark.metric} ${aiBenchmark.relative}` : (insights.bestCampaign?.name)}</span>
-                                            <span className="font-bold text-emerald-600">({(aiBenchmark?.value ?? insights.maxRate).toFixed ? (aiBenchmark?.value ?? insights.maxRate).toFixed(1) : (insights.maxRate.toFixed(1))}%)</span>
+                                            <span>{t('analytics.top')}</span>
+                                            <span
+                                                className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]"
+                                                title={
+                                                    insights.bestCampaign?.name
+                                                }
+                                            >
+                                                {aiBenchmark?.comparison_to ===
+                                                    'channel_avg' &&
+                                                aiBenchmark?.relative
+                                                    ? `${aiBenchmark.metric} ${aiBenchmark.relative}`
+                                                    : insights.bestCampaign
+                                                          ?.name}
+                                            </span>
+                                            <span className="font-bold text-emerald-600">
+                                                (
+                                                {(
+                                                    aiBenchmark?.value ??
+                                                    insights.maxRate
+                                                ).toFixed
+                                                    ? (
+                                                          aiBenchmark?.value ??
+                                                          insights.maxRate
+                                                      ).toFixed(1)
+                                                    : insights.maxRate.toFixed(
+                                                          1
+                                                      )}
+                                                %)
+                                            </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span>Lowest:</span>
-                                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]" title={insights.worstCampaign?.name}>{insights.worstCampaign?.name}</span>
-                                            <span className="font-bold text-rose-500">({(aiBenchmark?.value ?? insights.minRate).toFixed ? (aiBenchmark?.value ?? insights.minRate).toFixed(1) : (insights.minRate.toFixed(1))}%)</span>
+                                            <span>{t('analytics.lowest')}</span>
+                                            <span
+                                                className="font-medium text-gray-900 dark:text-white truncate max-w-[100px]"
+                                                title={
+                                                    insights.worstCampaign?.name
+                                                }
+                                            >
+                                                {insights.worstCampaign?.name}
+                                            </span>
+                                            <span className="font-bold text-rose-500">
+                                                (
+                                                {(
+                                                    aiBenchmark?.value ??
+                                                    insights.minRate
+                                                ).toFixed
+                                                    ? (
+                                                          aiBenchmark?.value ??
+                                                          insights.minRate
+                                                      ).toFixed(1)
+                                                    : insights.minRate.toFixed(
+                                                          1
+                                                      )}
+                                                %)
+                                            </span>
                                         </div>
                                         <div className="pt-1 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-300 mt-2">
-                                            Keep {selectedCampaign.name} above {(insights.avgRate).toFixed(2)}% to stay competitive.
+                                            {t('analytics.keepAbove', {
+                                                campaignName:
+                                                    selectedCampaign.name,
+                                                rate: insights.avgRate.toFixed(
+                                                    2
+                                                ),
+                                            })}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -469,38 +694,80 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.15, duration: 0.25 }}
                                     className={cn(
-                                        "rounded-2xl p-5 border hover:shadow-sm transition-shadow",
-                                        insights.performanceTier === 'high' ? "bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60" :
-                                            insights.performanceTier === 'medium' ? "bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60" :
-                                                "bg-rose-50/50 border-rose-200/60 dark:bg-rose-900/40 dark:border-rose-700/60"
+                                        'rounded-2xl p-5 border hover:shadow-sm transition-shadow',
+                                        insights.performanceTier === 'high'
+                                            ? 'bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-900/40 dark:border-emerald-700/60'
+                                            : insights.performanceTier ===
+                                                'medium'
+                                              ? 'bg-blue-50/50 border-blue-200/60 dark:bg-blue-900/40 dark:border-blue-700/60'
+                                              : 'bg-rose-50/50 border-rose-200/60 dark:bg-rose-900/40 dark:border-rose-700/60'
                                     )}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
-                                        <CheckCircle2 className={cn("h-4 w-4",
-                                            insights.performanceTier === 'high' ? "text-emerald-600" :
-                                                insights.performanceTier === 'medium' ? "text-blue-600" :
-                                                    "text-rose-600"
-                                        )} />
-                                        <p className={cn("text-xs uppercase font-bold tracking-wide",
-                                            insights.performanceTier === 'high' ? "text-emerald-600" :
-                                                insights.performanceTier === 'medium' ? "text-blue-600" :
-                                                    "text-rose-600",
-                                            "dark:text-white"
-                                        )}>Action</p>
+                                        <CheckCircle2
+                                            className={cn(
+                                                'h-4 w-4',
+                                                insights.performanceTier ===
+                                                    'high'
+                                                    ? 'text-emerald-600'
+                                                    : insights.performanceTier ===
+                                                        'medium'
+                                                      ? 'text-blue-600'
+                                                      : 'text-rose-600'
+                                            )}
+                                        />
+                                        <p
+                                            className={cn(
+                                                'text-xs uppercase font-bold tracking-wide',
+                                                insights.performanceTier ===
+                                                    'high'
+                                                    ? 'text-emerald-600'
+                                                    : insights.performanceTier ===
+                                                        'medium'
+                                                      ? 'text-blue-600'
+                                                      : 'text-rose-600',
+                                                'dark:text-white'
+                                            )}
+                                        >
+                                            {t('analytics.action')}
+                                        </p>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed dark:text-gray-100">
                                         {aiActions && aiActions.length > 0 ? (
                                             <ul className="list-disc pl-5 space-y-1">
-                                                {aiActions.map((a: any, idx: number) => (
-                                                    <li key={idx} className="text-sm text-gray-600 dark:text-gray-100">{a.detail || a.type || JSON.stringify(a)}</li>
-                                                ))}
+                                                {aiActions.map(
+                                                    (a: any, idx: number) => (
+                                                        <li
+                                                            key={idx}
+                                                            className="text-sm text-gray-600 dark:text-gray-100"
+                                                        >
+                                                            {a.detail ||
+                                                                a.type ||
+                                                                JSON.stringify(
+                                                                    a
+                                                                )}
+                                                        </li>
+                                                    )
+                                                )}
                                             </ul>
+                                        ) : insights.performanceTier ===
+                                          'high' ? (
+                                            t('analytics.actions.high', {
+                                                campaignName:
+                                                    selectedCampaign.name,
+                                            })
+                                        ) : insights.performanceTier ===
+                                          'medium' ? (
+                                            t('analytics.actions.medium', {
+                                                campaignName:
+                                                    selectedCampaign.name,
+                                            })
                                         ) : (
-                                            insights.performanceTier === 'high'
-                                                ? `Double down on creatives performing in ${selectedCampaign.name}. Scale budget by 10-15% to maximize ROI while maintaining efficiency.`
-                                                : insights.performanceTier === 'medium'
-                                                    ? `Maintain current settings for ${selectedCampaign.name} while testing small variations in ad copy to boost conversion rate slightly.`
-                                                    : `Test new offer variants to close the gap with ${insights.bestCampaign?.name}. Analyze audience segmentation for potential mismatches.`
+                                            t('analytics.actions.low', {
+                                                campaignName:
+                                                    insights.bestCampaign
+                                                        ?.name ?? '',
+                                            })
                                         )}
                                     </p>
                                 </motion.div>
@@ -514,7 +781,9 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
             <div className="col-span-1 rounded-3xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-sm flex flex-col">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <p className="text-2xl font-bold tracking-tight">Platform Breakdown</p>
+                        <p className="text-2xl font-bold tracking-tight">
+                            {t('analytics.platformBreakdown')}
+                        </p>
                         <TooltipProvider>
                             <Tooltip delayDuration={300}>
                                 <TooltipTrigger asChild>
@@ -530,22 +799,55 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                             <div className="flex items-center gap-1.5 mb-1.5">
                                                 <div
                                                     className="w-0.5 h-3.5 rounded-full shrink-0"
-                                                    style={{ background: '#F97316' }}
+                                                    style={{
+                                                        background: '#F97316',
+                                                    }}
                                                 />
                                                 <span
                                                     className="text-[10px] font-medium uppercase tracking-wider"
                                                     style={{ color: '#FB923C' }}
                                                 >
-                                                    Platform Breakdown
+                                                    {t(
+                                                        'analytics.platformBreakdown'
+                                                    )}
                                                 </span>
                                             </div>
                                             <p className="text-[12.5px] text-slate-100 leading-relaxed m-0 mb-2.5">
-                                                Compare ad spend, conversions, and cost-per-acquisition across Facebook, Google, TikTok, and Line platforms.
+                                                {t(
+                                                    'analytics.tooltip.platformBreakdown.description'
+                                                )}
                                             </p>
                                             <div className="space-y-1.5 text-[11px] text-slate-300">
-                                                <p><span className="text-amber-400 font-semibold">Share:</span> Percentage of total budget spent on each platform</p>
-                                                <p><span className="font-semibold text-emerald-400">CPA:</span> Cost Per Acquisition - lower is better</p>
-                                                <p><span className="font-semibold text-blue-400">Tip:</span> Focus budget on platforms with the best CPA while testing underperforming channels.</p>
+                                                <p>
+                                                    <span className="text-amber-400 font-semibold">
+                                                        {t(
+                                                            'analytics.tooltip.platformBreakdown.shareLabel'
+                                                        )}
+                                                    </span>{' '}
+                                                    {t(
+                                                        'analytics.tooltip.platformBreakdown.share'
+                                                    )}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold text-emerald-400">
+                                                        {t(
+                                                            'analytics.tooltip.platformBreakdown.cpaLabel'
+                                                        )}
+                                                    </span>{' '}
+                                                    {t(
+                                                        'analytics.tooltip.platformBreakdown.cpa'
+                                                    )}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold text-blue-400">
+                                                        {t(
+                                                            'analytics.tooltip.platformBreakdown.tipLabel'
+                                                        )}
+                                                    </span>{' '}
+                                                    {t(
+                                                        'analytics.tooltip.platformBreakdown.tip'
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -553,16 +855,21 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    <p className="text-sm text-muted-foreground">Key metrics and budget utilization</p>
+                    <p className="text-sm text-muted-foreground">
+                        {t('analytics.platformSubtitle')}
+                    </p>
                 </div>
 
                 <div className="flex-1 flex flex-col gap-6">
                     {/* Platform Leaderboard */}
                     <div className="space-y-6">
                         {platformMetrics.data
-                            .filter(platform => platform.spend > 0)
+                            .filter((platform) => platform.spend > 0)
                             .map((platform) => {
-                                const percentage = (platform.spend / platformMetrics.totalSpendAll) * 100 || 0;
+                                const percentage =
+                                    (platform.spend /
+                                        platformMetrics.totalSpendAll) *
+                                        100 || 0;
                                 return (
                                     <motion.div
                                         key={platform.name}
@@ -573,49 +880,93 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                     >
                                         <div className="flex justify-between items-end">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-700">{platform.name}</span>
-                                                {platform.name === platformMetrics.bestCpaPlatform?.name && (
-                                                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0 h-5">Best Value</Badge>
+                                                <span className="font-semibold text-gray-700">
+                                                    {platform.name}
+                                                </span>
+                                                {platform.name ===
+                                                    platformMetrics
+                                                        .bestCpaPlatform
+                                                        ?.name && (
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0 h-5"
+                                                    >
+                                                        {t(
+                                                            'analytics.bestValue'
+                                                        )}
+                                                    </Badge>
                                                 )}
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-sm font-bold text-gray-900">
-                                                    {formatCurrency(platform.spend, { maximumFractionDigits: 0 })}
+                                                    {formatCurrency(
+                                                        platform.spend,
+                                                        {
+                                                            maximumFractionDigits: 0,
+                                                        }
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={cn("h-3 rounded-full overflow-hidden",
-                                            platform.name === 'Facebook' ? "bg-blue-100" :
-                                                platform.name === 'Google' ? "bg-red-100" :
-                                                    platform.name === 'Line' ? "bg-emerald-100" :
-                                                        "bg-gray-100"
-                                        )}>
+                                        <div
+                                            className={cn(
+                                                'h-3 rounded-full overflow-hidden',
+                                                platform.name === 'Facebook'
+                                                    ? 'bg-blue-100'
+                                                    : platform.name === 'Google'
+                                                      ? 'bg-red-100'
+                                                      : platform.name === 'Line'
+                                                        ? 'bg-emerald-100'
+                                                        : 'bg-gray-100'
+                                            )}
+                                        >
                                             <motion.div
                                                 variants={{
                                                     initial: { width: 0 },
                                                     visible: {
                                                         width: `${percentage}%`,
-                                                        transition: { duration: 1, ease: "easeOut", delay: 0.2 }
+                                                        transition: {
+                                                            duration: 1,
+                                                            ease: 'easeOut',
+                                                            delay: 0.2,
+                                                        },
                                                     },
                                                     hover: {
                                                         scaleX: 1.02,
-                                                        transition: { duration: 0.2, ease: "easeOut" }
-                                                    }
+                                                        transition: {
+                                                            duration: 0.2,
+                                                            ease: 'easeOut',
+                                                        },
+                                                    },
                                                 }}
-                                                className={cn("h-full rounded-full origin-left",
-                                                    platform.name === 'Facebook' ? "bg-blue-600" :
-                                                        platform.name === 'Google' ? "bg-red-500" :
-                                                            platform.name === 'Line' ? "bg-emerald-500" :
-                                                                "bg-gray-900"
+                                                className={cn(
+                                                    'h-full rounded-full origin-left',
+                                                    platform.name === 'Facebook'
+                                                        ? 'bg-blue-600'
+                                                        : platform.name ===
+                                                            'Google'
+                                                          ? 'bg-red-500'
+                                                          : platform.name ===
+                                                              'Line'
+                                                            ? 'bg-emerald-500'
+                                                            : 'bg-gray-900'
                                                 )}
                                             />
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-500 px-1">
-                                            <span>Share: {percentage.toFixed(1)}%</span>
-                                            <span>CPA: {formatCurrency(platform.cpa, { maximumFractionDigits: 0 })}</span>
+                                            <span>
+                                                {t('analytics.share')}:{' '}
+                                                {percentage.toFixed(1)}%
+                                            </span>
+                                            <span>
+                                                {t('analytics.cpa')}:{' '}
+                                                {formatCurrency(platform.cpa, {
+                                                    maximumFractionDigits: 0,
+                                                })}
+                                            </span>
                                         </div>
                                     </motion.div>
-                                )
+                                );
                             })}
                     </div>
 
@@ -624,19 +975,37 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                     <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 relative group">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <Lightbulb className={cn("h-4 w-4",
-                                    tips[currentTipIndex]?.type === 'warning' ? "text-red-600" :
-                                        tips[currentTipIndex]?.type === 'opportunity' ? "text-violet-600" :
-                                            "text-blue-600"
-                                )} />
-                                <p className={cn("text-xs uppercase font-bold tracking-wide",
-                                    tips[currentTipIndex]?.type === 'warning' ? "text-red-600" :
-                                        tips[currentTipIndex]?.type === 'opportunity' ? "text-violet-600" :
-                                            "text-blue-600"
-                                )}>
-                                    {tips[currentTipIndex]?.type === 'warning' ? 'Efficiency Warning' :
-                                        tips[currentTipIndex]?.type === 'opportunity' ? 'Optimization Opportunity' :
-                                            'Growth Tip'} ({currentTipIndex + 1}/{tips.length})
+                                <Lightbulb
+                                    className={cn(
+                                        'h-4 w-4',
+                                        tips[currentTipIndex]?.type ===
+                                            'warning'
+                                            ? 'text-red-600'
+                                            : tips[currentTipIndex]?.type ===
+                                                'opportunity'
+                                              ? 'text-violet-600'
+                                              : 'text-blue-600'
+                                    )}
+                                />
+                                <p
+                                    className={cn(
+                                        'text-xs uppercase font-bold tracking-wide',
+                                        tips[currentTipIndex]?.type ===
+                                            'warning'
+                                            ? 'text-red-600'
+                                            : tips[currentTipIndex]?.type ===
+                                                'opportunity'
+                                              ? 'text-violet-600'
+                                              : 'text-blue-600'
+                                    )}
+                                >
+                                    {tips[currentTipIndex]?.type === 'warning'
+                                        ? t('analytics.tipLabels.warning')
+                                        : tips[currentTipIndex]?.type ===
+                                            'opportunity'
+                                          ? t('analytics.tipLabels.opportunity')
+                                          : t('analytics.tipLabels.info')}{' '}
+                                    ({currentTipIndex + 1}/{tips.length})
                                 </p>
                             </div>
 
@@ -647,15 +1016,43 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                                         onClick={prevTip}
                                         className="p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
                                     >
-                                        <span className="sr-only">Previous</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                                        <span className="sr-only">
+                                            {t('analytics.navigation.previous')}
+                                        </span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="m15 18-6-6 6-6" />
+                                        </svg>
                                     </button>
                                     <button
                                         onClick={nextTip}
                                         className="p-1 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
                                     >
-                                        <span className="sr-only">Next</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                        <span className="sr-only">
+                                            {t('analytics.navigation.next')}
+                                        </span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="m9 18 6-6-6-6" />
+                                        </svg>
                                     </button>
                                 </div>
                             )}
@@ -676,8 +1073,6 @@ export function CampaignAnalytics({ campaigns, tenantId }: CampaignAnalyticsProp
                             </AnimatePresence>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </div>

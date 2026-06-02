@@ -7,6 +7,7 @@ import { CreditCard, Eye, MousePointerClick, Target } from 'lucide-react';
 import { SummaryCard } from './ui/summary-card';
 import { formatCurrencyTHB, formatNumber } from '@/lib/formatters';
 import type { SummaryMetrics, GrowthMetrics } from '../schemas';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types
@@ -28,7 +29,7 @@ export interface DashboardMetricsProps {
 // =============================================================================
 
 interface MetricConfig {
-    title: string;
+    titleKey: string;
     icon: typeof CreditCard;
     getValue: (summary: SummaryMetrics) => string;
     getTrend: (growth: GrowthMetrics) => number | null;
@@ -44,7 +45,7 @@ const safeNumber = (v: any, fallback = 0) => {
 
 const metricsConfig: MetricConfig[] = [
     {
-        title: 'Total Spend',
+        titleKey: 'metrics.totalSpend',
         icon: CreditCard,
         getValue: (s) => formatCurrencyTHB(safeNumber(s.totalCost)),
         getTrend: (g) => g.costGrowth,
@@ -52,21 +53,21 @@ const metricsConfig: MetricConfig[] = [
         lowerIsBetter: true,
     },
     {
-        title: 'Impressions',
+        titleKey: 'metrics.impressions',
         icon: Eye,
         getValue: (s) => formatNumber(safeNumber(s.totalImpressions)),
         getTrend: (g) => g.impressionsGrowth,
         accentColor: 'violet',
     },
     {
-        title: 'Clicks',
+        titleKey: 'metrics.clicks',
         icon: MousePointerClick,
         getValue: (s) => formatNumber(safeNumber(s.totalClicks)),
         getTrend: (g) => g.clicksGrowth,
         accentColor: 'cyan',
     },
     {
-        title: 'Conversions',
+        titleKey: 'metrics.conversions',
         icon: Target,
         getValue: (s) => formatNumber(safeNumber(s.totalConversions)),
         getTrend: (g) => g.conversionsGrowth,
@@ -81,29 +82,37 @@ const metricsConfig: MetricConfig[] = [
 export function DashboardMetrics({
     summary,
     growth,
-    comparisonLabel = 'vs last period',
+    comparisonLabel,
     loading = false,
 }: DashboardMetricsProps) {
+    const { t } = useTranslation('dashboard');
+    const resolvedComparisonLabel =
+        comparisonLabel ?? t('comparison.lastPeriod');
+
     return (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {metricsConfig.map((metric) => (
                 <SummaryCard
-                    key={metric.title}
-                    title={metric.title}
+                    key={metric.titleKey}
+                    title={t(metric.titleKey)}
                     icon={metric.icon}
                     accentColor={metric.accentColor as any}
-                    value={summary ? metric.getValue(summary) : metric.getValue({
-                        totalImpressions: 0,
-                        totalClicks: 0,
-                        totalCost: 0,
-                        totalConversions: 0,
-                        averageCtr: 0,
-                        averageRoas: 0,
-                        averageCpm: 0,
-                        averageRoi: 0,
-                    })}
+                    value={
+                        summary
+                            ? metric.getValue(summary)
+                            : metric.getValue({
+                                  totalImpressions: 0,
+                                  totalClicks: 0,
+                                  totalCost: 0,
+                                  totalConversions: 0,
+                                  averageCtr: 0,
+                                  averageRoas: 0,
+                                  averageCpm: 0,
+                                  averageRoi: 0,
+                              })
+                    }
                     trend={growth ? metric.getTrend(growth) : null}
-                    trendLabel={comparisonLabel}
+                    trendLabel={resolvedComparisonLabel}
                     lowerIsBetter={metric.lowerIsBetter}
                     loading={loading}
                 />

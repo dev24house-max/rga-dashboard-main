@@ -34,8 +34,12 @@ import { BulkActionBar } from '../components/bulk-action-bar';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFileDownload } from '@/hooks/use-file-download';
 import { useCampaigns } from '../hooks/use-campaigns';
-import { useDeleteCampaign, useToggleCampaignStatus } from '../hooks/use-campaign-mutations';
+import {
+    useDeleteCampaign,
+    useToggleCampaignStatus,
+} from '../hooks/use-campaign-mutations';
 import { exportService } from '@/features/dashboard/services/export-service';
+import { useTranslation } from '@/i18n/use-translation';
 import type { Campaign } from '../types';
 
 // =============================================================================
@@ -50,7 +54,11 @@ function formatDateDisplay(dateStr: string): string {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
 }
 
 // =============================================================================
@@ -84,26 +92,37 @@ function IndeterminateProgress({ className }: { className?: string }) {
 // =============================================================================
 
 export function CampaignsPage() {
+    const { t } = useTranslation('campaigns');
+
     // ==========================================================================
     // State Management
     // ==========================================================================
 
     // Sheet state
-    const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+    const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(
+        null
+    );
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     // Delete confirmation dialog state
-    const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(null);
+    const [deletingCampaign, setDeletingCampaign] = useState<Campaign | null>(
+        null
+    );
 
     // Period filter state for time-window metrics
     const [period, setPeriod] = useState<PeriodEnum>('7d');
-    const [customRange, setCustomRange] = useState<{ from: Date; to: Date } | null>(null);
+    const [customRange, setCustomRange] = useState<{
+        from: Date;
+        to: Date;
+    } | null>(null);
 
     // Search and filter state
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<Set<string>>(new Set(['ALL']));
     const [platform, setPlatform] = useState<Set<string>>(new Set(['ALL']));
-    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(DEFAULT_WEEK_STARTS_ON);
+    const [weekStartsOn, setWeekStartsOn] = useState<WeekStartsOn>(
+        DEFAULT_WEEK_STARTS_ON
+    );
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -132,7 +151,15 @@ export function CampaignsPage() {
         setPage(1);
         // Removed: setSelectedIds(new Set()); // Allow keeping selection across filter changes
         // Removed: setShowSelectedOnly(false); // Allow keeping "Selected Only" mode
-    }, [debouncedSearch, status, platform, period, weekStartsOn, sortBy, sortOrder]);
+    }, [
+        debouncedSearch,
+        status,
+        platform,
+        period,
+        weekStartsOn,
+        sortBy,
+        sortOrder,
+    ]);
 
     // ==========================================================================
     // Auto-exit "Selected Only" Mode when selection is empty
@@ -169,14 +196,26 @@ export function CampaignsPage() {
     // ==========================================================================
     // Data Fetching with All Filters (Paginated for Table)
     // ==========================================================================
-    const { data: campaignsResponse, isLoading, isError, error, refetch, isFetching } = useCampaigns({
+    const {
+        data: campaignsResponse,
+        isLoading,
+        isError,
+        error,
+        refetch,
+        isFetching,
+    } = useCampaigns({
         page: showSelectedOnly ? 1 : page,
         limit: showSelectedOnly ? 100 : DEFAULT_PAGE_SIZE, // Show all selected items (up to 100)
         // Only filter by IDs if we have selections
-        ids: showSelectedOnly && selectedIds.size > 0 ? Array.from(selectedIds) : undefined,
+        ids:
+            showSelectedOnly && selectedIds.size > 0
+                ? Array.from(selectedIds)
+                : undefined,
         search: debouncedSearch || undefined,
         status: status.has('ALL') ? undefined : Array.from(status).join(','),
-        platform: platform.has('ALL') ? undefined : Array.from(platform).join(','),
+        platform: platform.has('ALL')
+            ? undefined
+            : Array.from(platform).join(','),
         sortBy: sortBy as any,
         sortOrder,
         startDate: dateRange.startDate,
@@ -191,24 +230,31 @@ export function CampaignsPage() {
     // Global Data Fetching (Unpaginated for Charts/Analytics)
     // ==========================================================================
     // Fetch all items (up to limit) that match the filters, ignoring pagination
-    const { data: globalCampaignsResponse, isLoading: isGlobalLoading } = useCampaigns({
-        page: 1,
-        limit: GLOBAL_QUERY_LIMIT,
-        ids: showSelectedOnly
-            ? (selectedIds.size > 0 ? Array.from(selectedIds) : ['00000000-0000-0000-0000-000000000000'])
-            : undefined,
-        search: debouncedSearch || undefined,
-        status: status.has('ALL') ? undefined : Array.from(status).join(','),
-        platform: platform.has('ALL') ? undefined : Array.from(platform).join(','),
-        sortBy: sortBy as any,
-        sortOrder,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-    });
+    const { data: globalCampaignsResponse, isLoading: isGlobalLoading } =
+        useCampaigns({
+            page: 1,
+            limit: GLOBAL_QUERY_LIMIT,
+            ids: showSelectedOnly
+                ? selectedIds.size > 0
+                    ? Array.from(selectedIds)
+                    : ['00000000-0000-0000-0000-000000000000']
+                : undefined,
+            search: debouncedSearch || undefined,
+            status: status.has('ALL')
+                ? undefined
+                : Array.from(status).join(','),
+            platform: platform.has('ALL')
+                ? undefined
+                : Array.from(platform).join(','),
+            sortBy: sortBy as any,
+            sortOrder,
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+        });
 
     const globalCampaigns = globalCampaignsResponse?.data || [];
     // Use global summary if available (it aggregates everything), otherwise fall back to paginated summary
-    // Actually, backend usually returns summary for "matching filters" not "matching page", 
+    // Actually, backend usually returns summary for "matching filters" not "matching page",
     // but just to be safe and consistent with charts, we can use global summary if we wanted.
     // However, the existing 'summary' usually reflects total metrics for the QUERY, not the PAGE.
     // Let's stick with the 'summary' from the main query for the top cards as that's standard,
@@ -242,66 +288,91 @@ export function CampaignsPage() {
     // ==========================================================================
     // Sort Handler
     // ==========================================================================
-    const handleSort = useCallback((column: SortableColumn) => {
-        if (sortBy === column) {
-            // Toggle order if clicking same column
-            setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-        } else {
-            // Set new column with default desc order
-            setSortBy(column);
-            setSortOrder('desc');
-        }
-    }, [sortBy]);
+    const handleSort = useCallback(
+        (column: SortableColumn) => {
+            if (sortBy === column) {
+                // Toggle order if clicking same column
+                setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+            } else {
+                // Set new column with default desc order
+                setSortBy(column);
+                setSortOrder('desc');
+            }
+        },
+        [sortBy]
+    );
 
     // ==========================================================================
     // Selection Handlers
     // ==========================================================================
-    const handleToggleSelect = useCallback((id: string) => {
-        setSelectedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                if (next.size >= MAX_SELECTION_LIMIT) {
-                    toast.error('Selection limit reached', {
-                        description: `You can only select up to ${MAX_SELECTION_LIMIT} campaigns.`
-                    });
-                    return next;
+    const handleToggleSelect = useCallback(
+        (id: string) => {
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) {
+                    next.delete(id);
+                } else {
+                    if (next.size >= MAX_SELECTION_LIMIT) {
+                        toast.error(t('page.toasts.selectionLimitTitle'), {
+                            description: t(
+                                'page.toasts.selectionLimitDescription',
+                                {
+                                    limit: MAX_SELECTION_LIMIT,
+                                }
+                            ),
+                        });
+                        return next;
+                    }
+                    next.add(id);
                 }
-                next.add(id);
-            }
-            return next;
-        });
-    }, []);
+                return next;
+            });
+        },
+        [t]
+    );
 
-    const handleToggleAll = useCallback((isChecked: boolean) => {
-        if (!campaigns) return;
+    const handleToggleAll = useCallback(
+        (isChecked: boolean) => {
+            if (!campaigns) return;
 
-        setSelectedIds((prev) => {
-            const next = new Set(prev);
-            const currentPageIds = campaigns.map((c) => c.id);
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                const currentPageIds = campaigns.map((c) => c.id);
 
-            if (isChecked) {
-                // Limit selection to max
-                const remainingSlots = MAX_SELECTION_LIMIT - next.size;
-                if (remainingSlots <= 0) {
-                    toast.error('Selection limit reached', { description: `You have already selected ${MAX_SELECTION_LIMIT} campaigns.` });
-                    return next;
+                if (isChecked) {
+                    // Limit selection to max
+                    const remainingSlots = MAX_SELECTION_LIMIT - next.size;
+                    if (remainingSlots <= 0) {
+                        toast.error(t('page.toasts.selectionLimitTitle'), {
+                            description: t(
+                                'page.toasts.selectionAlreadyDescription',
+                                {
+                                    limit: MAX_SELECTION_LIMIT,
+                                }
+                            ),
+                        });
+                        return next;
+                    }
+
+                    const itemsToAdd = currentPageIds.slice(0, remainingSlots);
+                    itemsToAdd.forEach((id) => next.add(id));
+
+                    if (itemsToAdd.length < currentPageIds.length) {
+                        toast.info(t('page.toasts.selectionCappedTitle'), {
+                            description: t(
+                                'page.toasts.selectionCappedDescription'
+                            ),
+                        });
+                    }
+                } else {
+                    // Remove all current page items (keep others)
+                    currentPageIds.forEach((id) => next.delete(id));
                 }
-
-                const itemsToAdd = currentPageIds.slice(0, remainingSlots);
-                itemsToAdd.forEach((id) => next.add(id));
-
-                if (itemsToAdd.length < currentPageIds.length) {
-                    toast.info('Selection capped', { description: 'Only some items were selected to stay within the 10-item limit.' });
-                }
-            } else {
-                // Remove all current page items (keep others)
-                currentPageIds.forEach((id) => next.delete(id));
-            }
-            return next;
-        });
-    }, [campaigns]);
+                return next;
+            });
+        },
+        [campaigns, t]
+    );
 
     const handleClearSelection = useCallback(() => {
         setSelectedIds(new Set());
@@ -312,19 +383,25 @@ export function CampaignsPage() {
     // Bulk Action Handlers (TODO: Implement API)
     // ==========================================================================
     const handleBulkPause = useCallback(() => {
-        toast.info('Bulk Pause', { description: 'This feature is coming soon.' });
+        toast.info(t('page.toasts.bulkPauseTitle'), {
+            description: t('page.toasts.featureComingSoon'),
+        });
         // TODO: Implement bulk pause API call
-    }, []);
+    }, [t]);
 
     const handleBulkEnable = useCallback(() => {
-        toast.info('Bulk Enable', { description: 'This feature is coming soon.' });
+        toast.info(t('page.toasts.bulkEnableTitle'), {
+            description: t('page.toasts.featureComingSoon'),
+        });
         // TODO: Implement bulk enable API call
-    }, []);
+    }, [t]);
 
     const handleBulkDelete = useCallback(() => {
-        toast.info('Bulk Delete', { description: 'This feature is coming soon.' });
+        toast.info(t('page.toasts.bulkDeleteTitle'), {
+            description: t('page.toasts.featureComingSoon'),
+        });
         // TODO: Implement bulk delete API call
-    }, []);
+    }, [t]);
 
     // ==========================================================================
     // Export Handler
@@ -337,7 +414,9 @@ export function CampaignsPage() {
             const blob = await exportService.downloadCampaignsCsv({
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
-                status: status.has('ALL') ? undefined : Array.from(status).join(','),
+                status: status.has('ALL')
+                    ? undefined
+                    : Array.from(status).join(','),
             });
 
             // Generate filename with date
@@ -347,18 +426,23 @@ export function CampaignsPage() {
             // Trigger download
             downloadBlob(blob, filename);
 
-            toast.success('Export successful', {
-                description: `Downloaded ${filename}`,
+            toast.success(t('page.toasts.exportSuccessTitle'), {
+                description: t('page.toasts.exportSuccessDescription', {
+                    filename,
+                }),
             });
         } catch (err) {
             console.error('Export failed:', err);
-            toast.error('Export failed', {
-                description: err instanceof Error ? err.message : 'Unable to download CSV report',
+            toast.error(t('page.toasts.exportFailedTitle'), {
+                description:
+                    err instanceof Error
+                        ? err.message
+                        : t('page.toasts.exportFailedDescription'),
             });
         } finally {
             setIsExporting(false);
         }
-    }, [dateRange, status, downloadBlob]);
+    }, [dateRange, status, downloadBlob, t]);
 
     // ==========================================================================
     // Campaign Action Handlers
@@ -441,7 +525,7 @@ export function CampaignsPage() {
                     {/* Summary Skeleton */}
                     <Skeleton className="h-[200px] w-full rounded-3xl" />
                 </div>
-            </DashboardLayout >
+            </DashboardLayout>
         );
     }
 
@@ -453,11 +537,12 @@ export function CampaignsPage() {
             <DashboardLayout>
                 <div className="flex flex-col items-center justify-center gap-4 py-16">
                     <p className="text-destructive">
-                        Failed to load campaigns: {error?.message || 'Unknown error'}
+                        {t('page.errors.loadCampaigns')}{' '}
+                        {error?.message || t('page.errors.unknownError')}
                     </p>
                     <Button variant="outline" onClick={() => refetch()}>
                         <Loader2 className="mr-2 h-4 w-4" />
-                        Retry
+                        {t('page.errors.retry')}
                     </Button>
                 </div>
             </DashboardLayout>
@@ -471,11 +556,16 @@ export function CampaignsPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-4 md:gap-6 relative z-10">
                 {/* Page Header */}
-                <div data-tutorial="campaigns-header" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                    data-tutorial="campaigns-header"
+                    className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                >
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            {t('page.title')}
+                        </h1>
                         <p className="text-muted-foreground">
-                            Manage your advertising campaigns across all platforms.
+                            {t('page.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -483,8 +573,14 @@ export function CampaignsPage() {
                 {/* Time Window Indicator */}
                 <div className="flex flex-col gap-1">
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        Metrics from <span className="font-medium">{formatDateDisplay(dateRange.startDate)}</span> to{' '}
-                        <span className="font-medium">{formatDateDisplay(dateRange.endDate)}</span>
+                        {t('page.timeWindow.metricsFrom')}{' '}
+                        <span className="font-medium">
+                            {formatDateDisplay(dateRange.startDate)}
+                        </span>{' '}
+                        {t('page.timeWindow.to')}{' '}
+                        <span className="font-medium">
+                            {formatDateDisplay(dateRange.endDate)}
+                        </span>
                     </div>
                     {/* Loading Bar for Refetching - Explicit Indeterminate Animation */}
                     {isFetching && !isLoading && (
@@ -494,7 +590,9 @@ export function CampaignsPage() {
                          Since we can't easily modify Progress internals, we will use a self-updating value. */}
                             <IndeterminateProgress className="h-2.5 w-full bg-orange-500/20 *:data-[slot=progress-indicator]:bg-linear-to-r *:data-[slot=progress-indicator]:from-orange-500 *:data-[slot=progress-indicator]:to-amber-500" />
                             <div className="flex justify-between items-center mt-1">
-                                <span className="text-[10px] text-muted-foreground">Updating data...</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {t('page.timeWindow.updating')}
+                                </span>
                             </div>
                         </div>
                     )}
@@ -522,7 +620,6 @@ export function CampaignsPage() {
                     />
                 </div>
 
-
                 {/* Bulk Action Bar (shown when items selected) */}
                 <BulkActionBar
                     selectedCount={selectedIds.size}
@@ -547,7 +644,6 @@ export function CampaignsPage() {
                         onToggleAll={handleToggleAll}
                         onEdit={handleEdit}
                         onDelete={handleDeleteClick}
-
                         page={showSelectedOnly ? 1 : page}
                         totalPages={totalPages}
                         totalItems={totalItems}
@@ -558,7 +654,10 @@ export function CampaignsPage() {
 
                 {/* Campaign Summary Dashboard (Middle Section) */}
                 <div data-tutorial="campaigns-summary">
-                    <CampaignSummary summary={campaignsResponse?.summary} isLoading={isLoading} />
+                    <CampaignSummary
+                        summary={campaignsResponse?.summary}
+                        isLoading={isLoading}
+                    />
                 </div>
 
                 {/* Visualization Panel (Bottom) */}
@@ -574,7 +673,9 @@ export function CampaignsPage() {
 
                         {/* Campaign Analytics (Conversion Rate) */}
                         <div data-tutorial="campaigns-analytics">
-                            <CampaignAnalytics campaigns={displayedGlobalCampaigns} />
+                            <CampaignAnalytics
+                                campaigns={displayedGlobalCampaigns}
+                            />
                         </div>
                     </>
                 )}
@@ -594,24 +695,31 @@ export function CampaignsPage() {
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {t('page.deleteDialog.title')}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{deletingCampaign?.name}"?
-                            This action cannot be undone.
+                            {t('page.deleteDialog.description', {
+                                name: deletingCampaign?.name ?? '',
+                            })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>
+                            {t('page.deleteDialog.cancel')}
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteConfirm}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             disabled={deleteMutation.isPending}
                         >
-                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                            {deleteMutation.isPending
+                                ? t('page.deleteDialog.deleting')
+                                : t('page.deleteDialog.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </DashboardLayout >
+        </DashboardLayout>
     );
 }
