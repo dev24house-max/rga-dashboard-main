@@ -439,13 +439,13 @@ describe('NotificationService', () => {
 
                 await service.triggerFromAlert(mockAlert as any);
 
-                expect(prismaService.notification.createMany).toHaveBeenCalledWith({
+                expect(prismaService.notification.createMany).toHaveBeenCalledWith(expect.objectContaining({
                     data: expect.arrayContaining([
                         expect.objectContaining({
                             alertId: 'alert-001',
                         }),
                     ]),
-                });
+                }));
             });
 
             it('should use HIGH priority for CRITICAL alerts', async () => {
@@ -454,13 +454,13 @@ describe('NotificationService', () => {
 
                 await service.triggerFromAlert(mockAlert as any);
 
-                expect(prismaService.notification.createMany).toHaveBeenCalledWith({
+                expect(prismaService.notification.createMany).toHaveBeenCalledWith(expect.objectContaining({
                     data: expect.arrayContaining([
                         expect.objectContaining({
                             priority: 'HIGH',
                         }),
                     ]),
-                });
+                }));
             });
 
             it('should include actionUrl in metadata', async () => {
@@ -469,7 +469,7 @@ describe('NotificationService', () => {
 
                 await service.triggerFromAlert(mockAlert as any);
 
-                expect(prismaService.notification.createMany).toHaveBeenCalledWith({
+                expect(prismaService.notification.createMany).toHaveBeenCalledWith(expect.objectContaining({
                     data: expect.arrayContaining([
                         expect.objectContaining({
                             metadata: expect.objectContaining({
@@ -477,7 +477,7 @@ describe('NotificationService', () => {
                             }),
                         }),
                     ]),
-                });
+                }));
             });
         });
     });

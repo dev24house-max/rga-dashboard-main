@@ -42,7 +42,8 @@ lerna-debug.log*
 # Database
 *.db
 *.db-journal
-prisma/migrations/
+prisma/migrations/*
+!prisma/migrations/
 !prisma/migrations/**
 # Temp Scripts
 /test-scripts/

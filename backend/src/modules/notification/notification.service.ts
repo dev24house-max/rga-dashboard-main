@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../../common/services/mail.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
-import { NotificationChannel, Notification, Alert } from '@prisma/client';
+import { Prisma, NotificationChannel, Notification, Alert } from '@prisma/client';
 
 @Injectable()
 export class NotificationService {
@@ -38,12 +38,19 @@ export class NotificationService {
      * Trigger notifications from an Alert
      * Creates a notification for each active user in the tenant
      */
-    async triggerFromAlert(alert: Alert): Promise<void> {
+    async triggerFromAlert(
+        alert: Alert,
+        client: Prisma.TransactionClient | PrismaService = this.prisma,
+    ): Promise<void> {
         // Get all active users in the tenant
-        const users = await this.prisma.user.findMany({
+        const users = await client.user.findMany({
             where: { tenantId: alert.tenantId, isActive: true },
             select: { id: true },
         });
+
+        if (users.length === 0) {
+            return;
+        }
 
         const alertMetadata =
             alert.metadata &&
@@ -71,7 +78,10 @@ export class NotificationService {
             },
         }));
 
-        await this.prisma.notification.createMany({ data: notifications });
+        await client.notification.createMany({
+            data: notifications,
+            skipDuplicates: true,
+        });
     }
 
     /**

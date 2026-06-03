@@ -1,7 +1,16 @@
 import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
-import { Prisma, AlertRuleType, AlertSeverity, AlertStatus } from '@prisma/client';
+import { Prisma, Alert, AlertRuleType, AlertSeverity, AlertStatus } from '@prisma/client';
+
+type AlertCheckClient = Prisma.TransactionClient | PrismaService;
+type BudgetEmailJob = {
+    alert: Alert;
+    campaignName: string;
+    userEmails: string[];
+};
+
+const ALERT_DEDUP_WINDOW_MS = 60 * 60 * 1000;
 
 // Preset Alert Rules - using Prisma enum types
 const PRESET_RULES: Array<{
@@ -284,30 +293,72 @@ export class AlertService {
     // ============================================
 
     async checkAlerts(tenantId: string) {
+        const result = await this.withTenantAlertLock(tenantId, (client) =>
+            this.checkAlertsLocked(client, tenantId),
+        );
+
+        for (const emailJob of result.emailJobs) {
+            await this.notificationService.sendBudgetAlertEmail(
+                { ...emailJob.alert, campaign: { name: emailJob.campaignName } },
+                emailJob.userEmails,
+            ).catch(err => {
+                this.logger.error(`Failed to send budget alert emails: ${err.message}`);
+            });
+        }
+
+        this.logger.log(`Created ${result.alerts.length} new alerts`);
+        return result.alerts;
+    }
+
+    private async withTenantAlertLock<T>(
+        tenantId: string,
+        work: (client: AlertCheckClient) => Promise<T>,
+    ): Promise<T> {
+        const prismaWithTransaction = this.prisma as PrismaService & {
+            $transaction?: PrismaService['$transaction'];
+        };
+
+        if (typeof prismaWithTransaction.$transaction !== 'function') {
+            return work(this.prisma);
+        }
+
+        return this.prisma.$transaction(
+            async (tx) => {
+                // Serializes alert checks for the same tenant across Node processes.
+                await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`alert-check:${tenantId}`}))`;
+                return work(tx);
+            },
+            { maxWait: 15000, timeout: 60000 },
+        );
+    }
+
+    private async checkAlertsLocked(client: AlertCheckClient, tenantId: string) {
         this.logger.log(`Checking alerts for tenant ${tenantId}`);
 
-        const rules = await this.prisma.alertRule.findMany({
+        const rules = await client.alertRule.findMany({
             where: { tenantId, isActive: true },
         });
 
         if (rules.length === 0) {
             this.logger.log('No active rules found');
-            return [];
+            return { alerts: [], emailJobs: [] };
         }
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const campaigns = await this.prisma.campaign.findMany({
+        const campaigns = await client.campaign.findMany({
             where: { tenantId },
             include: {
                 metrics: {
-                    where: { date: { gte: sevenDaysAgo } },
+                    where: { date: { gte: sevenDaysAgo }, isMockData: false },
                 },
             },
         });
 
-        const newAlerts: any[] = [];
+        const dedupCutoff = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS);
+        const newAlerts: Alert[] = [];
+        const emailJobs: BudgetEmailJob[] = [];
 
         for (const campaign of campaigns) {
             if (campaign.metrics.length === 0) continue;
@@ -320,17 +371,20 @@ export class AlertService {
                 const violated = this.checkRule(rule, aggregated, budgetNum);
 
                 if (violated) {
-                    const existingAlert = await this.prisma.alert.findFirst({
+                    const existingAlert = await client.alert.findFirst({
                         where: {
                             tenantId,
                             campaignId: campaign.id,
-                            type: rule.name.toUpperCase().replace(/ /g, '_'),
-                            status: { not: AlertStatus.RESOLVED },
+                            ruleId: rule.id,
+                            OR: [
+                                { status: { not: AlertStatus.RESOLVED } },
+                                { createdAt: { gte: dedupCutoff } },
+                            ],
                         },
                     });
 
                     if (!existingAlert) {
-                        const alert = await this.prisma.alert.create({
+                        const alert = await client.alert.create({
                             data: {
                                 tenant: { connect: { id: tenantId } },
                                 rule: { connect: { id: rule.id } },
@@ -351,21 +405,28 @@ export class AlertService {
                         });
 
                         // 🔔 Trigger notifications for all tenant users
-                        await this.notificationService.triggerFromAlert(alert);
+                        await this.notificationService.triggerFromAlert(alert, client);
+
+                        await client.alertRule.update({
+                            where: { id: rule.id },
+                            data: {
+                                lastTriggeredAt: new Date(),
+                                triggerCount: { increment: 1 },
+                            },
+                        });
 
                         // 📧 Send email notifications for budget alerts
                         if (rule.name.includes('Budget')) {
-                            const users = await this.prisma.user.findMany({
+                            const users = await client.user.findMany({
                                 where: { tenantId, isActive: true },
                                 select: { email: true },
                             });
                             const userEmails = users.map(u => u.email);
                             if (userEmails.length > 0) {
-                                await this.notificationService.sendBudgetAlertEmail(
-                                    { ...alert, campaign: { name: campaign.name } },
+                                emailJobs.push({
+                                    alert,
+                                    campaignName: campaign.name,
                                     userEmails,
-                                ).catch(err => {
-                                    this.logger.error(`Failed to send budget alert emails: ${err.message}`);
                                 });
                             }
                         }
@@ -376,8 +437,7 @@ export class AlertService {
             }
         }
 
-        this.logger.log(`Created ${newAlerts.length} new alerts`);
-        return newAlerts;
+        return { alerts: newAlerts, emailJobs };
     }
 
     private aggregateMetrics(metrics: any[]) {
@@ -402,10 +462,15 @@ export class AlertService {
 
     private checkRule(rule: any, metrics: any, budget?: number | null) {
         const value = metrics[rule.metric];
-        let threshold = rule.threshold;
+        let threshold = Number(rule.threshold);
 
-        if (rule.name === 'Overspend' && budget) {
-            threshold = budget * rule.threshold;
+        if (
+            rule.alertType === AlertRuleType.PRESET &&
+            rule.metric === 'spend' &&
+            budget &&
+            threshold <= 1.1
+        ) {
+            threshold = budget * threshold;
         }
 
         switch (rule.operator) {
