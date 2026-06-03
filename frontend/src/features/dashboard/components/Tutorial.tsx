@@ -1,12 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/i18n/use-translation";
 
 interface TutorialStep {
   id: string;
   title: string;
   description: string;
   target: string;
-  position: 'top' | 'bottom' | 'left' | 'right' | 'center';
+  position: "top" | "bottom" | "left" | "right" | "center";
 }
 
 interface TutorialProps {
@@ -29,11 +36,14 @@ const Tutorial: React.FC<TutorialProps> = ({
   onComplete,
   onSkip,
 }) => {
+  const { t } = useTranslation("tutorial");
   const [isVisible, setIsVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
-  const [placement, setPlacement] = useState<'top' | 'bottom' | 'left' | 'right'>('bottom');
+  const [placement, setPlacement] = useState<
+    "top" | "bottom" | "left" | "right"
+  >("bottom");
 
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number>(0);
@@ -54,9 +64,9 @@ const Tutorial: React.FC<TutorialProps> = ({
       timerId = setTimeout(check, 150);
     };
 
-    window.addEventListener('resize', debouncedCheck);
+    window.addEventListener("resize", debouncedCheck);
     return () => {
-      window.removeEventListener('resize', debouncedCheck);
+      window.removeEventListener("resize", debouncedCheck);
       clearTimeout(timerId);
     };
   }, []);
@@ -97,30 +107,42 @@ const Tutorial: React.FC<TutorialProps> = ({
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    const prefer: 'top' | 'bottom' | 'left' | 'right' =
-      step.position === 'center' ? 'bottom' : step.position;
+    const prefer: "top" | "bottom" | "left" | "right" =
+      step.position === "center" ? "bottom" : step.position;
 
     let top = 0;
     let left = 0;
-    let nextPlacement: 'top' | 'bottom' | 'left' | 'right' = prefer;
+    let nextPlacement: "top" | "bottom" | "left" | "right" = prefer;
 
-    if (prefer === 'bottom') {
+    if (prefer === "bottom") {
       top = spotBottom + OFFSET;
       left = centerX - tw / 2;
-      if (top + th > vh - 16) { top = spotTop - th - OFFSET; nextPlacement = 'top'; }
-    } else if (prefer === 'top') {
+      if (top + th > vh - 16) {
+        top = spotTop - th - OFFSET;
+        nextPlacement = "top";
+      }
+    } else if (prefer === "top") {
       top = spotTop - th - OFFSET;
       left = centerX - tw / 2;
-      if (top < 16) { top = spotBottom + OFFSET; nextPlacement = 'bottom'; }
-    } else if (prefer === 'right') {
+      if (top < 16) {
+        top = spotBottom + OFFSET;
+        nextPlacement = "bottom";
+      }
+    } else if (prefer === "right") {
       top = centerY - th / 2;
       left = spotRight + OFFSET;
-      if (left + tw > vw - 16) { left = spotLeft - tw - OFFSET; nextPlacement = 'left'; }
+      if (left + tw > vw - 16) {
+        left = spotLeft - tw - OFFSET;
+        nextPlacement = "left";
+      }
     } else {
       // left
       top = centerY - th / 2;
       left = spotLeft - tw - OFFSET;
-      if (left < 16) { left = spotRight + OFFSET; nextPlacement = 'right'; }
+      if (left < 16) {
+        left = spotRight + OFFSET;
+        nextPlacement = "right";
+      }
     }
 
     left = Math.max(16, Math.min(left, vw - tw - 16));
@@ -132,8 +154,12 @@ const Tutorial: React.FC<TutorialProps> = ({
 
   // ── Actions (stable refs) ─────────────────────────────────────────────────
   const handleNext = useCallback(() => {
-    if (isLastStep) { onComplete(); setIsVisible(false); }
-    else { onStepChange(currentStep + 1); }
+    if (isLastStep) {
+      onComplete();
+      setIsVisible(false);
+    } else {
+      onStepChange(currentStep + 1);
+    }
   }, [isLastStep, currentStep, onComplete, onStepChange]);
 
   const handleBack = useCallback(() => {
@@ -148,7 +174,9 @@ const Tutorial: React.FC<TutorialProps> = ({
   }, [onSkip]);
 
   const handleSkipRef = useRef(handleSkip);
-  useEffect(() => { handleSkipRef.current = handleSkip; }, [handleSkip]);
+  useEffect(() => {
+    handleSkipRef.current = handleSkip;
+  }, [handleSkip]);
 
   // ── Scroll + event wiring per step ───────────────────────────────────────
   useEffect(() => {
@@ -159,7 +187,11 @@ const Tutorial: React.FC<TutorialProps> = ({
     const target = document.querySelector(step.target) as HTMLElement | null;
     if (!target) return;
 
-    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
 
     // Measure after scroll settles; also measure immediately for non-scroll cases
     computePosition();
@@ -173,10 +205,10 @@ const Tutorial: React.FC<TutorialProps> = ({
 
     // FIX: use ref so keydown always calls the latest handleSkip
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         handleSkipRef.current();
       }
-      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      if (e.key === "ArrowRight" || e.key === "Enter") {
         e.preventDefault();
         if (isLastStep) {
           onComplete();
@@ -185,7 +217,7 @@ const Tutorial: React.FC<TutorialProps> = ({
           onStepChange(currentStep + 1);
         }
       }
-      if (e.key === 'ArrowLeft') {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         if (currentStep > 0) {
           onStepChange(currentStep - 1);
@@ -193,24 +225,34 @@ const Tutorial: React.FC<TutorialProps> = ({
       }
     };
 
-    window.addEventListener('resize', scheduleCompute);
-    window.addEventListener('scroll', scheduleCompute, { passive: true, capture: true });
-    window.addEventListener('keydown', onKey);
+    window.addEventListener("resize", scheduleCompute);
+    window.addEventListener("scroll", scheduleCompute, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("keydown", onKey);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearTimeout(settleTimer);
-      window.removeEventListener('resize', scheduleCompute);
-      window.removeEventListener('scroll', scheduleCompute, true);
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener("resize", scheduleCompute);
+      window.removeEventListener("scroll", scheduleCompute, true);
+      window.removeEventListener("keydown", onKey);
     };
-  }, [step, computePosition, currentStep, isLastStep, onComplete, onStepChange]); // handleSkip intentionally omitted — accessed via ref
+  }, [
+    step,
+    computePosition,
+    currentStep,
+    isLastStep,
+    onComplete,
+    onStepChange,
+  ]); // handleSkip intentionally omitted — accessed via ref
 
   if (!isVisible) return null;
 
   // ── Derived values (memoised) ─────────────────────────────────────────────
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1440;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 900;
 
   const sr = useMemo(() => {
     if (!highlightRect) return null;
@@ -231,23 +273,51 @@ const Tutorial: React.FC<TutorialProps> = ({
     const centerY = sr.y + sr.h / 2;
     const style: React.CSSProperties = {};
 
-    if (placement === 'bottom') {
+    if (placement === "bottom") {
       style.top = tooltipPos.top - 8;
-      style.left = Math.min(Math.max(tooltipPos.left + 20, centerX - 8), tooltipPos.left + tw - 36);
-    } else if (placement === 'top') {
+      style.left = Math.min(
+        Math.max(tooltipPos.left + 20, centerX - 8),
+        tooltipPos.left + tw - 36
+      );
+    } else if (placement === "top") {
       style.top = tooltipPos.top + th;
-      style.left = Math.min(Math.max(tooltipPos.left + 20, centerX - 8), tooltipPos.left + tw - 36);
-    } else if (placement === 'right') {
-      style.top = Math.min(Math.max(tooltipPos.top + 20, centerY - 8), tooltipPos.top + th - 36);
+      style.left = Math.min(
+        Math.max(tooltipPos.left + 20, centerX - 8),
+        tooltipPos.left + tw - 36
+      );
+    } else if (placement === "right") {
+      style.top = Math.min(
+        Math.max(tooltipPos.top + 20, centerY - 8),
+        tooltipPos.top + th - 36
+      );
       style.left = tooltipPos.left - 8;
     } else {
-      style.top = Math.min(Math.max(tooltipPos.top + 20, centerY - 8), tooltipPos.top + th - 36);
+      style.top = Math.min(
+        Math.max(tooltipPos.top + 20, centerY - 8),
+        tooltipPos.top + th - 36
+      );
       style.left = tooltipPos.left + tw;
     }
     return style;
   }, [isMobile, sr, placement, tooltipPos, getTooltipDims]);
 
-  const progress = useMemo(() => ((currentStep + 1) / steps.length) * 100, [currentStep, steps.length]);
+  const progress = useMemo(
+    () => ((currentStep + 1) / steps.length) * 100,
+    [currentStep, steps.length]
+  );
+  const stepCompactLabel = t("controls.stepCompact", {
+    current: currentStep + 1,
+    total: steps.length,
+  });
+  const stepOfLabel = t("controls.stepOf", {
+    current: currentStep + 1,
+    total: steps.length,
+  });
+  const closeLabel = t("controls.close");
+  const nextLabel = t("controls.next");
+  const doneLabel = t("controls.done");
+  const backLabel = t("controls.back");
+  const skipLabel = t("controls.skip");
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -261,41 +331,72 @@ const Tutorial: React.FC<TutorialProps> = ({
         className="fixed inset-0 z-50 pointer-events-none"
         role="dialog"
         aria-modal="true"
-        aria-label={`Tutorial step ${currentStep + 1} of ${steps.length}: ${step.title}`}
+        aria-label={t("dialog.ariaLabel", {
+          current: currentStep + 1,
+          total: steps.length,
+          title: step.title,
+        })}
       >
         {/* SVG overlay with spotlight cutout */}
         {sr && (
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ display: 'block' }}
+            style={{ display: "block" }}
             width={vw}
             height={vh}
           >
             <defs>
               <mask id="tutorial-spotlight-mask">
                 <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                <rect x={sr.x} y={sr.y} width={sr.w} height={sr.h} rx={sr.r} fill="black" />
+                <rect
+                  x={sr.x}
+                  y={sr.y}
+                  width={sr.w}
+                  height={sr.h}
+                  rx={sr.r}
+                  fill="black"
+                />
               </mask>
             </defs>
 
             <rect
-              x="0" y="0" width="100%" height="100%"
+              x="0"
+              y="0"
+              width="100%"
+              height="100%"
               fill="rgba(15, 23, 42, 0.6)"
               mask="url(#tutorial-spotlight-mask)"
             />
 
             {/* Focus ring */}
             <rect
-              x={sr.x} y={sr.y} width={sr.w} height={sr.h} rx={sr.r}
-              fill="none" stroke="rgba(249,115,22,0.7)" strokeWidth="2"
+              x={sr.x}
+              y={sr.y}
+              width={sr.w}
+              height={sr.h}
+              rx={sr.r}
+              fill="none"
+              stroke="rgba(249,115,22,0.7)"
+              strokeWidth="2"
             />
 
             {/* Pulsing glow */}
             <rect
-              x={sr.x - 4} y={sr.y - 4} width={sr.w + 8} height={sr.h + 8} rx={sr.r + 4}
-              fill="none" stroke="rgba(249,115,22,0.3)" strokeWidth="1.5"
+              x={sr.x - 4}
+              y={sr.y - 4}
+              width={sr.w + 8}
+              height={sr.h + 8}
+              rx={sr.r + 4}
+              fill="none"
+              stroke="rgba(249,115,22,0.3)"
+              strokeWidth="1.5"
             >
-              <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+              <animate
+                attributeName="opacity"
+                values="0.3;1;0.3"
+                dur="2s"
+                repeatCount="indefinite"
+              />
             </rect>
           </svg>
         )}
@@ -303,10 +404,10 @@ const Tutorial: React.FC<TutorialProps> = ({
         {/* Background overlay — non-interactive, blocks all clicks */}
         <div
           className="absolute inset-0"
-          style={{ zIndex: 5, pointerEvents: 'auto' }}
-          onClick={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.preventDefault()}
-          onTouchEnd={(e) => e.preventDefault()}
+          style={{ zIndex: 5, pointerEvents: "auto" }}
+          onClick={e => e.stopPropagation()}
+          onTouchStart={e => e.preventDefault()}
+          onTouchEnd={e => e.preventDefault()}
         />
 
         {/* Arrow connector */}
@@ -316,10 +417,18 @@ const Tutorial: React.FC<TutorialProps> = ({
             style={{ ...arrowStyle, width: 16, height: 16, zIndex: 10 }}
           >
             <svg viewBox="0 0 16 16" width="16" height="16">
-              {placement === 'bottom' && <polygon points="8,0 16,16 0,16" fill="white" />}
-              {placement === 'top'    && <polygon points="0,0 16,0 8,16"  fill="white" />}
-              {placement === 'right'  && <polygon points="0,0 16,8 0,16"  fill="white" />}
-              {placement === 'left'   && <polygon points="16,0 0,8 16,16" fill="white" />}
+              {placement === "bottom" && (
+                <polygon points="8,0 16,16 0,16" fill="white" />
+              )}
+              {placement === "top" && (
+                <polygon points="0,0 16,0 8,16" fill="white" />
+              )}
+              {placement === "right" && (
+                <polygon points="0,0 16,8 0,16" fill="white" />
+              )}
+              {placement === "left" && (
+                <polygon points="16,0 0,8 16,16" fill="white" />
+              )}
             </svg>
           </div>
         )}
@@ -328,16 +437,16 @@ const Tutorial: React.FC<TutorialProps> = ({
         {isMobile ? (
           <motion.div
             key={step.id}
-            initial={{ y: '100%', opacity: 0 }}
+            initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
             drag="y"
             dragConstraints={{ top: 0 }}
             onDragEnd={(_, info) => info.offset.y > 80 && handleSkip()}
             className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-white rounded-t-2xl shadow-2xl"
-            style={{ zIndex: 20, paddingBottom: 'env(safe-area-inset-bottom)' }}
-            onClick={(e) => e.stopPropagation()}
+            style={{ zIndex: 20, paddingBottom: "env(safe-area-inset-bottom)" }}
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-slate-200" />
@@ -347,46 +456,61 @@ const Tutorial: React.FC<TutorialProps> = ({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <span className="text-xs font-semibold text-orange-500 tracking-widest uppercase">
-                    Step {currentStep + 1}/{steps.length}
+                    {stepCompactLabel}
                   </span>
-                  <h3 className="text-lg font-bold text-slate-900 mt-1">{step.title}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mt-1">
+                    {step.title}
+                  </h3>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleSkip(); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleSkip();
+                  }}
                   className="shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  aria-label="Close tutorial"
+                  aria-label={closeLabel}
                 >
-                  ✕
+                  &times;
                 </button>
               </div>
 
               <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
 
-              <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                {step.description}
+              </p>
 
               <div className="flex gap-3 pt-2">
                 {currentStep > 0 && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleBack(); }} 
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleBack();
+                    }}
                     className="flex-1 py-3 px-3 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition focus:outline-none focus:ring-2 focus:ring-slate-400"
                     type="button"
                   >
-                    ← Back
+                    {backLabel}
                   </button>
                 )}
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleNext(); }} 
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
                   className="flex-1 py-3 px-3 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-orange-600"
                   type="button"
                 >
-                  {isLastStep ? 'Done ✓' : 'Next →'}
+                  {isLastStep ? doneLabel : nextLabel}
                 </button>
               </div>
             </div>
           </motion.div>
-
         ) : (
           /* Tooltip — desktop */
           <motion.div
@@ -395,36 +519,49 @@ const Tutorial: React.FC<TutorialProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 6 }}
-            transition={{ type: 'spring', damping: 24, stiffness: 280 }}
+            transition={{ type: "spring", damping: 24, stiffness: 280 }}
             className="absolute pointer-events-auto bg-white rounded-2xl"
             style={{
               top: tooltipPos.top,
               left: tooltipPos.left,
               width: TOOLTIP_WIDTH,
               zIndex: 25,
-              boxShadow: '0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(15,23,42,0.08)',
+              boxShadow:
+                "0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(15,23,42,0.08)",
             }}
-            onClick={(e) => { e.stopPropagation(); }}
-            onMouseDown={(e) => { e.stopPropagation(); }}
-            onTouchStart={(e) => { e.stopPropagation(); }}
+            onClick={e => {
+              e.stopPropagation();
+            }}
+            onMouseDown={e => {
+              e.stopPropagation();
+            }}
+            onTouchStart={e => {
+              e.stopPropagation();
+            }}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold text-orange-500 tracking-widest uppercase">
-                  Step {currentStep + 1} of {steps.length}
+                  {stepOfLabel}
                 </span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleSkip(); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleSkip();
+                  }}
                   className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 text-xs transition focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  aria-label="Close tutorial"
+                  aria-label={closeLabel}
                   type="button"
                 >
-                  ✕
+                  &times;
                 </button>
               </div>
 
               <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
-                <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
 
               <div className="flex items-center gap-1.5 mb-4">
@@ -435,40 +572,53 @@ const Tutorial: React.FC<TutorialProps> = ({
                     style={{
                       width: i === currentStep ? 20 : 6,
                       height: 6,
-                      background: i === currentStep ? '#f97316' : '#e2e8f0',
+                      background: i === currentStep ? "#f97316" : "#e2e8f0",
                     }}
                   />
                 ))}
               </div>
 
-              <h3 className="text-base font-bold text-slate-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed mb-6">{step.description}</p>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                {step.title}
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                {step.description}
+              </p>
 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   {currentStep > 0 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleBack(); }} 
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleBack();
+                      }}
                       className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition focus:outline-none focus:ring-2 focus:ring-slate-400"
                       type="button"
                     >
-                      ← Back
+                      {backLabel}
                     </button>
                   )}
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleSkip(); }} 
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleSkip();
+                    }}
                     className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-slate-300"
                     type="button"
                   >
-                    Skip
+                    {skipLabel}
                   </button>
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleNext(); }} 
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
                   className="px-6 py-2 text-sm font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-orange-600"
                   type="button"
                 >
-                  {isLastStep ? 'Done ✓' : 'Next →'}
+                  {isLastStep ? doneLabel : nextLabel}
                 </button>
               </div>
             </div>

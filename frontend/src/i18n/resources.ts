@@ -12,6 +12,7 @@ import { sidebarEn } from "./locales/en/sidebar";
 import { exportControlsEn } from "./locales/en/export-controls";
 import { chatEn } from "./locales/en/chat";
 import { notificationsEn } from "./locales/en/notifications";
+import { tutorialEn } from "./locales/en/tutorial";
 import { dashboardTh } from "./locales/th/dashboard";
 import { campaignsTh } from "./locales/th/campaigns";
 import { dataSourcesTh } from "./locales/th/data-sources";
@@ -26,6 +27,7 @@ import { sidebarTh } from "./locales/th/sidebar";
 import { exportControlsTh } from "./locales/th/export-controls";
 import { chatTh } from "./locales/th/chat";
 import { notificationsTh } from "./locales/th/notifications";
+import { tutorialTh } from "./locales/th/tutorial";
 
 export const resources = {
   en: {
@@ -43,6 +45,7 @@ export const resources = {
     exportControls: exportControlsEn,
     chat: chatEn,
     notifications: notificationsEn,
+    tutorial: tutorialEn,
   },
   th: {
     dashboard: dashboardTh,
@@ -59,6 +62,7 @@ export const resources = {
     exportControls: exportControlsTh,
     chat: chatTh,
     notifications: notificationsTh,
+    tutorial: tutorialTh,
   },
 } as const;
 
