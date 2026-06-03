@@ -2,6 +2,7 @@ import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { Prisma, Alert, AlertRuleType, AlertSeverity, AlertStatus } from '@prisma/client';
+import { visibleAlertWhere } from '../../common/filters/visible-alerts.filter';
 
 type AlertCheckClient = Prisma.TransactionClient | PrismaService;
 type BudgetEmailJob = {
@@ -221,7 +222,9 @@ export class AlertService {
     }) {
         const { status, severity, limit = 50 } = options || {};
 
-        const whereClause: Prisma.AlertWhereInput = { tenantId };
+        const whereClause: Prisma.AlertWhereInput = {
+            AND: [{ tenantId }, visibleAlertWhere()],
+        };
         if (status) whereClause.status = status;
         if (severity) whereClause.severity = severity;
 
@@ -244,8 +247,10 @@ export class AlertService {
         const counts = await this.prisma.alert.groupBy({
             by: ['severity'],
             where: {
-                tenantId,
-                status: AlertStatus.OPEN,
+                AND: [
+                    { tenantId, status: AlertStatus.OPEN },
+                    visibleAlertWhere(),
+                ],
             },
             _count: true,
         });
@@ -396,6 +401,8 @@ export class AlertService {
                                 metadata: {
                                     ruleName: rule.name,
                                     campaignName: campaign.name,
+                                    dataSource: 'real',
+                                    metricWindowDays: 7,
                                     metric: rule.metric,
                                     value: aggregated[rule.metric],
                                     threshold: rule.threshold,

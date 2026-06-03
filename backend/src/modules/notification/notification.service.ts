@@ -4,6 +4,10 @@ import { MailService } from '../../common/services/mail.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { Prisma, NotificationChannel, Notification, Alert } from '@prisma/client';
+import {
+    getAlertMetricCutoffDate,
+    visibleNotificationWhere,
+} from '../../common/filters/visible-alerts.filter';
 
 @Injectable()
 export class NotificationService {
@@ -42,6 +46,11 @@ export class NotificationService {
         alert: Alert,
         client: Prisma.TransactionClient | PrismaService = this.prisma,
     ): Promise<void> {
+        if (!(await this.hasVisibleAlertMetrics(alert, client))) {
+            this.logger.warn(`Skipped notification for mock-only alert ${alert.id}`);
+            return;
+        }
+
         // Get all active users in the tenant
         const users = await client.user.findMany({
             where: { tenantId: alert.tenantId, isActive: true },
@@ -82,6 +91,27 @@ export class NotificationService {
             data: notifications,
             skipDuplicates: true,
         });
+    }
+
+    private async hasVisibleAlertMetrics(
+        alert: Alert,
+        client: Prisma.TransactionClient | PrismaService,
+    ): Promise<boolean> {
+        if (!alert.campaignId) {
+            return true;
+        }
+
+        const realMetric = await client.metric.findFirst({
+            where: {
+                tenantId: alert.tenantId,
+                campaignId: alert.campaignId,
+                date: { gte: getAlertMetricCutoffDate() },
+                isMockData: false,
+            },
+            select: { id: true },
+        });
+
+        return Boolean(realMetric);
     }
 
     /**
@@ -206,7 +236,7 @@ export class NotificationService {
         const { page = 1, limit = 20, isRead, type } = query;
         const skip = (page - 1) * limit;
 
-        const where: any = {
+        const where: Prisma.NotificationWhereInput = {
             userId,
             isDismissed: false,
         };
@@ -218,9 +248,13 @@ export class NotificationService {
             where.type = type;
         }
 
+        const visibleWhere: Prisma.NotificationWhereInput = {
+            AND: [where, visibleNotificationWhere()],
+        };
+
         const [data, total] = await Promise.all([
             this.prisma.notification.findMany({
-                where,
+                where: visibleWhere,
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
@@ -239,7 +273,7 @@ export class NotificationService {
                     campaignId: true,
                 },
             }),
-            this.prisma.notification.count({ where }),
+            this.prisma.notification.count({ where: visibleWhere }),
         ]);
 
         return {
@@ -258,7 +292,12 @@ export class NotificationService {
      */
     async getUnreadCount(userId: string): Promise<number> {
         return this.prisma.notification.count({
-            where: { userId, isRead: false, isDismissed: false },
+            where: {
+                AND: [
+                    { userId, isRead: false, isDismissed: false },
+                    visibleNotificationWhere(),
+                ],
+            },
         });
     }
 
@@ -285,7 +324,12 @@ export class NotificationService {
      */
     async markAllAsRead(userId: string): Promise<{ count: number }> {
         const result = await this.prisma.notification.updateMany({
-            where: { userId, isRead: false },
+            where: {
+                AND: [
+                    { userId, isRead: false, isDismissed: false },
+                    visibleNotificationWhere(),
+                ],
+            },
             data: { isRead: true, readAt: new Date() },
         });
 
