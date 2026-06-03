@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Mic, Trash2, StopCircle, RefreshCw } from 'lucide-react';
+import {
+    Send,
+    Bot,
+    User,
+    Sparkles,
+    Mic,
+    Trash2,
+    StopCircle,
+    RefreshCw,
+} from 'lucide-react';
 import chatbotImage from '../chatbot.webp';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/auth-store';
+import { useTranslation } from '@/i18n/use-translation';
 
 // Add Speech Recognition Type Definition
 declare global {
@@ -46,7 +56,8 @@ function cleanText(text: string | any): string {
 
     // Remove JSON structure - extract just the text content
     // Match patterns like {"parts":[{"text":"..."}]} or similar
-    const jsonMatch = result.match(/"text"\s*:\s*"([^"]+(?:\\.[^"]*)*)"/) ||
+    const jsonMatch =
+        result.match(/"text"\s*:\s*"([^"]+(?:\\.[^"]*)*)"/) ||
         result.match(/"text"\s*:\s*"([^"]*)"/);
     if (jsonMatch && jsonMatch[1]) {
         result = JSON.parse('"' + jsonMatch[1] + '"'); // Parse the captured string properly
@@ -94,16 +105,29 @@ function cleanText(text: string | any): string {
     return result;
 }
 
-export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
-    const DEFAULT_MESSAGE: Message = {
-        id: '1',
-        text: "Hello! 👋 I'm your AI Assistant. How can I help you regarding your dashboard today?",
-        sender: 'ai',
-        timestamp: new Date()
-    };
+function isDefaultOnlyChat(messages: Message[]) {
+    const [message] = messages;
 
-    const [messages, setMessages] = useState<Message[]>([DEFAULT_MESSAGE]);
-    const [inputValue, setInputValue] = useState("");
+    return (
+        messages.length === 1 && message?.id === '1' && message.sender === 'ai'
+    );
+}
+
+export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
+    const { t } = useTranslation('chat');
+    const initialMessage = t('widget.initialMessage');
+
+    const createDefaultMessage = (): Message => ({
+        id: '1',
+        text: initialMessage,
+        sender: 'ai',
+        timestamp: new Date(),
+    });
+
+    const [messages, setMessages] = useState<Message[]>(() => [
+        createDefaultMessage(),
+    ]);
+    const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -116,15 +140,28 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                setMessages(parsed.map((m: any) => ({
-                    ...m,
-                    timestamp: new Date(m.timestamp)
-                })));
+                setMessages(
+                    parsed.map((m: any) => ({
+                        ...m,
+                        timestamp: new Date(m.timestamp),
+                    }))
+                );
             } catch (e) {
-                console.error("Failed to parse widget history", e);
+                console.error('Failed to parse widget history', e);
             }
         }
     }, []);
+
+    // Keep the greeting in the selected language while no real chat exists.
+    useEffect(() => {
+        setMessages((prev) => {
+            if (!isDefaultOnlyChat(prev) || prev[0].text === initialMessage) {
+                return prev;
+            }
+
+            return [{ ...prev[0], text: initialMessage }];
+        });
+    }, [initialMessage, messages.length]);
 
     // Save to SessionStorage whenever messages change
     useEffect(() => {
@@ -142,16 +179,24 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+            textareaRef.current.style.height =
+                textareaRef.current.scrollHeight + 'px';
         }
     }, [inputValue]);
 
     const { user } = useAuthStore();
     /** Floating widget only: direct n8n webhook (CORS must allow your origin). */
-    const backendBase = (typeof import.meta !== 'undefined' ? import.meta.env.VITE_API_URL : '') || '/api/v1';
+    const backendBase =
+        (typeof import.meta !== 'undefined'
+            ? import.meta.env.VITE_API_URL
+            : '') || '/api/v1';
     const widgetWebhookUrl =
-        (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHAT_WIDGET_WEBHOOK_URL : '') ||
-        (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL : '') ||
+        (typeof import.meta !== 'undefined'
+            ? import.meta.env.VITE_CHAT_WIDGET_WEBHOOK_URL
+            : '') ||
+        (typeof import.meta !== 'undefined'
+            ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL
+            : '') ||
         `${backendBase}/ai/webhook/general`;
 
     const handleSendMessage = async () => {
@@ -161,12 +206,12 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
             id: Date.now().toString(),
             text: inputValue,
             sender: 'user',
-            timestamp: new Date()
+            timestamp: new Date(),
         };
 
-        setMessages(prev => [...prev, newUserMessage]);
+        setMessages((prev) => [...prev, newUserMessage]);
         const userInput = inputValue;
-        setInputValue("");
+        setInputValue('');
         setIsTyping(true);
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
@@ -189,23 +234,35 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                 if (contentType.includes('application/json')) {
                     try {
                         const data = JSON.parse(raw);
-                        errorMessage = data?.error || data?.message || JSON.stringify(data);
+                        errorMessage =
+                            data?.error ||
+                            data?.message ||
+                            JSON.stringify(data);
                     } catch {
                         // fallback to raw string
                     }
                 }
-                console.warn('[ChatWindow] Webhook returned non-OK response, suppressed user message.', {
-                    status: response.status,
-                    contentType,
-                    errorMessage,
-                });
+                console.warn(
+                    '[ChatWindow] Webhook returned non-OK response, suppressed user message.',
+                    {
+                        status: response.status,
+                        contentType,
+                        errorMessage,
+                    }
+                );
                 return;
             }
 
             if (contentType.includes('application/json')) {
                 if (!raw || raw.trim() === '') {
-                    console.warn('[ChatWindow] Empty JSON body returned from webhook.');
-                    console.log('[ChatWindow] Webhook raw response:', { raw, status: response.status, contentType });
+                    console.warn(
+                        '[ChatWindow] Empty JSON body returned from webhook.'
+                    );
+                    console.log('[ChatWindow] Webhook raw response:', {
+                        raw,
+                        status: response.status,
+                        contentType,
+                    });
                 } else {
                     try {
                         const data = JSON.parse(raw);
@@ -221,24 +278,38 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                             data?.answer ||
                             data?.analysis ||
                             data?.content ||
-                            (data?.parts?.[0]?.text) ||
-                            (data?.candidates?.[0]?.content?.parts?.[0]?.text) ||
+                            data?.parts?.[0]?.text ||
+                            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
                             '';
 
-                        if (!extractedText && data?.success === false && data?.error) {
+                        if (
+                            !extractedText &&
+                            data?.success === false &&
+                            data?.error
+                        ) {
                             extractedText = data.error;
                         }
-                        if (!extractedText && data?.success === false && data?.message) {
+                        if (
+                            !extractedText &&
+                            data?.success === false &&
+                            data?.message
+                        ) {
                             extractedText = data.message;
                         }
 
                         if (!extractedText && (data?.session_id ?? data?.id)) {
-                            console.warn('[ChatWindow] Webhook returned no reply text; keys:', Object.keys(data || {}));
+                            console.warn(
+                                '[ChatWindow] Webhook returned no reply text; keys:',
+                                Object.keys(data || {})
+                            );
                         }
 
                         aiText = cleanText(extractedText);
                     } catch (parseErr) {
-                        console.warn('[ChatWindow] Failed to parse webhook JSON response. Raw:', raw);
+                        console.warn(
+                            '[ChatWindow] Failed to parse webhook JSON response. Raw:',
+                            raw
+                        );
                         aiText = cleanText(raw);
                     }
                 }
@@ -253,10 +324,10 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                     id: (Date.now() + 1).toString(),
                     text: aiText,
                     sender: 'ai',
-                    timestamp: new Date()
+                    timestamp: new Date(),
                 };
 
-                setMessages(prev => [...prev, newAiMessage]);
+                setMessages((prev) => [...prev, newAiMessage]);
             }
         } catch (error) {
             console.error('Chat error:', error);
@@ -273,8 +344,8 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
     };
 
     const handleNewChat = () => {
-        setMessages([DEFAULT_MESSAGE]);
-        setInputValue("");
+        setMessages([createDefaultMessage()]);
+        setInputValue('');
         setIsTyping(false);
         setIsListening(false);
         if (recognitionRef.current) recognitionRef.current.stop();
@@ -287,9 +358,10 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
             return;
         }
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("Your browser does not support speech recognition.");
+            alert(t('widget.speech.unsupported'));
             return;
         }
 
@@ -305,7 +377,9 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
 
         recognition.onresult = (event: any) => {
             const transcript = event.results[0][0].transcript;
-            setInputValue(prev => (prev ? prev + " " + transcript : transcript));
+            setInputValue((prev) =>
+                prev ? prev + ' ' + transcript : transcript
+            );
         };
 
         recognition.start();
@@ -318,7 +392,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                     className="fixed bottom-24 right-6 w-[300px] z-[60] origin-bottom-right will-change-transform"
                 >
                     <Card className="border-0 shadow-2xl overflow-hidden flex flex-col h-[480px] max-h-[calc(100dvh-7rem)] rounded-2xl bg-white/95 backdrop-blur-xl border-slate-100 ring-1 ring-slate-200 dark:bg-card/95 dark:ring-border dark:shadow-black/40">
@@ -326,18 +400,22 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                         <div className="p-3 border-b border-slate-100 bg-white/60 backdrop-blur flex flex-row items-center justify-between shrink-0 dark:border-border dark:bg-popover/80">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden dark:border-border dark:bg-muted">
-                                    <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
+                                    <img
+                                        src={chatbotImage}
+                                        alt={t('widget.imageAlt')}
+                                        className="w-full h-full object-contain"
+                                    />
                                 </div>
                                 <div>
                                     <div className="text-sm font-bold text-slate-800 flex items-center gap-1.5 dark:text-foreground">
-                                        AI Assistant
+                                        {t('widget.assistantTitle')}
                                         <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wide uppercase border border-orange-200 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-300">
-                                            Beta
+                                            {t('widget.beta')}
                                         </span>
                                     </div>
                                     <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 dark:text-muted-foreground">
                                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                        Online
+                                        {t('widget.status.online')}
                                     </p>
                                 </div>
                             </div>
@@ -346,7 +424,7 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                 size="icon"
                                 onClick={handleNewChat}
                                 className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground"
-                                title="Start New Chat"
+                                title={t('widget.actions.startNewChat')}
                             >
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
@@ -363,36 +441,57 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className={cn(
-                                        "flex w-full items-start gap-2.5",
-                                        msg.sender === 'user' ? "flex-row-reverse" : ""
+                                        'flex w-full items-start gap-2.5',
+                                        msg.sender === 'user'
+                                            ? 'flex-row-reverse'
+                                            : ''
                                     )}
                                 >
                                     <Avatar className="h-7 w-7 mt-0.5 border border-slate-100 shadow-sm bg-white dark:border-border dark:bg-muted">
                                         {msg.sender === 'user' ? (
                                             <>
                                                 <AvatarImage src="/avatars/user.png" />
-                                                <AvatarFallback className="bg-slate-100 text-slate-500 dark:bg-muted dark:text-muted-foreground"><User className="h-3.5 w-3.5" /></AvatarFallback>
+                                                <AvatarFallback className="bg-slate-100 text-slate-500 dark:bg-muted dark:text-muted-foreground">
+                                                    <User className="h-3.5 w-3.5" />
+                                                </AvatarFallback>
                                             </>
                                         ) : (
                                             <>
-                                                <AvatarImage src={chatbotImage} className="object-cover" />
-                                                <AvatarFallback className="bg-white dark:bg-muted"><Bot className="h-3.5 w-3.5 text-orange-500" /></AvatarFallback>
+                                                <AvatarImage
+                                                    src={chatbotImage}
+                                                    className="object-cover"
+                                                />
+                                                <AvatarFallback className="bg-white dark:bg-muted">
+                                                    <Bot className="h-3.5 w-3.5 text-orange-500" />
+                                                </AvatarFallback>
                                             </>
                                         )}
                                     </Avatar>
 
-                                    <div className={cn(
-                                        "max-w-[85%] p-3 text-[13px] leading-relaxed shadow-sm break-words",
-                                        msg.sender === 'user'
-                                            ? "bg-orange-500 text-white rounded-2xl rounded-tr-sm"
-                                            : "bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm dark:border-border dark:bg-popover dark:text-popover-foreground"
-                                    )}>
+                                    <div
+                                        className={cn(
+                                            'max-w-[85%] p-3 text-[13px] leading-relaxed shadow-sm break-words',
+                                            msg.sender === 'user'
+                                                ? 'bg-orange-500 text-white rounded-2xl rounded-tr-sm'
+                                                : 'bg-white border border-slate-100 text-slate-700 rounded-2xl rounded-tl-sm dark:border-border dark:bg-popover dark:text-popover-foreground'
+                                        )}
+                                    >
                                         {msg.text}
-                                        <div className={cn(
-                                            "text-[9px] mt-1 text-right opacity-70",
-                                            msg.sender === 'user' ? "text-orange-100" : "text-slate-400 dark:text-muted-foreground"
-                                        )}>
-                                            {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        <div
+                                            className={cn(
+                                                'text-[9px] mt-1 text-right opacity-70',
+                                                msg.sender === 'user'
+                                                    ? 'text-orange-100'
+                                                    : 'text-slate-400 dark:text-muted-foreground'
+                                            )}
+                                        >
+                                            {msg.timestamp.toLocaleTimeString(
+                                                [],
+                                                {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                }
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -406,23 +505,39 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                     className="flex w-full items-start gap-2.5"
                                 >
                                     <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 p-1.5 overflow-hidden shrink-0 mt-0.5 dark:border-border dark:bg-muted">
-                                        <img src={chatbotImage} alt="AI" className="w-full h-full object-contain" />
+                                        <img
+                                            src={chatbotImage}
+                                            alt={t('widget.imageAlt')}
+                                            className="w-full h-full object-contain"
+                                        />
                                     </div>
                                     <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm p-3 shadow-sm dark:border-border dark:bg-popover">
                                         <div className="flex gap-1">
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
-                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
+                                                transition={{
+                                                    repeat: Infinity,
+                                                    duration: 0.6,
+                                                    delay: 0,
+                                                }}
                                                 className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
-                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
+                                                transition={{
+                                                    repeat: Infinity,
+                                                    duration: 0.6,
+                                                    delay: 0.2,
+                                                }}
                                                 className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                             <motion.div
                                                 animate={{ y: [0, -3, 0] }}
-                                                transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
+                                                transition={{
+                                                    repeat: Infinity,
+                                                    duration: 0.6,
+                                                    delay: 0.4,
+                                                }}
                                                 className="w-1 h-1 bg-slate-400 rounded-full dark:bg-muted-foreground"
                                             />
                                         </div>
@@ -436,10 +551,18 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                             <div className="relative flex min-h-[44px] items-center overflow-hidden bg-slate-50 border border-slate-200 rounded-[1.5rem] shadow-sm transition-all duration-200 ease-out py-1 pl-1 pr-1.5 focus-within:!border-orange-300/70 focus-within:shadow-[0_0_0_1px_rgba(251,146,60,0.14),0_0_18px_rgba(251,146,60,0.08)] dark:border-border dark:bg-popover dark:focus-within:!border-orange-400/35 dark:focus-within:shadow-[0_0_0_1px_rgba(249,115,22,0.16),0_0_18px_rgba(249,115,22,0.08)]">
                                 <textarea
                                     ref={textareaRef}
-                                    placeholder={isListening ? "Listening..." : "Ask me anything..."}
+                                    placeholder={
+                                        isListening
+                                            ? t(
+                                                  'widget.input.listeningPlaceholder'
+                                              )
+                                            : t('widget.input.askPlaceholder')
+                                    }
                                     className="flex-1 !bg-transparent border-none outline-none text-[13px] leading-5 px-2.5 py-2 text-slate-700 placeholder:text-slate-400 min-h-[36px] max-h-[120px] resize-none custom-scrollbar dark:!bg-transparent dark:text-foreground dark:placeholder:text-muted-foreground"
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onChange={(e) =>
+                                        setInputValue(e.target.value)
+                                    }
                                     onKeyDown={handleKeyDown}
                                     disabled={isTyping}
                                     rows={1}
@@ -452,32 +575,41 @@ export function ChatWindow({ isOpen, onClose }: ChatWindowProps) {
                                             variant="ghost"
                                             onClick={handleVoiceInput}
                                             className={cn(
-                                                "h-8 w-8 rounded-full bg-transparent hover:bg-slate-200 text-slate-400 transition-colors dark:bg-transparent dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground",
-                                                isListening && "text-red-500 bg-red-50 hover:bg-red-100 animate-pulse dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25"
+                                                'h-8 w-8 rounded-full bg-transparent hover:bg-slate-200 text-slate-400 transition-colors dark:bg-transparent dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground',
+                                                isListening &&
+                                                    'text-red-500 bg-red-50 hover:bg-red-100 animate-pulse dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25'
                                             )}
                                         >
-                                            {isListening ? <StopCircle className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                            {isListening ? (
+                                                <StopCircle className="h-4 w-4" />
+                                            ) : (
+                                                <Mic className="h-4 w-4" />
+                                            )}
                                         </Button>
                                     )}
-
                                     <Button
                                         size="icon"
                                         onClick={handleSendMessage}
-                                        disabled={!inputValue.trim() || isTyping}
+                                        disabled={
+                                            !inputValue.trim() || isTyping
+                                        }
                                         className={cn(
-                                            "h-8 w-8 rounded-full transition-all shadow-sm",
+                                            'h-8 w-8 rounded-full transition-all shadow-sm',
                                             inputValue.trim()
-                                                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                                                : "bg-slate-200 text-slate-400 opacity-0 w-0 p-0 overflow-hidden"
+                                                ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                                                : 'bg-slate-200 text-slate-400 opacity-0 w-0 p-0 overflow-hidden'
                                         )}
                                     >
                                         <Send className="h-3.5 w-3.5" />
                                     </Button>
-                                    {!inputValue.trim() && <div className="w-1" />} {/* Spacer when send is hidden */}
+                                    {!inputValue.trim() && (
+                                        <div className="w-1" />
+                                    )}{' '}
+                                    {/* Spacer when send is hidden */}
                                 </div>
                             </div>
                             <div className="text-center mt-2.5 text-[9px] leading-none text-slate-400 font-medium tracking-wide opacity-80 dark:text-muted-foreground">
-                                AI can make mistakes. Check important info.
+                                {t('widget.disclaimer')}
                             </div>
                         </div>
                     </Card>

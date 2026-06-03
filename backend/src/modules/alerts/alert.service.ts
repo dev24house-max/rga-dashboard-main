@@ -340,9 +340,12 @@ export class AlertService {
                                 title: `${rule.name}: ${campaign.name}`,
                                 message: this.generateAlertMessage(rule, aggregated, campaign.name),
                                 metadata: {
+                                    ruleName: rule.name,
+                                    campaignName: campaign.name,
                                     metric: rule.metric,
                                     value: aggregated[rule.metric],
                                     threshold: rule.threshold,
+                                    operator: rule.operator,
                                 },
                             },
                         });
@@ -425,6 +428,6 @@ export class AlertService {
         const value = metrics[rule.metric];
         const formatted = typeof value === 'number' ? value.toFixed(2) : value;
 
-        return `Campaign "${campaignName}" มี ${rule.metric} = ${formatted} (เกณฑ์: ${rule.operator} ${rule.threshold})`;
+        return `Campaign "${campaignName}" has ${rule.metric} = ${formatted} (condition: ${rule.operator} ${rule.threshold})`;
     }
 }

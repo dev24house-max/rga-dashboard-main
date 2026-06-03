@@ -38,9 +38,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { RuleFormDialog } from './RuleFormDialog';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Constants
@@ -54,32 +61,48 @@ const OPERATOR_LABELS: Record<string, string> = {
     eq: '=',
 };
 
-const METRIC_LABELS: Record<string, string> = {
-    ctr: 'CTR',
-    cpc: 'CPC',
-    roas: 'ROAS',
-    spend: 'Spend',
-    impressions: 'Impressions',
-    clicks: 'Clicks',
-    conversions: 'Conversions',
+const METRIC_LABEL_KEYS: Record<string, string> = {
+    ctr: 'alertRules.metrics.ctr',
+    cpc: 'alertRules.metrics.cpc',
+    roas: 'alertRules.metrics.roas',
+    spend: 'alertRules.metrics.spend',
+    impressions: 'alertRules.metrics.impressions',
+    clicks: 'alertRules.metrics.clicks',
+    conversions: 'alertRules.metrics.conversions',
 };
 
-const SEVERITY_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive'; className: string }> = {
-    CRITICAL: { label: 'Critical', variant: 'destructive', className: 'bg-red-100 text-red-700 border-red-200' },
-    WARNING: { label: 'Warning', variant: 'secondary', className: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    INFO: { label: 'Info', variant: 'default', className: 'bg-blue-100 text-blue-700 border-blue-200' },
-};
+const SEVERITY_CONFIG: Record<string, { labelKey: string; className: string }> =
+    {
+        CRITICAL: {
+            labelKey: 'alertRules.severity.critical',
+            className: 'bg-red-100 text-red-700 border-red-200',
+        },
+        WARNING: {
+            labelKey: 'alertRules.severity.warning',
+            className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        },
+        INFO: {
+            labelKey: 'alertRules.severity.info',
+            className: 'bg-blue-100 text-blue-700 border-blue-200',
+        },
+    };
 
 // =============================================================================
 // Helper Functions
 // =============================================================================
 
-function formatCondition(metric: string, operator: string, threshold: number | string): string {
-    const metricLabel = METRIC_LABELS[metric] || metric.toUpperCase();
+function formatCondition(
+    metric: string,
+    operator: string,
+    threshold: number | string,
+    t: (path: string) => string
+): string {
+    const metricLabel = METRIC_LABEL_KEYS[metric]
+        ? t(METRIC_LABEL_KEYS[metric])
+        : metric.toUpperCase();
     const opLabel = OPERATOR_LABELS[operator] || operator;
-    const value = Number(threshold); // Ensure value is a number
+    const value = Number(threshold);
 
-    // Format threshold based on metric type
     let formattedThreshold: string;
     if (metric === 'ctr' || metric === 'roas') {
         formattedThreshold = value.toFixed(2);
@@ -118,16 +141,20 @@ function TableSkeleton() {
 // =============================================================================
 
 function EmptyState({ onAddRule }: { onAddRule: () => void }) {
+    const { t } = useTranslation('settings');
+
     return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
             <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Alert Rules</h3>
+            <h3 className="text-lg font-medium mb-2">
+                {t('alertRules.empty.title')}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                Create your first alert rule to automatically monitor campaign metrics and get notified when thresholds are breached.
+                {t('alertRules.empty.description')}
             </p>
             <Button onClick={onAddRule}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Rule
+                {t('alertRules.empty.createRule')}
             </Button>
         </div>
     );
@@ -138,6 +165,7 @@ function EmptyState({ onAddRule }: { onAddRule: () => void }) {
 // =============================================================================
 
 export function AlertRulesTab() {
+    const { t } = useTranslation('settings');
     const queryClient = useQueryClient();
     const user = useAuthStore(selectUser);
     const tenantId = user?.tenantId;
@@ -151,7 +179,11 @@ export function AlertRulesTab() {
     // Queries
     // =========================================================================
 
-    const { data: rules = [], isLoading, isError } = useQuery({
+    const {
+        data: rules = [],
+        isLoading,
+        isError,
+    } = useQuery({
         queryKey: ['alert-rules', tenantId],
         queryFn: async () => {
             const response = await alertService.getRules();
@@ -167,13 +199,20 @@ export function AlertRulesTab() {
         mutationFn: (data: Parameters<typeof alertService.createRule>[0]) =>
             alertService.createRule(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['alert-rules', tenantId] });
+            queryClient.invalidateQueries({
+                queryKey: ['alert-rules', tenantId],
+            });
             setIsFormOpen(false);
-            toast.success('Rule created', { description: 'Alert rule has been created successfully.' });
+            toast.success(t('alertRules.toasts.created'), {
+                description: t('alertRules.toasts.createdDescription'),
+            });
         },
         onError: (error) => {
-            toast.error('Failed to create rule', {
-                description: error instanceof Error ? error.message : 'Unknown error',
+            toast.error(t('alertRules.toasts.createFailed'), {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : t('alertRules.toasts.unknownError'),
             });
         },
     });
@@ -182,14 +221,21 @@ export function AlertRulesTab() {
         mutationFn: ({ id, data }: { id: string; data: Partial<AlertRule> }) =>
             alertService.updateRule(id, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['alert-rules', tenantId] });
+            queryClient.invalidateQueries({
+                queryKey: ['alert-rules', tenantId],
+            });
             setIsFormOpen(false);
             setEditingRule(null);
-            toast.success('Rule updated', { description: 'Alert rule has been updated.' });
+            toast.success(t('alertRules.toasts.updated'), {
+                description: t('alertRules.toasts.updatedDescription'),
+            });
         },
         onError: (error) => {
-            toast.error('Failed to update rule', {
-                description: error instanceof Error ? error.message : 'Unknown error',
+            toast.error(t('alertRules.toasts.updateFailed'), {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : t('alertRules.toasts.unknownError'),
             });
         },
     });
@@ -198,40 +244,61 @@ export function AlertRulesTab() {
         mutationFn: (id: string) => alertService.toggleRule(id),
         onMutate: async (id) => {
             // Cancel outgoing refetches
-            await queryClient.cancelQueries({ queryKey: ['alert-rules', tenantId] });
+            await queryClient.cancelQueries({
+                queryKey: ['alert-rules', tenantId],
+            });
 
             // Snapshot previous value
-            const previousRules = queryClient.getQueryData<AlertRule[]>(['alert-rules', tenantId]);
+            const previousRules = queryClient.getQueryData<AlertRule[]>([
+                'alert-rules',
+                tenantId,
+            ]);
 
             // Optimistically update
-            queryClient.setQueryData<AlertRule[]>(['alert-rules', tenantId], (old) =>
-                old?.map((rule) =>
-                    rule.id === id ? { ...rule, isActive: !rule.isActive } : rule
-                )
+            queryClient.setQueryData<AlertRule[]>(
+                ['alert-rules', tenantId],
+                (old) =>
+                    old?.map((rule) =>
+                        rule.id === id
+                            ? { ...rule, isActive: !rule.isActive }
+                            : rule
+                    )
             );
 
             return { previousRules };
         },
         onError: (err, id, context) => {
             // Rollback on error
-            queryClient.setQueryData(['alert-rules', tenantId], context?.previousRules);
-            toast.error('Failed to toggle rule');
+            queryClient.setQueryData(
+                ['alert-rules', tenantId],
+                context?.previousRules
+            );
+            toast.error(t('alertRules.toasts.toggleFailed'));
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['alert-rules', tenantId] });
+            queryClient.invalidateQueries({
+                queryKey: ['alert-rules', tenantId],
+            });
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => alertService.deleteRule(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['alert-rules', tenantId] });
+            queryClient.invalidateQueries({
+                queryKey: ['alert-rules', tenantId],
+            });
             setDeletingRule(null);
-            toast.success('Rule deleted', { description: 'Alert rule has been removed.' });
+            toast.success(t('alertRules.toasts.deleted'), {
+                description: t('alertRules.toasts.deletedDescription'),
+            });
         },
         onError: (error) => {
-            toast.error('Failed to delete rule', {
-                description: error instanceof Error ? error.message : 'Unknown error',
+            toast.error(t('alertRules.toasts.deleteFailed'), {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : t('alertRules.toasts.unknownError'),
             });
         },
     });
@@ -281,15 +348,15 @@ export function AlertRulesTab() {
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <ShieldAlert className="h-5 w-5" />
-                        Watchdog Rules
+                        {t('alertRules.header.title')}
                     </CardTitle>
                     <CardDescription>
-                        Automatically monitor campaigns and get notified when metrics breach thresholds.
+                        {t('alertRules.header.description')}
                     </CardDescription>
                 </div>
                 <Button onClick={handleAddRule}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Rule
+                    {t('alertRules.header.addRule')}
                 </Button>
             </CardHeader>
 
@@ -299,7 +366,7 @@ export function AlertRulesTab() {
                 ) : isError ? (
                     <div className="flex flex-col items-center justify-center py-8 text-destructive">
                         <AlertTriangle className="h-8 w-8 mb-2" />
-                        <p>Failed to load rules. Please try again.</p>
+                        <p>{t('alertRules.status.loadFailed')}</p>
                     </div>
                 ) : rules.length === 0 ? (
                     <EmptyState onAddRule={handleAddRule} />
@@ -307,17 +374,30 @@ export function AlertRulesTab() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[80px]">Active</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Condition</TableHead>
-                                <TableHead>Severity</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="w-[80px]">
+                                    {t('alertRules.table.active')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('alertRules.table.name')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('alertRules.table.condition')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('alertRules.table.severity')}
+                                </TableHead>
+                                <TableHead>
+                                    {t('alertRules.table.type')}
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    {t('alertRules.table.actions')}
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {rules.map((rule) => {
-                                const severityConfig = SEVERITY_CONFIG[rule.severity];
+                                const severityConfig =
+                                    SEVERITY_CONFIG[rule.severity];
                                 const isPreset = rule.type === 'PRESET';
 
                                 return (
@@ -325,8 +405,14 @@ export function AlertRulesTab() {
                                         <TableCell>
                                             <Switch
                                                 checked={rule.isActive}
-                                                onCheckedChange={() => toggleMutation.mutate(rule.id)}
-                                                disabled={toggleMutation.isPending}
+                                                onCheckedChange={() =>
+                                                    toggleMutation.mutate(
+                                                        rule.id
+                                                    )
+                                                }
+                                                disabled={
+                                                    toggleMutation.isPending
+                                                }
                                             />
                                         </TableCell>
                                         <TableCell className="font-medium">
@@ -339,20 +425,42 @@ export function AlertRulesTab() {
                                         </TableCell>
                                         <TableCell>
                                             <code className="text-sm bg-muted px-2 py-1 rounded">
-                                                {formatCondition(rule.metric, rule.operator, rule.threshold)}
+                                                {formatCondition(
+                                                    rule.metric,
+                                                    rule.operator,
+                                                    rule.threshold,
+                                                    t
+                                                )}
                                             </code>
                                         </TableCell>
                                         <TableCell>
                                             <Badge
                                                 variant="outline"
-                                                className={cn('font-medium', severityConfig?.className)}
+                                                className={cn(
+                                                    'font-medium',
+                                                    severityConfig?.className
+                                                )}
                                             >
-                                                {severityConfig?.label || rule.severity}
+                                                {severityConfig
+                                                    ? t(severityConfig.labelKey)
+                                                    : rule.severity}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={isPreset ? 'secondary' : 'outline'}>
-                                                {isPreset ? 'Preset' : 'Custom'}
+                                            <Badge
+                                                variant={
+                                                    isPreset
+                                                        ? 'secondary'
+                                                        : 'outline'
+                                                }
+                                            >
+                                                {isPreset
+                                                    ? t(
+                                                          'alertRules.types.preset'
+                                                      )
+                                                    : t(
+                                                          'alertRules.types.custom'
+                                                      )}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -360,18 +468,38 @@ export function AlertRulesTab() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleEditRule(rule)}
+                                                    onClick={() =>
+                                                        handleEditRule(rule)
+                                                    }
                                                     disabled={isPreset}
-                                                    title={isPreset ? 'Preset rules cannot be edited' : 'Edit rule'}
+                                                    title={
+                                                        isPreset
+                                                            ? t(
+                                                                  'alertRules.tooltips.presetEdit'
+                                                              )
+                                                            : t(
+                                                                  'alertRules.tooltips.edit'
+                                                              )
+                                                    }
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => setDeletingRule(rule)}
+                                                    onClick={() =>
+                                                        setDeletingRule(rule)
+                                                    }
                                                     disabled={isPreset}
-                                                    title={isPreset ? 'Preset rules cannot be deleted' : 'Delete rule'}
+                                                    title={
+                                                        isPreset
+                                                            ? t(
+                                                                  'alertRules.tooltips.presetDelete'
+                                                              )
+                                                            : t(
+                                                                  'alertRules.tooltips.delete'
+                                                              )
+                                                    }
                                                     className="text-destructive hover:text-destructive"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -395,27 +523,40 @@ export function AlertRulesTab() {
                 }}
                 rule={editingRule}
                 onSubmit={handleFormSubmit}
-                isSubmitting={createMutation.isPending || updateMutation.isPending}
+                isSubmitting={
+                    createMutation.isPending || updateMutation.isPending
+                }
             />
 
             {/* Delete Confirmation Dialog */}
-            <AlertDialog open={!!deletingRule} onOpenChange={(open) => !open && setDeletingRule(null)}>
+            <AlertDialog
+                open={!!deletingRule}
+                onOpenChange={(open) => !open && setDeletingRule(null)}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Alert Rule</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {t('alertRules.deleteDialog.title')}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{deletingRule?.name}"? This action cannot be undone.
+                            {t('alertRules.deleteDialog.description', {
+                                name: deletingRule?.name ?? '',
+                            })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>
+                            {t('alertRules.deleteDialog.cancel')}
+                        </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteConfirm}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             disabled={deleteMutation.isPending}
                         >
-                            {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Delete
+                            {deleteMutation.isPending && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            {t('alertRules.deleteDialog.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

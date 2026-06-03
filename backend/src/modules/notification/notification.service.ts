@@ -45,6 +45,13 @@ export class NotificationService {
             select: { id: true },
         });
 
+        const alertMetadata =
+            alert.metadata &&
+                typeof alert.metadata === 'object' &&
+                !Array.isArray(alert.metadata)
+                ? (alert.metadata as Record<string, unknown>)
+                : {};
+
         // Create notification for each user
         const notifications = users.map((user) => ({
             tenantId: alert.tenantId,
@@ -56,10 +63,11 @@ export class NotificationService {
             priority: alert.severity === 'CRITICAL' ? 'HIGH' : 'NORMAL',
             alertId: alert.id,
             metadata: {
+                ...alertMetadata,
                 alertType: alert.type,
                 severity: alert.severity,
                 actionUrl: `/dashboard/alerts/${alert.id}`,
-                actionText: 'ดูรายละเอียด',
+                actionText: 'View details',
             },
         }));
 

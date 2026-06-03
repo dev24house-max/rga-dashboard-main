@@ -5,7 +5,7 @@ import type {
   AlertSeverity,
   NotificationChannel,
   SyncStatus,
-} from './enums';
+} from "./enums";
 
 export interface Metric {
   id: string;
@@ -175,8 +175,8 @@ export interface IntegrationNotification {
   tenantId: string;
   integrationId?: string;
   platform: string;
-  severity: 'info' | 'warning' | 'critical';
-  status: 'open' | 'resolved';
+  severity: "info" | "warning" | "critical";
+  status: "open" | "resolved";
   title: string;
   reason?: string;
   actionUrl?: string;
@@ -184,7 +184,7 @@ export interface IntegrationNotification {
   resolvedAt?: string;
   createdAt: string;
   updatedAt: string;
-  integration?: Pick<Integration, 'id' | 'name' | 'provider' | 'lastSyncAt'>;
+  integration?: Pick<Integration, "id" | "name" | "provider" | "lastSyncAt">;
 }
 
 export interface OAuthStatus {
@@ -247,20 +247,20 @@ export interface ApiErrorResponse {
  * Known API error codes for type-safe error handling
  */
 export type ApiErrorCode =
-  | 'INVALID_CREDENTIALS'
-  | 'ACCOUNT_LOCKED'
-  | 'EMAIL_EXISTS'
-  | 'TOKEN_EXPIRED'
-  | 'TOKEN_REVOKED'
-  | 'USER_NOT_FOUND'
-  | 'ACCOUNT_INACTIVE'
-  | 'VALIDATION_ERROR'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'CONFLICT'
-  | 'TOO_MANY_REQUESTS'
-  | 'INTERNAL_ERROR'
+  | "INVALID_CREDENTIALS"
+  | "ACCOUNT_LOCKED"
+  | "EMAIL_EXISTS"
+  | "TOKEN_EXPIRED"
+  | "TOKEN_REVOKED"
+  | "USER_NOT_FOUND"
+  | "ACCOUNT_INACTIVE"
+  | "VALIDATION_ERROR"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "TOO_MANY_REQUESTS"
+  | "INTERNAL_ERROR"
   | string; // Allow unknown error codes
 
 /**
@@ -284,13 +284,21 @@ export interface Notification {
   title: string;
   message: string;
   channel: NotificationChannel;
-  priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
   metadata?: {
     actionUrl?: string;
     actionText?: string;
     icon?: string;
     alertType?: string;
     severity?: AlertSeverity;
+    metric?: string;
+    value?: string | number;
+    threshold?: string | number;
+    operator?: string;
+    campaignName?: string;
+    ruleName?: string;
+    platform?: string;
+    recordsCount?: string | number;
   };
   isRead: boolean;
   readAt?: string;
@@ -302,4 +310,3 @@ export interface Notification {
   createdAt: string;
   expiresAt?: string;
 }
-

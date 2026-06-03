@@ -168,7 +168,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         } catch (error) {
             set({
                 isLoading: false,
-                error: error instanceof Error ? error.message : 'Failed to fetch',
+                error:
+                    error instanceof Error ? error.message : 'Failed to fetch',
             });
             console.error('Failed to fetch notifications:', error);
         }
@@ -177,7 +178,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     fetchUnreadCount: async () => {
         try {
             const response = await apiClient.get('/notifications/unread-count');
-            set({ unreadCount: response.data.count || 0 });
+            set({
+                unreadCount:
+                    response.data.unreadCount ?? response.data.count ?? 0,
+            });
         } catch (error) {
             console.error('Failed to fetch unread count:', error);
         }

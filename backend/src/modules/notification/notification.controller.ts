@@ -11,34 +11,38 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class NotificationController {
     constructor(private readonly notificationService: NotificationService) { }
 
+    private getUserId(req: any): string {
+        return req.user.id ?? req.user.sub;
+    }
+
     @Get()
     @ApiOperation({ summary: 'Get notifications for current user' })
     async findAll(@Req() req: any, @Query() query: NotificationQueryDto) {
-        return this.notificationService.findAll(req.user.sub, query);
+        return this.notificationService.findAll(this.getUserId(req), query);
     }
 
     @Get('unread-count')
     @ApiOperation({ summary: 'Get unread notification count' })
     async getUnreadCount(@Req() req: any) {
-        const count = await this.notificationService.getUnreadCount(req.user.sub);
+        const count = await this.notificationService.getUnreadCount(this.getUserId(req));
         return { unreadCount: count };
     }
 
     @Patch(':id/read')
     @ApiOperation({ summary: 'Mark notification as read' })
     async markAsRead(@Param('id') id: string, @Req() req: any) {
-        return this.notificationService.markAsRead(id, req.user.sub);
+        return this.notificationService.markAsRead(id, this.getUserId(req));
     }
 
     @Patch('read-all')
     @ApiOperation({ summary: 'Mark all notifications as read' })
     async markAllAsRead(@Req() req: any) {
-        return this.notificationService.markAllAsRead(req.user.sub);
+        return this.notificationService.markAllAsRead(this.getUserId(req));
     }
 
     @Patch(':id/dismiss')
     @ApiOperation({ summary: 'Dismiss notification' })
     async dismiss(@Param('id') id: string, @Req() req: any) {
-        return this.notificationService.dismiss(id, req.user.sub);
+        return this.notificationService.dismiss(id, this.getUserId(req));
     }
 }

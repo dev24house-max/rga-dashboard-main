@@ -2,7 +2,7 @@
 // RuleFormDialog - Create/Edit Alert Rule Modal
 // =============================================================================
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,48 +35,79 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import type { AlertRule } from '@/services/alert-service';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Schema
 // =============================================================================
 
-const ruleFormSchema = z.object({
-    name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-    metric: z.string().min(1, 'Metric is required'),
-    operator: z.string().min(1, 'Operator is required'),
-    threshold: z.coerce.number().min(0, 'Threshold must be positive'),
-    severity: z.enum(['INFO', 'WARNING', 'CRITICAL']),
-    description: z.string().optional(),
-});
+type RuleFormValues = {
+    name: string;
+    metric: string;
+    operator: string;
+    threshold: number;
+    severity: 'INFO' | 'WARNING' | 'CRITICAL';
+    description?: string;
+};
 
-type RuleFormValues = z.infer<typeof ruleFormSchema>;
+function createRuleFormSchema(t: (path: string) => string) {
+    return z.object({
+        name: z
+            .string()
+            .min(1, t('alertRules.form.validation.nameRequired'))
+            .max(100, t('alertRules.form.validation.nameTooLong')),
+        metric: z
+            .string()
+            .min(1, t('alertRules.form.validation.metricRequired')),
+        operator: z
+            .string()
+            .min(1, t('alertRules.form.validation.operatorRequired')),
+        threshold: z.coerce
+            .number()
+            .min(0, t('alertRules.form.validation.thresholdPositive')),
+        severity: z.enum(['INFO', 'WARNING', 'CRITICAL']),
+        description: z.string().optional(),
+    });
+}
 
 // =============================================================================
 // Options
 // =============================================================================
 
 const METRIC_OPTIONS = [
-    { value: 'ctr', label: 'CTR (Click-Through Rate)' },
-    { value: 'cpc', label: 'CPC (Cost Per Click)' },
-    { value: 'roas', label: 'ROAS (Return on Ad Spend)' },
-    { value: 'spend', label: 'Spend (Total Cost)' },
-    { value: 'impressions', label: 'Impressions' },
-    { value: 'clicks', label: 'Clicks' },
-    { value: 'conversions', label: 'Conversions' },
+    { value: 'ctr', labelKey: 'alertRules.metricOptions.ctr' },
+    { value: 'cpc', labelKey: 'alertRules.metricOptions.cpc' },
+    { value: 'roas', labelKey: 'alertRules.metricOptions.roas' },
+    { value: 'spend', labelKey: 'alertRules.metricOptions.spend' },
+    { value: 'impressions', labelKey: 'alertRules.metricOptions.impressions' },
+    { value: 'clicks', labelKey: 'alertRules.metricOptions.clicks' },
+    { value: 'conversions', labelKey: 'alertRules.metricOptions.conversions' },
 ];
 
 const OPERATOR_OPTIONS = [
-    { value: 'gt', label: 'Greater than (>)' },
-    { value: 'lt', label: 'Less than (<)' },
-    { value: 'gte', label: 'Greater or equal (≥)' },
-    { value: 'lte', label: 'Less or equal (≤)' },
-    { value: 'eq', label: 'Equal to (=)' },
+    { value: 'gt', labelKey: 'alertRules.operators.gt' },
+    { value: 'lt', labelKey: 'alertRules.operators.lt' },
+    { value: 'gte', labelKey: 'alertRules.operators.gte' },
+    { value: 'lte', labelKey: 'alertRules.operators.lte' },
+    { value: 'eq', labelKey: 'alertRules.operators.eq' },
 ];
 
 const SEVERITY_OPTIONS = [
-    { value: 'INFO', label: 'Info', className: 'text-blue-600' },
-    { value: 'WARNING', label: 'Warning', className: 'text-yellow-600' },
-    { value: 'CRITICAL', label: 'Critical', className: 'text-red-600' },
+    {
+        value: 'INFO',
+        labelKey: 'alertRules.severity.info',
+        className: 'text-blue-600',
+    },
+    {
+        value: 'WARNING',
+        labelKey: 'alertRules.severity.warning',
+        className: 'text-yellow-600',
+    },
+    {
+        value: 'CRITICAL',
+        labelKey: 'alertRules.severity.critical',
+        className: 'text-red-600',
+    },
 ];
 
 // =============================================================================
@@ -102,7 +133,9 @@ export function RuleFormDialog({
     onSubmit,
     isSubmitting = false,
 }: RuleFormDialogProps) {
+    const { t } = useTranslation('settings');
     const isEditing = !!rule;
+    const ruleFormSchema = useMemo(() => createRuleFormSchema(t), [t]);
 
     const form = useForm<RuleFormValues>({
         resolver: zodResolver(ruleFormSchema) as any,
@@ -149,26 +182,38 @@ export function RuleFormDialog({
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {isEditing ? 'Edit Alert Rule' : 'Create Alert Rule'}
+                        {isEditing
+                            ? t('alertRules.form.editTitle')
+                            : t('alertRules.form.createTitle')}
                     </DialogTitle>
                     <DialogDescription>
                         {isEditing
-                            ? 'Modify the alert rule configuration.'
-                            : 'Create a new rule to monitor your campaigns.'}
+                            ? t('alertRules.form.editDescription')
+                            : t('alertRules.form.createDescription')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={form.handleSubmit(handleSubmit)}
+                        className="space-y-4"
+                    >
                         {/* Name */}
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Rule Name</FormLabel>
+                                    <FormLabel>
+                                        {t('alertRules.form.fields.name')}
+                                    </FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., Low CTR Alert" {...field} />
+                                        <Input
+                                            placeholder={t(
+                                                'alertRules.form.placeholders.name'
+                                            )}
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -182,17 +227,29 @@ export function RuleFormDialog({
                                 name="metric"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Metric</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormLabel>
+                                            {t('alertRules.form.fields.metric')}
+                                        </FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select metric" />
+                                                    <SelectValue
+                                                        placeholder={t(
+                                                            'alertRules.form.placeholders.metric'
+                                                        )}
+                                                    />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {METRIC_OPTIONS.map((opt) => (
-                                                    <SelectItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
+                                                    <SelectItem
+                                                        key={opt.value}
+                                                        value={opt.value}
+                                                    >
+                                                        {t(opt.labelKey)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -207,17 +264,31 @@ export function RuleFormDialog({
                                 name="operator"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Condition</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormLabel>
+                                            {t(
+                                                'alertRules.form.fields.condition'
+                                            )}
+                                        </FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select operator" />
+                                                    <SelectValue
+                                                        placeholder={t(
+                                                            'alertRules.form.placeholders.operator'
+                                                        )}
+                                                    />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {OPERATOR_OPTIONS.map((opt) => (
-                                                    <SelectItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
+                                                    <SelectItem
+                                                        key={opt.value}
+                                                        value={opt.value}
+                                                    >
+                                                        {t(opt.labelKey)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -235,18 +306,26 @@ export function RuleFormDialog({
                                 name="threshold"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Threshold</FormLabel>
+                                        <FormLabel>
+                                            {t(
+                                                'alertRules.form.fields.threshold'
+                                            )}
+                                        </FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
-                                                placeholder="1.0"
+                                                placeholder={t(
+                                                    'alertRules.form.placeholders.threshold'
+                                                )}
                                                 {...field}
                                             />
                                         </FormControl>
                                         <FormDescription className="text-xs">
-                                            The value to compare against
+                                            {t(
+                                                'alertRules.form.help.threshold'
+                                            )}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -258,11 +337,22 @@ export function RuleFormDialog({
                                 name="severity"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Severity</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormLabel>
+                                            {t(
+                                                'alertRules.form.fields.severity'
+                                            )}
+                                        </FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select severity" />
+                                                    <SelectValue
+                                                        placeholder={t(
+                                                            'alertRules.form.placeholders.severity'
+                                                        )}
+                                                    />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -270,9 +360,11 @@ export function RuleFormDialog({
                                                     <SelectItem
                                                         key={opt.value}
                                                         value={opt.value}
-                                                        className={opt.className}
+                                                        className={
+                                                            opt.className
+                                                        }
                                                     >
-                                                        {opt.label}
+                                                        {t(opt.labelKey)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -289,10 +381,16 @@ export function RuleFormDialog({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description (Optional)</FormLabel>
+                                    <FormLabel>
+                                        {t(
+                                            'alertRules.form.fields.description'
+                                        )}
+                                    </FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Describe what this rule monitors..."
+                                            placeholder={t(
+                                                'alertRules.form.placeholders.description'
+                                            )}
                                             className="resize-none"
                                             rows={2}
                                             {...field}
@@ -310,11 +408,15 @@ export function RuleFormDialog({
                                 onClick={() => onOpenChange(false)}
                                 disabled={isSubmitting}
                             >
-                                Cancel
+                                {t('alertRules.form.actions.cancel')}
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isEditing ? 'Save Changes' : 'Create Rule'}
+                                {isSubmitting && (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
+                                {isEditing
+                                    ? t('alertRules.form.actions.saveChanges')
+                                    : t('alertRules.form.actions.createRule')}
                             </Button>
                         </DialogFooter>
                     </form>

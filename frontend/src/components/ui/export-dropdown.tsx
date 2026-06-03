@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Download, FileImage, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { exportToImage, exportToPdfWithSummary } from '@/lib/export-utils';
+import { useTranslation } from '@/i18n/use-translation';
 
 interface ExportDropdownProps {
     /** The element to capture for Image/PDF. Pass a ref.current */
@@ -26,6 +27,7 @@ export function ExportDropdown({
     onExportCsv,
     disabled = false,
 }: ExportDropdownProps) {
+    const { t } = useTranslation('exportControls');
     const [isExporting, setIsExporting] = useState(false);
 
     const handleExport = async (type: 'image' | 'pdf') => {
@@ -62,7 +64,7 @@ export function ExportDropdown({
                     ) : (
                         <Download className="h-4 w-4" />
                     )}
-                    Export
+                    {t('export')}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -71,19 +73,19 @@ export function ExportDropdown({
                     disabled={!targetElement}
                 >
                     <FileImage className="mr-2 h-4 w-4 text-blue-500" />
-                    <span>Save as Image</span>
+                    <span>{t('saveAsImage')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                     onClick={() => handleExport('pdf')}
                     disabled={!targetElement}
                 >
                     <FileText className="mr-2 h-4 w-4 text-red-500" />
-                    <span>Save as PDF</span>
+                    <span>{t('saveAsPdf')}</span>
                 </DropdownMenuItem>
                 {onExportCsv && (
                     <DropdownMenuItem onClick={onExportCsv}>
                         <FileSpreadsheet className="mr-2 h-4 w-4 text-green-500" />
-                        <span>Save as CSV</span>
+                        <span>{t('saveAsCsv')}</span>
                     </DropdownMenuItem>
                 )}
             </DropdownMenuContent>

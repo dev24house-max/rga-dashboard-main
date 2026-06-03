@@ -2,10 +2,16 @@
 // Settings Page - User Preferences and Alert Configuration
 // =============================================================================
 
-import { useEffect } from 'react';
+import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -19,9 +25,8 @@ import {
 import { Settings2, Bell } from 'lucide-react';
 import { AlertRulesTab } from '@/features/alerts/components/AlertRulesTab';
 import { useTheme } from '@/contexts/ThemeContext';
-
 import { useRegionalSettings } from '@/contexts/RegionalSettingsContext';
-import React from 'react';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // General Settings Tab Content
@@ -66,22 +71,28 @@ function GeneralSettingsTab({
     onEmailNotificationsChange,
     onLineNotificationsChange,
 }: GeneralSettingsTabProps) {
+    const { t } = useTranslation('settings');
+
     return (
         <div className="space-y-6">
             {/* Appearance Settings */}
             <Card data-tutorial="settings-appearance">
                 <CardHeader>
-                    <CardTitle className="dark:text-zinc-100">Appearance</CardTitle>
+                    <CardTitle className="dark:text-zinc-100">
+                        {t('general.appearance.title')}
+                    </CardTitle>
                     <CardDescription className="dark:text-zinc-400">
-                        Customize how the dashboard looks and feels.
+                        {t('general.appearance.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="dark:text-zinc-100">Dark Mode</Label>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.appearance.darkMode.label')}
+                            </Label>
                             <p className="text-sm text-muted-foreground dark:text-zinc-500">
-                                Switch to dark theme for low-light environments.
+                                {t('general.appearance.darkMode.description')}
                             </p>
                         </div>
                         <Switch
@@ -92,9 +103,13 @@ function GeneralSettingsTab({
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="dark:text-zinc-100">Compact View</Label>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.appearance.compactView.label')}
+                            </Label>
                             <p className="text-sm text-muted-foreground dark:text-zinc-500">
-                                Use smaller spacing to fit more data on screen.
+                                {t(
+                                    'general.appearance.compactView.description'
+                                )}
                             </p>
                         </div>
                         <Switch
@@ -108,61 +123,103 @@ function GeneralSettingsTab({
             {/* Regional Settings */}
             <Card data-tutorial="settings-regional">
                 <CardHeader>
-                    <CardTitle className="dark:text-zinc-100">Regional</CardTitle>
+                    <CardTitle className="dark:text-zinc-100">
+                        {t('general.regional.title')}
+                    </CardTitle>
                     <CardDescription className="dark:text-zinc-400">
-                        Configure language and regional preferences.
+                        {t('general.regional.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label className="dark:text-zinc-100">Language</Label>
-                            <Select value={language} onValueChange={onLanguageChange}>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.regional.language')}
+                            </Label>
+                            <Select
+                                value={language}
+                                onValueChange={onLanguageChange}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="th">ไทย (Thai)</SelectItem>
-                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="th">
+                                        {t('general.regional.languages.th')}
+                                    </SelectItem>
+                                    <SelectItem value="en">
+                                        {t('general.regional.languages.en')}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="dark:text-zinc-100">Timezone</Label>
-                            <Select value={timezone} onValueChange={onTimezoneChange}>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.regional.timezone')}
+                            </Label>
+                            <Select
+                                value={timezone}
+                                onValueChange={onTimezoneChange}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="asia-bangkok">Asia/Bangkok (UTC+7)</SelectItem>
-                                    <SelectItem value="utc">UTC</SelectItem>
+                                    <SelectItem value="asia-bangkok">
+                                        {t(
+                                            'general.regional.timezones.asiaBangkok'
+                                        )}
+                                    </SelectItem>
+                                    <SelectItem value="utc">
+                                        {t('general.regional.timezones.utc')}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label className="dark:text-zinc-100">Currency</Label>
-                            <Select value={currency} onValueChange={onCurrencyChange}>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.regional.currency')}
+                            </Label>
+                            <Select
+                                value={currency}
+                                onValueChange={onCurrencyChange}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="thb">THB (฿)</SelectItem>
-                                    <SelectItem value="usd">USD ($)</SelectItem>
+                                    <SelectItem value="thb">
+                                        {t('general.regional.currencies.thb')}
+                                    </SelectItem>
+                                    <SelectItem value="usd">
+                                        {t('general.regional.currencies.usd')}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="dark:text-zinc-100">Date Format</Label>
-                            <Select value={dateFormat} onValueChange={onDateFormatChange}>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.regional.dateFormat')}
+                            </Label>
+                            <Select
+                                value={dateFormat}
+                                onValueChange={onDateFormatChange}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="dmy">DD/MM/YYYY</SelectItem>
-                                    <SelectItem value="mdy">MM/DD/YYYY</SelectItem>
-                                    <SelectItem value="ymd">YYYY-MM-DD</SelectItem>
+                                    <SelectItem value="dmy">
+                                        {t('general.regional.dateFormats.dmy')}
+                                    </SelectItem>
+                                    <SelectItem value="mdy">
+                                        {t('general.regional.dateFormats.mdy')}
+                                    </SelectItem>
+                                    <SelectItem value="ymd">
+                                        {t('general.regional.dateFormats.ymd')}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -173,17 +230,21 @@ function GeneralSettingsTab({
             {/* Notification Preferences */}
             <Card data-tutorial="settings-notifications">
                 <CardHeader>
-                    <CardTitle className="dark:text-zinc-100">Notification Preferences</CardTitle>
+                    <CardTitle className="dark:text-zinc-100">
+                        {t('general.notifications.title')}
+                    </CardTitle>
                     <CardDescription className="dark:text-zinc-400">
-                        Choose how and when you receive notifications.
+                        {t('general.notifications.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="dark:text-zinc-100">In-App Notifications</Label>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.notifications.inApp.label')}
+                            </Label>
                             <p className="text-sm text-muted-foreground dark:text-zinc-500">
-                                Show notifications in the dashboard.
+                                {t('general.notifications.inApp.description')}
                             </p>
                         </div>
                         <Switch
@@ -193,9 +254,11 @@ function GeneralSettingsTab({
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="dark:text-zinc-100">Email Notifications</Label>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.notifications.email.label')}
+                            </Label>
                             <p className="text-sm text-muted-foreground dark:text-zinc-500">
-                                Receive alerts via email.
+                                {t('general.notifications.email.description')}
                             </p>
                         </div>
                         <Switch
@@ -205,9 +268,11 @@ function GeneralSettingsTab({
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <Label className="dark:text-zinc-100">LINE Notifications</Label>
+                            <Label className="dark:text-zinc-100">
+                                {t('general.notifications.line.label')}
+                            </Label>
                             <p className="text-sm text-muted-foreground dark:text-zinc-500">
-                                Receive alerts via LINE.
+                                {t('general.notifications.line.description')}
                             </p>
                         </div>
                         <Switch
@@ -226,6 +291,7 @@ function GeneralSettingsTab({
 // =============================================================================
 
 export default function Settings() {
+    const { t } = useTranslation('settings');
     const { theme, toggleTheme, switchable } = useTheme();
     const {
         language,
@@ -241,34 +307,45 @@ export default function Settings() {
     const [emailNotifications, setEmailNotifications] = React.useState(false);
     const [lineNotifications, setLineNotifications] = React.useState(false);
 
-    // สามารถเพิ่ม useEffect เพื่อ sync inAppNotifications/emailNotifications/lineNotifications กับ localStorage ถ้าต้องการ
-
     return (
         <ProtectedRoute>
             <DashboardLayout>
                 <div className="space-y-6">
                     {/* Page Header */}
-                    <div data-tutorial="settings-header" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div
+                        data-tutorial="settings-header"
+                        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-                                Settings
+                                {t('page.title')}
                             </h1>
                             <p className="text-sm text-slate-500 dark:text-zinc-500 mt-1">
-                                Manage your account preferences and alert configurations.
+                                {t('page.subtitle')}
                             </p>
                         </div>
                     </div>
 
                     {/* Settings Tabs */}
                     <Tabs defaultValue="general" className="space-y-6">
-                        <TabsList data-tutorial="settings-tabs" className="grid w-full max-w-md grid-cols-2">
-                            <TabsTrigger value="general" className="flex items-center gap-2">
+                        <TabsList
+                            data-tutorial="settings-tabs"
+                            className="grid w-full max-w-md grid-cols-2"
+                        >
+                            <TabsTrigger
+                                value="general"
+                                className="flex items-center gap-2"
+                            >
                                 <Settings2 className="h-4 w-4" />
-                                General
+                                {t('page.tabs.general')}
                             </TabsTrigger>
-                            <TabsTrigger data-tutorial="settings-alerts-tab" value="alerts" className="flex items-center gap-2">
+                            <TabsTrigger
+                                data-tutorial="settings-alerts-tab"
+                                value="alerts"
+                                className="flex items-center gap-2"
+                            >
                                 <Bell className="h-4 w-4" />
-                                Alert Rules
+                                {t('page.tabs.alertRules')}
                             </TabsTrigger>
                         </TabsList>
 
@@ -289,8 +366,12 @@ export default function Settings() {
                                 onTimezoneChange={setTimezone}
                                 onCurrencyChange={setCurrency}
                                 onDateFormatChange={setDateFormat}
-                                onInAppNotificationsChange={setInAppNotifications}
-                                onEmailNotificationsChange={setEmailNotifications}
+                                onInAppNotificationsChange={
+                                    setInAppNotifications
+                                }
+                                onEmailNotificationsChange={
+                                    setEmailNotifications
+                                }
                                 onLineNotificationsChange={setLineNotifications}
                             />
                         </TabsContent>

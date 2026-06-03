@@ -12,6 +12,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useTranslation } from '@/i18n/use-translation';
 
 // =============================================================================
 // Types
@@ -27,7 +28,13 @@ interface DashboardHeaderProps {
 // Component
 // =============================================================================
 
-export function DashboardHeader({ onExportCSV, onExportPDF, isExporting }: DashboardHeaderProps) {
+export function DashboardHeader({
+    onExportCSV,
+    onExportPDF,
+    isExporting,
+}: DashboardHeaderProps) {
+    const { t } = useTranslation('exportControls');
+
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             {/* Title Section */}
@@ -52,7 +59,7 @@ export function DashboardHeader({ onExportCSV, onExportPDF, isExporting }: Dashb
                             className="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm"
                         >
                             <Download className="h-4 w-4 mr-2" />
-                            Export
+                            {t('export')}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -62,7 +69,7 @@ export function DashboardHeader({ onExportCSV, onExportPDF, isExporting }: Dashb
                             className="cursor-pointer"
                         >
                             <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-                            <span>Export CSV</span>
+                            <span>{t('exportCsv')}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={onExportPDF}
@@ -70,7 +77,7 @@ export function DashboardHeader({ onExportCSV, onExportPDF, isExporting }: Dashb
                             className="cursor-pointer"
                         >
                             <FileText className="mr-2 h-4 w-4 text-red-600" />
-                            <span>Export PDF</span>
+                            <span>{t('exportPdf')}</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
