@@ -31,8 +31,8 @@ import { useTranslation } from '@/i18n/use-translation';
 const CHECKLIST_PLATFORM_IDS = [
     'google-ads',
     'google-analytics',
-    'google-search-console',
-    //'facebook-ads',
+    //'google-search-console',
+    'facebook-ads',
     //'line-ads',
     'tiktok-ads',
 ] as const;

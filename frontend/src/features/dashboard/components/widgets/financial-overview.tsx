@@ -21,6 +21,7 @@ import { useFormatter } from '@/hooks/use-formatter';
 import { downloadCsv } from '@/lib/download-utils';
 import { ExportDropdown } from '@/components/ui/export-dropdown';
 import { useTranslation } from '@/i18n/use-translation';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export interface FinancialBreakdownItem {
     name: string;
@@ -76,6 +77,42 @@ const DEFAULT_SUMMARY = [
 
 // Currency formatters now imported from @/lib/formatters
 
+const DARK_MODE_DONUT_COLOR = '#64748b';
+const DARK_MODE_DONUT_LUMINANCE_THRESHOLD = 0.08;
+
+function getHexLuminance(color: string) {
+    const match = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    const hex = match?.[1];
+    if (!hex) return null;
+
+    const normalized =
+        hex.length === 3
+            ? hex
+                  .split('')
+                  .map((char) => `${char}${char}`)
+                  .join('')
+            : hex;
+
+    const channels = [0, 2, 4].map((start) => {
+        const value = parseInt(normalized.slice(start, start + 2), 16) / 255;
+        return value <= 0.03928
+            ? value / 12.92
+            : Math.pow((value + 0.055) / 1.055, 2.4);
+    });
+
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function resolveDonutDisplayColor(color: string, isDarkMode: boolean) {
+    if (!isDarkMode) return color;
+
+    const luminance = getHexLuminance(color);
+    return luminance !== null &&
+        luminance < DARK_MODE_DONUT_LUMINANCE_THRESHOLD
+        ? DARK_MODE_DONUT_COLOR
+        : color;
+}
+
 function buildFinancialCsv(
     breakdown: FinancialBreakdownItem[],
     summary: FinancialSummaryItem[],
@@ -119,6 +156,7 @@ export function FinancialOverview({
     summary,
 }: FinancialOverviewProps) {
     const { t } = useTranslation('dashboard');
+    const { theme } = useTheme();
     const { formatCurrency } = useFormatter();
     const cardRef = useRef<HTMLDivElement>(null);
     const [targetElement, setTargetElement] = useState<HTMLDivElement | null>(
@@ -151,6 +189,11 @@ export function FinancialOverview({
     const computedTotal =
         total ?? resolvedBreakdown.reduce((acc, cur) => acc + cur.value, 0);
     const formattedRoiDelta = `${roiDelta >= 0 ? '+' : ''}${roiDelta.toFixed(1)}%`;
+    const formatWholeCurrency = (value: number) =>
+        formatCurrency(value, {
+            maximumFractionDigits: 0,
+            minimumFractionDigits: 0,
+        });
 
     useEffect(() => {
         if (cardRef.current) {
@@ -159,15 +202,25 @@ export function FinancialOverview({
     }, []);
     const hasData = resolvedBreakdown.some((item) => item.value > 0);
 
-    const chartData = hasData
-        ? resolvedBreakdown
-        : [
-              {
-                  name: noDataLabel,
-                  value: 1,
-                  color: 'var(--chart-empty, #cbd5e1)',
-              },
-          ];
+    const chartData = useMemo(() => {
+        const source = hasData
+            ? resolvedBreakdown
+            : [
+                  {
+                      name: noDataLabel,
+                      value: 1,
+                      color: 'var(--chart-empty, #cbd5e1)',
+                  },
+              ];
+
+        return source.map((item) => ({
+            ...item,
+            displayColor: resolveDonutDisplayColor(
+                item.color,
+                theme === 'dark'
+            ),
+        }));
+    }, [hasData, noDataLabel, resolvedBreakdown, theme]);
 
     const handleExportCsv = () => {
         downloadCsv(
@@ -221,6 +274,29 @@ export function FinancialOverview({
                         filename="financial-overview"
                         targetElement={targetElement}
                         onExportCsv={handleExportCsv}
+                        pdfSummaryData={{
+                            title: resolvedTitle,
+                            subtitle: `${resolvedSubtitle} ROAS ${roi.toFixed(1)}x (${formattedRoiDelta} ${resolvedRoiComparisonLabel})`,
+                            roi,
+                            roiDelta,
+                            total: computedTotal,
+                            totalLabel: formatWholeCurrency(computedTotal),
+                            breakdown: resolvedBreakdown.map((item) => ({
+                                name: item.name,
+                                value: item.value,
+                                formattedValue: formatWholeCurrency(
+                                    item.value
+                                ),
+                            })),
+                            summary: resolvedSummary.map((item) => ({
+                                label: item.label,
+                                value: item.value,
+                                formattedValue: formatWholeCurrency(
+                                    item.value
+                                ),
+                                deltaLabel: item.deltaLabel,
+                            })),
+                        }}
                     />
                 </div>
             </CardHeader>
@@ -268,7 +344,10 @@ export function FinancialOverview({
                                             {chartData.map((entry, index) => (
                                                 <Cell
                                                     key={entry.name}
-                                                    fill={entry.color}
+                                                    fill={entry.displayColor}
+                                                    data-export-light-fill={
+                                                        entry.color
+                                                    }
                                                     onMouseEnter={() =>
                                                         setActiveIndex(index)
                                                     }
@@ -365,8 +444,10 @@ export function FinancialOverview({
                                     <div className="flex items-center gap-3 min-w-0">
                                         <span
                                             className="h-4 w-4 rounded-full flex-shrink-0"
+                                            data-export-light-bg={item.color}
                                             style={{
-                                                backgroundColor: item.color,
+                                                backgroundColor:
+                                                    item.displayColor,
                                             }}
                                         />
                                         <span

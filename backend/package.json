@@ -6,7 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "npx nest build",
+    "build": "npx prisma generate && npx nest build",
     "start": "npx prisma generate && node dist/main.js",
     "start:dev": "nest start --watch",
     "start:dev:prod": "npm run build && node dist/main.js",

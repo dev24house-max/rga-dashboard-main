@@ -7,7 +7,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { exportToImage, exportToPdfWithSummary } from '@/lib/export-utils';
+import {
+    exportToImage,
+    exportToPdfWithSummary,
+    type PdfSummaryData,
+} from '@/lib/export-utils';
 import { useTranslation } from '@/i18n/use-translation';
 
 interface ExportDropdownProps {
@@ -17,6 +21,8 @@ interface ExportDropdownProps {
     filename: string;
     /** Optional handler for CSV export */
     onExportCsv?: () => void;
+    /** Optional structured data to render below the PDF image */
+    pdfSummaryData?: PdfSummaryData;
     /** Disable all actions */
     disabled?: boolean;
 }
@@ -25,6 +31,7 @@ export function ExportDropdown({
     targetElement,
     filename,
     onExportCsv,
+    pdfSummaryData,
     disabled = false,
 }: ExportDropdownProps) {
     const { t } = useTranslation('exportControls');
@@ -41,7 +48,11 @@ export function ExportDropdown({
             if (type === 'image') {
                 await exportToImage(targetElement, filename);
             } else if (type === 'pdf') {
-                await exportToPdfWithSummary(targetElement, filename);
+                await exportToPdfWithSummary(
+                    targetElement,
+                    filename,
+                    pdfSummaryData
+                );
             }
         } catch (err) {
             console.error('Export failed', err);
@@ -57,6 +68,7 @@ export function ExportDropdown({
                     variant="outline"
                     size="sm"
                     className="gap-2"
+                    data-export-exclude="true"
                     disabled={disabled || isExporting}
                 >
                     {isExporting ? (

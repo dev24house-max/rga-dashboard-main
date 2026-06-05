@@ -63,7 +63,7 @@ const DISPLAY_PLATFORMS: PlatformId[] = [
     'google',
     'google-analytics',
     'search-console',
-    //'facebook',
+    'facebook',
     //'line',
     'tiktok',
 ];
