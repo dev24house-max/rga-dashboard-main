@@ -357,7 +357,7 @@ describe('NotificationService', () => {
 
                 expect(result.count).toBe(10);
                 expect(prismaService.notification.updateMany).toHaveBeenCalledWith({
-                    where: { userId: 'user-001', isRead: false },
+                    where: { userId: 'user-001', isRead: false, isDismissed: false },
                     data: { isRead: true, readAt: expect.any(Date) },
                 });
             });

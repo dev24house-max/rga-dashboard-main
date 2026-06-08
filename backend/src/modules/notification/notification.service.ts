@@ -4,10 +4,7 @@ import { MailService } from '../../common/services/mail.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { Prisma, NotificationChannel, Notification, Alert } from '@prisma/client';
-import {
-    getAlertMetricCutoffDate,
-    visibleNotificationWhere,
-} from '../../common/filters/visible-alerts.filter';
+import { getAlertMetricCutoffDate } from '../../common/filters/visible-alerts.filter';
 
 @Injectable()
 export class NotificationService {
@@ -248,13 +245,9 @@ export class NotificationService {
             where.type = type;
         }
 
-        const visibleWhere: Prisma.NotificationWhereInput = {
-            AND: [where, visibleNotificationWhere()],
-        };
-
         const [data, total] = await Promise.all([
             this.prisma.notification.findMany({
-                where: visibleWhere,
+                where,
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
@@ -273,7 +266,7 @@ export class NotificationService {
                     campaignId: true,
                 },
             }),
-            this.prisma.notification.count({ where: visibleWhere }),
+            this.prisma.notification.count({ where }),
         ]);
 
         return {
@@ -292,12 +285,7 @@ export class NotificationService {
      */
     async getUnreadCount(userId: string): Promise<number> {
         return this.prisma.notification.count({
-            where: {
-                AND: [
-                    { userId, isRead: false, isDismissed: false },
-                    visibleNotificationWhere(),
-                ],
-            },
+            where: { userId, isRead: false, isDismissed: false },
         });
     }
 
@@ -324,12 +312,7 @@ export class NotificationService {
      */
     async markAllAsRead(userId: string): Promise<{ count: number }> {
         const result = await this.prisma.notification.updateMany({
-            where: {
-                AND: [
-                    { userId, isRead: false, isDismissed: false },
-                    visibleNotificationWhere(),
-                ],
-            },
+            where: { userId, isRead: false, isDismissed: false },
             data: { isRead: true, readAt: new Date() },
         });
 
