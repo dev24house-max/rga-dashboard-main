@@ -1,5 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
+import React, { useState, useRef, useEffect } from "react";
+import { useAuthStore } from "@/stores/auth-store";
+import { chatService } from "@/services/chat-service";
+import {
+  ACTIVE_CHAT_SESSION_STORAGE_KEY,
+  WIDGET_CHAT_SESSION_STORAGE_KEY,
+  parseChatWebhookResponse,
+} from "@/services/chat-webhook";
 
 interface Message {
   id: string;
@@ -10,226 +16,265 @@ interface Message {
 
 interface ChatbotProps {
   webhookUrl?: string;
-  buttonSize?: 'default' | 'small';
+  buttonSize?: "default" | "small";
 }
 
 const ROLE_OPTIONS = [
-  { id: 'general', label: 'ทั่วไป' },
-  { id: 'ads', label: 'Ads' },
-  { id: 'seo', label: 'SEO' },
-  { id: 'social', label: 'Social' },
-  { id: 'strategy', label: 'Strategy' },
+  { id: "general", label: "ทั่วไป" },
+  { id: "ads", label: "Ads" },
+  { id: "seo", label: "SEO" },
+  { id: "social", label: "Social" },
+  { id: "strategy", label: "Strategy" },
 ] as const;
 
-type RoleId = (typeof ROLE_OPTIONS)[number]['id'];
+type RoleId = (typeof ROLE_OPTIONS)[number]["id"];
 
 // Simple UUID generator (lightweight alternative)
 const generateId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize = 'default' }) => {
+export const ChatbotWidget: React.FC<ChatbotProps> = ({
+  webhookUrl,
+  buttonSize = "default",
+}) => {
   const { user } = useAuthStore();
-  const DEBUG = import.meta.env.MODE === 'development';
+  const DEBUG = import.meta.env.MODE === "development";
   const logger = (tag: string, message: any, data?: any) => {
     if (DEBUG) {
-      console.log(`[ChatbotWidget] ${tag}: ${message}`, data || '');
+      console.log(`[ChatbotWidget] ${tag}: ${message}`, data || "");
     }
   };
 
-  const defaultGeneralWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-general';
-  const defaultSeoWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-seo';
-  const defaultFallbackWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-general';
+  const defaultGeneralWebhook =
+    "https://yourrga3.app.n8n.cloud/webhook/chat-general";
+  const defaultSeoWebhook = "https://yourrga3.app.n8n.cloud/webhook/chat-seo";
+  const defaultFallbackWebhook =
+    "https://yourrga3.app.n8n.cloud/webhook/chat-general";
 
   const generalWebhookUrl =
-    (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_GENERAL : '') ||
-    defaultGeneralWebhook;
+    (typeof import.meta !== "undefined"
+      ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_GENERAL
+      : "") || defaultGeneralWebhook;
 
   const seoWebhookUrl =
-    (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_SEO : '') ||
-    defaultSeoWebhook;
+    (typeof import.meta !== "undefined"
+      ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_SEO
+      : "") || defaultSeoWebhook;
 
   const globalWebhookUrl =
     webhookUrl ||
-    (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL : '');
+    (typeof import.meta !== "undefined"
+      ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL
+      : "");
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [activeRole, setActiveRole] = useState<RoleId>('general');
+  const [input, setInput] = useState("");
+  const [activeRole, setActiveRole] = useState<RoleId>("general");
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isSendingRef = useRef(false);
+  const activeSessionIdRef = useRef<string | null>(null);
 
   const resolvedWebhookUrl =
-    activeRole === 'general'
+    activeRole === "general"
       ? generalWebhookUrl
-      : activeRole === 'seo'
-      ? seoWebhookUrl
-      : globalWebhookUrl || defaultFallbackWebhook;
+      : activeRole === "seo"
+        ? seoWebhookUrl
+        : globalWebhookUrl || defaultFallbackWebhook;
+
+  useEffect(() => {
+    activeSessionIdRef.current =
+      sessionStorage.getItem(WIDGET_CHAT_SESSION_STORAGE_KEY) ||
+      sessionStorage.getItem(ACTIVE_CHAT_SESSION_STORAGE_KEY);
+  }, []);
+
+  const getOrCreateSessionId = async (firstMessage: string) => {
+    const storedSessionId =
+      activeSessionIdRef.current ||
+      sessionStorage.getItem(WIDGET_CHAT_SESSION_STORAGE_KEY) ||
+      sessionStorage.getItem(ACTIVE_CHAT_SESSION_STORAGE_KEY);
+
+    if (storedSessionId) {
+      activeSessionIdRef.current = storedSessionId;
+      sessionStorage.setItem(WIDGET_CHAT_SESSION_STORAGE_KEY, storedSessionId);
+      return storedSessionId;
+    }
+
+    const newSession = await chatService.createSession(
+      firstMessage.slice(0, 50) || "New Chat"
+    );
+    if (!newSession?.id) {
+      throw new Error("Unable to create chat session");
+    }
+
+    activeSessionIdRef.current = newSession.id;
+    sessionStorage.setItem(WIDGET_CHAT_SESSION_STORAGE_KEY, newSession.id);
+    return newSession.id;
+  };
 
   const appendMessage = (newMsg: Message) => {
-    setMessages((prev) => {
+    setMessages(prev => {
       const newText = newMsg.text.trim();
 
       // If this is a bot response and the same text already exists, keep only first occurrence.
       // This guarantees that the exact same bot answer will never repeat.
       if (!newMsg.isUser) {
         const alreadyHasSame = prev.some(
-          (m) => !m.isUser && m.text.trim() === newText
+          m => !m.isUser && m.text.trim() === newText
         );
         if (alreadyHasSame) {
-          logger('DEDUPE', 'Prevented duplicate bot message', { text: newText, requestId: newMsg.requestId });
+          logger("DEDUPE", "Prevented duplicate bot message", {
+            text: newText,
+            requestId: newMsg.requestId,
+          });
           return prev;
         }
       }
 
       // For user message, still prevent exact consecutive duplicate to avoid accidental double-submit.
       const last = prev[prev.length - 1];
-      if (last && last.isUser === newMsg.isUser && last.text.trim() === newText) {
-        logger('DEDUPE', 'Prevented consecutive duplicate', { text: newText, isUser: newMsg.isUser });
+      if (
+        last &&
+        last.isUser === newMsg.isUser &&
+        last.text.trim() === newText
+      ) {
+        logger("DEDUPE", "Prevented consecutive duplicate", {
+          text: newText,
+          isUser: newMsg.isUser,
+        });
         return prev;
       }
 
-      logger('APPEND', 'Adding new message', { id: newMsg.id, text: newText, isUser: newMsg.isUser, requestId: newMsg.requestId });
+      logger("APPEND", "Adding new message", {
+        id: newMsg.id,
+        text: newText,
+        isUser: newMsg.isUser,
+        requestId: newMsg.requestId,
+      });
       return [...prev, newMsg];
     });
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (import.meta.env.MODE === 'development') {
-      console.log('[ChatbotWidget] Resolved webhook URL:', resolvedWebhookUrl || '(empty)');
+    if (import.meta.env.MODE === "development") {
+      console.log(
+        "[ChatbotWidget] Resolved webhook URL:",
+        resolvedWebhookUrl || "(empty)"
+      );
     }
-  }, [resolvedWebhookUrl, activeRole, generalWebhookUrl, seoWebhookUrl, globalWebhookUrl]);
+  }, [
+    resolvedWebhookUrl,
+    activeRole,
+    generalWebhookUrl,
+    seoWebhookUrl,
+    globalWebhookUrl,
+  ]);
 
   const sendMessage = async () => {
     if (isSendingRef.current || !input.trim()) return;
 
     const requestId = generateId();
-    logger('SEND', 'Starting new request', { requestId, input: input.trim(), role: activeRole });
+    const savedInput = input.trim();
+    logger("SEND", "Starting new request", {
+      requestId,
+      input: savedInput,
+      role: activeRole,
+    });
 
     if (!resolvedWebhookUrl) {
       const botMsg: Message = {
         id: generateId(),
-        text: 'Webhook is not configured. Please set VITE_CHATBOT_WEBHOOK_URL.',
+        text: "Webhook is not configured. Please set VITE_CHATBOT_WEBHOOK_URL.",
         isUser: false,
         requestId,
       };
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages(prev => [...prev, botMsg]);
       return;
     }
 
     const userMsg: Message = {
       id: generateId(),
-      text: input,
+      text: savedInput,
       isUser: true,
       requestId,
     };
 
     appendMessage(userMsg);
-    setInput('');
+    setInput("");
     isSendingRef.current = true;
     setIsSending(true);
     setIsTyping(true);
 
     try {
+      const sessionId = await getOrCreateSessionId(savedInput);
+      await chatService.sendMessage(sessionId, savedInput, "user");
+
       // Build request body based on active role
       let requestBody: any = {
+        tenant_id: user?.tenantId || "",
+        user_id: user?.id || "",
+        session_id: sessionId,
+        question: savedInput,
         timestamp: new Date().toISOString(),
       };
 
-      if (activeRole === 'general' || activeRole === 'seo') {
-        // For chat-general and chat-seo, send tenant_id and question
-        requestBody.tenant_id = user?.tenantId || 'default_tenant';
-        requestBody.question = input;
-      } else {
-        // For other roles, use the default message format
-        requestBody.message = input;
+      if (activeRole !== "general" && activeRole !== "seo") {
         requestBody.role = activeRole;
       }
 
       const response = await fetch(resolvedWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       });
 
-      logger('RESPONSE', 'Received response', { requestId, status: response.status, contentType: response.headers.get('content-type') });
+      logger("RESPONSE", "Received response", {
+        requestId,
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+      });
 
-      const contentType = response.headers.get('content-type') || '';
-      let botText = '';
-
-      if (contentType.includes('application/json')) {
-        const data = await response.json();
-        logger('PARSE', 'Parsed JSON response', { requestId, data });
-        if (!response.ok) {
-          throw new Error(data?.error || data?.message || `HTTP ${response.status}`);
-        }
-
-        // Support multiple formats:
-        // - {reply: string}
-        // - {reply: [string]}
-        // - {response: string}
-        // - [{message: string}]
-        // - array of simple strings
-        if (Array.isArray(data)) {
-          if (
-            data.length > 0 &&
-            data.every(
-              (item) =>
-                item &&
-                typeof item === 'object' &&
-                (item.hasOwnProperty('answer') || item.hasOwnProperty('message') || item.hasOwnProperty('reply') || item.hasOwnProperty('response') || item.hasOwnProperty('output'))
-            )
-          ) {
-            botText = data
-              .map((item: any) => item.answer || item.reply || item.response || item.message || item.output || '')
-              .filter(Boolean)
-              .join('\n');
-          } else {
-            botText = data
-              .map((item) => (typeof item === 'string' ? item : JSON.stringify(item)))
-              .join('\n');
-          }
-        } else if (Array.isArray(data.reply)) {
-          botText = data.reply.join('\n');
-        } else {
-          botText = data.answer || data.reply || data.response || data.message || data.output || '';
-        }
-      } else {
-        const text = await response.text();
-        if (!response.ok) {
-          throw new Error(text || `HTTP ${response.status}`);
-        }
-        botText = text;
-      }
+      const webhookResult = await parseChatWebhookResponse(response);
+      let botText: any = webhookResult.answer;
 
       // Normalize to a single string message
       if (Array.isArray(botText)) {
         botText = botText
-          .map((item) => {
-            if (typeof item === 'string') return item;
-            if (item && typeof item === 'object') {
-              return item.answer || item.reply || item.response || item.message || item.output || JSON.stringify(item);
+          .map(item => {
+            if (typeof item === "string") return item;
+            if (item && typeof item === "object") {
+              return (
+                item.answer ||
+                item.reply ||
+                item.response ||
+                item.message ||
+                item.output ||
+                JSON.stringify(item)
+              );
             }
             return String(item);
           })
           .filter(Boolean)
-          .join(' ');
+          .join(" ");
       }
 
-      if (botText && typeof botText === 'object') {
+      if (botText && typeof botText === "object") {
         botText = JSON.stringify(botText);
       }
 
-      botText = (botText || 'ได้รับข้อความแล้วค่ะ').toString().replace(/\s+/g, ' ').trim();
+      botText = (botText || "").toString().replace(/\s+/g, " ").trim();
+      if (!botText) {
+        throw new Error("Webhook returned empty answer");
+      }
 
-      logger('FINALIZE', 'Final bot text', { requestId, botText });
+      logger("FINALIZE", "Final bot text", { requestId, botText });
 
       const botMsg: Message = {
         id: generateId(),
@@ -239,21 +284,28 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
       };
 
       appendMessage(botMsg);
+      await chatService.sendMessage(
+        sessionId,
+        botText,
+        "assistant",
+        webhookResult.metadata || {}
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger('ERROR', 'Request failed', { requestId, error: errorMessage });
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger("ERROR", "Request failed", { requestId, error: errorMessage });
       const errorMsg: Message = {
         id: generateId(),
-        text: 'ขออภัย เกิดข้อผิดพลาด',
+        text: "ขออภัย เกิดข้อผิดพลาด",
         isUser: false,
         requestId,
       };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       isSendingRef.current = false;
       setIsSending(false);
       setIsTyping(false);
-      logger('COMPLETE', 'Request finished', { requestId });
+      logger("COMPLETE", "Request finished", { requestId });
     }
   };
 
@@ -540,27 +592,30 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
         aria-label="Open chat"
       >
         <svg viewBox="0 0 24 24">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
         </svg>
       </button>
 
       {/* แผงแชท */}
-      <div className={`chatbot-panel ${isOpen ? 'open' : ''}`} data-size={buttonSize}>
+      <div
+        className={`chatbot-panel ${isOpen ? "open" : ""}`}
+        data-size={buttonSize}
+      >
         <div className="chatbot-header">
           <div className="chatbot-header-row">
             <h3>💬 Chat</h3>
             <button className="chatbot-close" onClick={() => setIsOpen(false)}>
               <svg viewBox="0 0 24 24">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
               </svg>
             </button>
           </div>
           <div className="chatbot-roles">
-            {ROLE_OPTIONS.map((role) => (
+            {ROLE_OPTIONS.map(role => (
               <button
                 key={role.id}
                 type="button"
-                className={`chatbot-role ${activeRole === role.id ? 'active' : ''}`}
+                className={`chatbot-role ${activeRole === role.id ? "active" : ""}`}
                 onClick={() => setActiveRole(role.id)}
                 aria-pressed={activeRole === role.id}
               >
@@ -577,9 +632,12 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
               <p>มีอะไรให้ช่วยไหมคะ?</p>
             </div>
           ) : (
-            messages.map((msg) => (
-              <div key={msg.id} className={`chatbot-msg ${msg.isUser ? 'user' : 'bot'}`}>
-                <div className="chatbot-avatar">{msg.isUser ? '👤' : '🤖'}</div>
+            messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`chatbot-msg ${msg.isUser ? "user" : "bot"}`}
+              >
+                <div className="chatbot-avatar">{msg.isUser ? "👤" : "🤖"}</div>
                 <div className="chatbot-bubble">{msg.text}</div>
               </div>
             ))
@@ -601,8 +659,8 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
           <input
             className="chatbot-input"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onChange={e => setInput(e.target.value)}
+            onKeyPress={e => e.key === "Enter" && sendMessage()}
             placeholder="พิมพ์ข้อความ..."
             disabled={isSending || isTyping}
           />
@@ -612,7 +670,7 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
             disabled={!input.trim() || isSending || isTyping}
           >
             <svg viewBox="0 0 24 24">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
           </button>
         </div>
