@@ -37,9 +37,9 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
     }
   };
 
-  const defaultGeneralWebhook = 'https://yourrga1.app.n8n.cloud/webhook/chat-general';
-  const defaultSeoWebhook = 'https://yourrga1.app.n8n.cloud/webhook/chat-seo';
-  const defaultFallbackWebhook = 'https://yourrga1.app.n8n.cloud/webhook/chat-general';
+  const defaultGeneralWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-general';
+  const defaultSeoWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-seo';
+  const defaultFallbackWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-general';
 
   const generalWebhookUrl =
     (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_GENERAL : '') ||
@@ -184,11 +184,11 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
               (item) =>
                 item &&
                 typeof item === 'object' &&
-                (item.hasOwnProperty('message') || item.hasOwnProperty('reply') || item.hasOwnProperty('response') || item.hasOwnProperty('output'))
+                (item.hasOwnProperty('answer') || item.hasOwnProperty('message') || item.hasOwnProperty('reply') || item.hasOwnProperty('response') || item.hasOwnProperty('output'))
             )
           ) {
             botText = data
-              .map((item: any) => item.message || item.reply || item.response || item.output || '')
+              .map((item: any) => item.answer || item.reply || item.response || item.message || item.output || '')
               .filter(Boolean)
               .join('\n');
           } else {
@@ -199,7 +199,7 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
         } else if (Array.isArray(data.reply)) {
           botText = data.reply.join('\n');
         } else {
-          botText = data.reply || data.response || data.message || data.output || '';
+          botText = data.answer || data.reply || data.response || data.message || data.output || '';
         }
       } else {
         const text = await response.text();
@@ -215,7 +215,7 @@ export const ChatbotWidget: React.FC<ChatbotProps> = ({ webhookUrl, buttonSize =
           .map((item) => {
             if (typeof item === 'string') return item;
             if (item && typeof item === 'object') {
-              return item.message || item.reply || item.response || item.output || JSON.stringify(item);
+              return item.answer || item.reply || item.response || item.message || item.output || JSON.stringify(item);
             }
             return String(item);
           })

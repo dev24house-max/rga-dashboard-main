@@ -22,7 +22,7 @@ export const N8nChatWidget = ({
   inputPlaceholder = 'เธเธดเธกเธเนเธเธณเธ–เธฒเธกเธเธญเธเธเธธเธ“...',
 }: N8nChatWidgetProps) => {
   useEffect(() => {
-    const defaultWebhook = 'https://yourrga1.app.n8n.cloud/webhook/chat-general';
+    const defaultWebhook = 'https://yourrga3.app.n8n.cloud/webhook/chat-general';
     const resolvedWebhookUrl =
       webhookUrl ||
       (typeof import.meta !== 'undefined' ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL : '') ||

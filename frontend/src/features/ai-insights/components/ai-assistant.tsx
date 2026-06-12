@@ -229,7 +229,7 @@ export function AiAssistant() {
     const { user, isAuthenticated } = useAuthStore();
     const queryClient = useQueryClient();
     const defaultWebhook =
-        'https://yourrga1.app.n8n.cloud/webhook/chat-general';
+        'https://yourrga3.app.n8n.cloud/webhook/chat-general';
     const envWebhookGeneral =
         (typeof import.meta !== 'undefined'
             ? import.meta.env.VITE_CHATBOT_WEBHOOK_URL_GENERAL
@@ -530,6 +530,7 @@ export function AiAssistant() {
                             );
                         }
                         responseText =
+                            data.answer ||
                             data.reply ||
                             data.response ||
                             data.message ||

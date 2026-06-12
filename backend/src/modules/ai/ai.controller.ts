@@ -105,13 +105,13 @@ export class AiController {
     }
 
     const rawAnswer =
+      payload?.answer ||
+      payload?.data?.answer ||
       payload?.text ||
-      payload?.response?.text ||
-      payload?.content ||
-      payload?.data?.text ||
       payload?.output ||
       payload?.reply ||
-      payload?.message;
+      payload?.message ||
+      payload?.response;
 
     let message = '';
     if (rawAnswer) {

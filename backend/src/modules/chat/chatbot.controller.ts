@@ -93,7 +93,7 @@ export class ChatbotController {
   @Post()
   async forwardToWebhook(@Body() body: ChatRequest): Promise<ChatResponse> {
     // Build N8N webhook URL from environment variables
-    const n8nBaseUrl = process.env.N8N_BASE_URL || 'https://yourrga1.app.n8n.cloud';
+    const n8nBaseUrl = process.env.N8N_BASE_URL || 'https://yourrga3.app.n8n.cloud';
     // This endpoint is chat-specific; prefer chat env var, keep legacy var as fallback.
     const n8nWebhookPath =
       process.env.N8N_CHAT_WEBHOOK_PATH ||

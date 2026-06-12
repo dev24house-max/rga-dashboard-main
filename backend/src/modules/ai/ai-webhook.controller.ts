@@ -2,7 +2,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
 
-@Controller('api/ai/webhook')
+@Controller('api/v1/ai/webhook')
 export class AiWebhookController {
     constructor(private http: HttpService) { }
 
