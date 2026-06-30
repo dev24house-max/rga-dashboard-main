@@ -44,7 +44,7 @@ export class GoogleSearchConsoleAuthController {
             const result = await this.oauthService.handleCallback(code, state);
 
             return res.redirect(
-                `${this.frontendUrl}/data-sources?status=${result.status}&tempToken=${result.tempToken}&platform=gsc`,
+                `${this.frontendUrl}/data-sources?status=${result.status}&tempToken=${result.tempToken}&platform=search-console`,
             );
         } catch (error: any) {
             return res.redirect(

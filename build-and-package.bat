@@ -32,7 +32,7 @@ cd backend
 echo [IMPORTANT] Please ensure your backend server (npm run start) is NOT running to avoid EPERM errors.
 pause
 echo Generating Prisma Client...
-call npx prisma@6.4.0 generate
+call .\node_modules\.bin\prisma.cmd generate
 if %errorlevel% neq 0 (
     echo [ERROR] Prisma generate failed!
     pause

@@ -6,8 +6,11 @@ import { Cache } from 'cache-manager';
 import { google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 import { EncryptionService } from '../../common/services/encryption.service';
+import { resolveGoogleOAuthRedirectUri } from '../../common/utils/google-oauth.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeoService } from './seo.service';
+
+const GSC_OAUTH_CALLBACK_PATH = '/auth/google/search-console/callback';
 
 export interface SearchConsoleSite {
     siteUrl: string;
@@ -32,13 +35,22 @@ export class GoogleSearchConsoleOAuthService {
     ) { }
 
     private createOAuthClient() {
+        const clientId =
+            this.configService.get<string>('GOOGLE_GSC_CLIENT_ID') ||
+            this.configService.get<string>('GOOGLE_CLIENT_ID');
+        const clientSecret =
+            this.configService.get<string>('GOOGLE_GSC_CLIENT_SECRET') ||
+            this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+        const redirectUri = this.getRedirectUri();
+
+        if (!clientId || !clientSecret) {
+            throw new Error('Missing Google Search Console OAuth client credentials');
+        }
+
         return new google.auth.OAuth2(
-            this.configService.get<string>('GOOGLE_CLIENT_ID'),
-            this.configService.get<string>('GOOGLE_CLIENT_SECRET'),
-            this.configService.get<string>(
-                'GOOGLE_REDIRECT_URI_GSC',
-                'http://localhost:3000/auth/google/search-console/callback',
-            ),
+            clientId,
+            clientSecret,
+            redirectUri,
         );
     }
 
@@ -47,12 +59,40 @@ export class GoogleSearchConsoleOAuthService {
             JSON.stringify({ userId, tenantId, timestamp: Date.now() }),
         ).toString('base64');
 
-        return this.createOAuthClient().generateAuthUrl({
+        const redirectUri = this.getRedirectUri();
+        const authUrl = this.createOAuthClient().generateAuthUrl({
             access_type: 'offline',
             scope: ['https://www.googleapis.com/auth/webmasters.readonly'],
             state,
             prompt: 'consent',
         });
+
+        this.logger.log(
+            `[GSC OAuth] Generated auth URL with client_id=${this.getMaskedClientId()} redirect_uri=${redirectUri}`,
+        );
+        return authUrl;
+    }
+
+    private getRedirectUri(): string {
+        return resolveGoogleOAuthRedirectUri(
+            this.configService,
+            'GOOGLE_REDIRECT_URI_GSC',
+            GSC_OAUTH_CALLBACK_PATH,
+        );
+    }
+
+    private getMaskedClientId(): string {
+        const clientId =
+            this.configService.get<string>('GOOGLE_GSC_CLIENT_ID') ||
+            this.configService.get<string>('GOOGLE_CLIENT_ID') ||
+            '';
+
+        if (!clientId) {
+            return 'missing';
+        }
+
+        const [prefix, domain] = clientId.split('-', 2);
+        return `${prefix}-${domain ? '...' : ''}`;
     }
 
     async handleCallback(code: string, state: string) {

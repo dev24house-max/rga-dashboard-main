@@ -46,17 +46,35 @@ export default function ResetPassword() {
     const [error, setError] = useState('');
     const [focused, setFocused] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [passwordIssues, setPasswordIssues] = useState<string[]>([]);
+
+    const getPasswordIssues = (pw: string) => {
+        const issues: string[] = [];
+        if (!pw || pw.length < 8) issues.push('At least 8 characters');
+        if (!/[a-z]/.test(pw)) issues.push('At least 1 lowercase letter (a-z)');
+        if (!/[A-Z]/.test(pw)) issues.push('At least 1 uppercase letter (A-Z)');
+        if (!/[0-9]/.test(pw)) issues.push('At least 1 number (0-9)');
+        if (!/[^A-Za-z0-9]/.test(pw)) issues.push('At least 1 symbol (e.g. !@#$%)');
+        return issues;
+    };
 
     const validateFields = (): boolean => {
         const errors: Record<string, string> = {};
+        setPasswordIssues([]);
 
         if (!password) {
             errors.password = 'Password is required';
-        } else if (password.length < 8) {
-            errors.password = 'Password must be at least 8 characters';
+        } else {
+            const issues = getPasswordIssues(password);
+            if (issues.length > 0) {
+                errors.password = 'Password does not meet the security requirements.';
+                setPasswordIssues(issues);
+            }
         }
 
-        if (password !== confirmPassword) {
+        if (!confirmPassword) {
+            errors.confirmPassword = 'Please confirm your password';
+        } else if (password && confirmPassword !== password) {
             errors.confirmPassword = 'Passwords do not match';
         }
 
@@ -237,6 +255,20 @@ export default function ResetPassword() {
                                                 <FocusDot field="password" />
                                             </div>
                                             <FieldError message={fieldErrors.password} />
+                                            {passwordIssues.length > 0 ? (
+                                                <div className="mt-1 text-[11px] text-slate-500">
+                                                    <p className="font-medium text-slate-600">Please ensure your password includes:</p>
+                                                    <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                                                        {passwordIssues.map((issue) => (
+                                                            <li key={issue}>{issue}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] text-slate-400 mt-1">
+                                                    Use at least 8 characters with uppercase, lowercase, a number, and a symbol.
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Confirm Password */}
